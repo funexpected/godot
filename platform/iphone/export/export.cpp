@@ -838,7 +838,7 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 				return ERR_FILE_NOT_FOUND;
 			}
 			String additional_dir = p_is_framework && asset.ends_with(".dylib") ? "/dylibs/" : "/";
-			String destination_dir = p_out_dir + additional_dir + asset.get_base_dir().replace("res://", "");
+			String destination_dir = p_out_dir + additional_dir;// + asset.get_file();
 			if (!filesystem_da->dir_exists(destination_dir)) {
 				Error make_dir_err = filesystem_da->make_dir_recursive(destination_dir);
 				if (make_dir_err) {
