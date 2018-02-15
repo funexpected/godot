@@ -1,3 +1,6 @@
 [submodule "modules/firebase"]
 	path = modules/firebase
 	url = git@gitlab.com:funexpected/godot-firebase-module.git
+[submodule "modules/amplitude"]
+	path = modules/amplitude
+	url = git@gitlab.com:funexpected/godot-amplitude-module.git
