@@ -393,7 +393,7 @@ void NativeScript::get_script_property_list(List<PropertyInfo> *p_list) const {
 			if (!existing_properties.has(E.key())) {
 				insert_position = p_list->insert_after(insert_position, E.get().info);
 				existing_properties.insert(E.key());
-			}
+            }
 		}
 		script_data = script_data->base_data;
 	}
