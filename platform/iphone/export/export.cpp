@@ -225,21 +225,22 @@ Vector<EditorExportPlatformIOS::ExportArchitecture> EditorExportPlatformIOS::_ge
 struct LoadingScreenInfo {
 	const char *preset_key;
 	const char *export_name;
+	const Vector2 size;
 };
 
 static const LoadingScreenInfo loading_screen_infos[] = {
-	{ "landscape_launch_screens/iphone_2436x1125", "Default-Landscape-X.png" },
-	{ "landscape_launch_screens/iphone_2208x1242", "Default-Landscape-736h@3x.png" },
-	{ "landscape_launch_screens/ipad_1024x768", "Default-Landscape.png" },
-	{ "landscape_launch_screens/ipad_2048x1536", "Default-Landscape@2x.png" },
+	{ "landscape_launch_screens/iphone_2436x1125", "Default-Landscape-X.png", Vector2(2436,1125) },
+	{ "landscape_launch_screens/iphone_2208x1242", "Default-Landscape-736h@3x.png", Vector2(2208,1242) },
+	{ "landscape_launch_screens/ipad_1024x768", "Default-Landscape.png", Vector2(1024, 768) },
+	{ "landscape_launch_screens/ipad_2048x1536", "Default-Landscape@2x.png", Vector2(2048, 1536) },
 
-	{ "portrait_launch_screens/iphone_640x960", "Default-480h@2x.png" },
-	{ "portrait_launch_screens/iphone_640x1136", "Default-568h@2x.png" },
-	{ "portrait_launch_screens/iphone_750x1334", "Default-667h@2x.png" },
-	{ "portrait_launch_screens/iphone_1125x2436", "Default-Portrait-X.png" },
-	{ "portrait_launch_screens/ipad_768x1024", "Default-Portrait.png" },
-	{ "portrait_launch_screens/ipad_1536x2048", "Default-Portrait@2x.png" },
-	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png" }
+	{ "portrait_launch_screens/iphone_640x960", "Default-480h@2x.png", Vector2(640, 960) },
+	{ "portrait_launch_screens/iphone_640x1136", "Default-568h@2x.png", Vector2(640, 1136) },
+	{ "portrait_launch_screens/iphone_750x1334", "Default-667h@2x.png", Vector2(750,1334) },
+	{ "portrait_launch_screens/iphone_1125x2436", "Default-Portrait-X.png", Vector2(1125,2436) },
+	{ "portrait_launch_screens/ipad_768x1024", "Default-Portrait.png", Vector2(768,1024) },
+	{ "portrait_launch_screens/ipad_1536x2048", "Default-Portrait@2x.png", Vector2(1536,2048) },
+	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png", Vector2(1242,2208) }
 };
 
 void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) {
@@ -553,6 +554,12 @@ Error EditorExportPlatformIOS::_export_loading_screens(const Ref<EditorExportPre
 				ERR_PRINT(err_str.utf8().get_data());
 				return err;
 			}
+		} else {
+			Ref<Image> img = memnew(Image(info.size.x, info.size.y, false, Image::Format::FORMAT_RGBA8));
+			img->lock();
+			img->fill(GLOBAL_DEF("application/boot_splash/bg_color", Color(1,1,1)));
+			img->unlock();
+			img->save_png(p_dest_dir + info.export_name);
 		}
 	}
 	memdelete(da);
