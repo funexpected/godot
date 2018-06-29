@@ -49,6 +49,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	GDCLASS(EditorExportPlatformIOS, EditorExportPlatform);
 
 	int version_code;
+	String framework_search_path;
 
 	Ref<ImageTexture> logo;
 
@@ -64,6 +65,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		String linker_flags;
 		String cpp_code;
 	};
+	
 
 	struct ExportArchitecture {
 		String name;
@@ -83,6 +85,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	struct IOSExportAsset {
 		String exported_path;
 		bool is_framework; // framework is anything linked to the binary, otherwise it's a resource
+		String type; // asset may be  put in different sections based on type
 	};
 
 	String _get_additional_plist_content();
@@ -678,13 +681,30 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 	String pbx_frameworks_refs;
 	String pbx_resources_build;
 	String pbx_resources_refs;
+	String pbx_embed_frameworks;
+	String pbx_embed_plugins;
+	String pbx_embed_empty;
+	String pbx_script_phase;
 
-	const String file_info_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; };\n") +
-									"$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = $name; path = \"$file_path\"; sourceTree = \"<group>\"; };\n";
+	const String build_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; };\n"); 
+	const String copy_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy,  RemoveHeadersOnCopy, ); }; };\n"); 
+	const String ref_format = String("$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = $name; path = \"$file_path\"; sourceTree = \"$source_tree\"; };\n");
+
 	for (int i = 0; i < p_additional_assets.size(); ++i) {
+		const IOSExportAsset &asset = p_additional_assets[i];
+		
+		if (asset.type == "script"){
+			FileAccess *f = FileAccess::open(asset.exported_path, FileAccess::READ);
+			if (f){
+				pbx_script_phase += f->get_pascal_string().replace("\\", "\\\\").replace("\"","\\\"").replace("\n", "\\n") + "\\n";
+				f->close();
+			}
+			continue;
+		}
+
 		String build_id = (++current_id).str();
 		String ref_id = (++current_id).str();
-		const IOSExportAsset &asset = p_additional_assets[i];
+		String copy_id = asset.is_framework && asset.type.begins_with("embed_") ? (++current_id).str() : "";
 
 		String type;
 		if (asset.exported_path.ends_with(".framework")) {
@@ -697,23 +717,44 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 			type = "file";
 		}
 
+		String &pbx_refs = asset.is_framework && !asset.type.begins_with("embed_") ? pbx_frameworks_refs : pbx_resources_refs;
 		String &pbx_build = asset.is_framework ? pbx_frameworks_build : pbx_resources_build;
-		String &pbx_refs = asset.is_framework ? pbx_frameworks_refs : pbx_resources_refs;
+		String &pbx_copy = asset.is_framework && asset.type == "embed_framework" ? pbx_embed_frameworks :
+							 asset.is_framework && asset.type == "embed_plugin" ? pbx_embed_plugins :
+							 pbx_embed_empty; 
+			
+			
 
-		if (pbx_build.length() > 0) {
-			pbx_build += ",\n";
-			pbx_refs += ",\n";
-		}
+		if (pbx_build.length() > 0) pbx_build += ",\n";
+		if (pbx_refs.length() > 0) pbx_refs += ",\n";
+		if (pbx_copy.length() > 0) pbx_copy += ",\n";
+		//if (pbx_extra.length() > 0) {
+		//	pbx_extra += ",\n";
+		//}
 		pbx_build += build_id;
 		pbx_refs += ref_id;
+		pbx_copy += copy_id;
+		//pbx_extra += build_id;
 
-		Dictionary format_dict;
-		format_dict["build_id"] = build_id;
-		format_dict["ref_id"] = ref_id;
-		format_dict["name"] = asset.exported_path.get_file();
-		format_dict["file_path"] = asset.exported_path;
-		format_dict["file_type"] = type;
-		pbx_files += file_info_format.format(format_dict, "$_");
+		Dictionary build_dict;
+		build_dict["build_id"] = build_id;
+		build_dict["ref_id"] = ref_id;
+		pbx_files += build_format.format(build_dict, "$_");
+		
+		if (asset.type.begins_with("embed_")){
+			Dictionary copy_dict;
+			copy_dict["build_id"] = copy_id;
+			copy_dict["ref_id"] = ref_id;
+			pbx_files += copy_format.format(copy_dict, "$_");
+		}
+
+		Dictionary ref_dict;
+		ref_dict["ref_id"] = ref_id;
+		ref_dict["name"] = asset.exported_path.get_file();
+		ref_dict["file_path"] = asset.exported_path;
+		ref_dict["file_type"] = type;
+		ref_dict["source_tree"] = asset.type.begins_with("embed_") ? "<absolute>":"<group>";
+		pbx_files += ref_format.format(ref_dict, "$_");
 	}
 
 	// Note, frameworks like gamekit are always included in our project.pbxprof file
@@ -745,8 +786,12 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 	str = str.replace("$additional_pbx_files", pbx_files);
 	str = str.replace("$additional_pbx_frameworks_build", pbx_frameworks_build);
 	str = str.replace("$additional_pbx_frameworks_refs", pbx_frameworks_refs);
+	str = str.replace("$additional_pbx_embed_frameworks_build", pbx_embed_frameworks);
+	str = str.replace("$additionl_pbx_embed_plugins_build", pbx_embed_plugins);
 	str = str.replace("$additional_pbx_resources_build", pbx_resources_build);
 	str = str.replace("$additional_pbx_resources_refs", pbx_resources_refs);
+	str = str.replace("$additional_pbx_scripts", pbx_script_phase);
+	str = str.replace("$framework_search_path", framework_search_path);
 
 	CharString cs = str.utf8();
 	p_project_data.resize(cs.size() - 1);
@@ -759,10 +804,18 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 	DirAccess *filesystem_da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	ERR_FAIL_COND_V_MSG(!filesystem_da, ERR_CANT_CREATE, "Cannot create DirAccess for path '" + p_out_dir + "'.");
 	for (int f_idx = 0; f_idx < p_assets.size(); ++f_idx) {
-		String asset = p_assets[f_idx];
+		Vector<String> typed_asset = p_assets[f_idx].split("::");
+		String asset = typed_asset[0];
+		String type = typed_asset.size() == 1 ? "default" : typed_asset[1];
+		if (type.begins_with("embed_")){
+			
+			asset = ProjectSettings::get_singleton()->globalize_path(asset);
+			String framework_dir = asset.get_base_dir();
+			if (framework_search_path.find(framework_dir) == -1) framework_search_path += " " + framework_dir + ",\n";
+		}
 		if (!asset.begins_with("res://")) {
 			// either SDK-builtin or already a part of the export template
-			IOSExportAsset exported_asset = { asset, p_is_framework };
+			IOSExportAsset exported_asset = { asset, p_is_framework, type };
 			r_exported_assets.push_back(exported_asset);
 		} else {
 			DirAccess *da = DirAccess::create_for_path(asset);
@@ -795,7 +848,7 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 				memdelete(filesystem_da);
 				return err;
 			}
-			IOSExportAsset exported_asset = { destination, p_is_framework };
+			IOSExportAsset exported_asset = { destination, p_is_framework, type };
 			r_exported_assets.push_back(exported_asset);
 		}
 	}
@@ -843,6 +896,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	String src_pkg_name;
 	String dest_dir = p_path.get_base_dir() + "/";
 	String binary_name = p_path.get_file().get_basename();
+	framework_search_path = binary_name + ",\n";
 
 	EditorProgress ep("export", "Exporting for iOS", 5, true);
 
