@@ -1,0 +1,2 @@
+void register_parallax_visibility_notifier_types();
+void unregister_parallax_visibility_notifier_types();
