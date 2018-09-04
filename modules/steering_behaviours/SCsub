@@ -1,0 +1,9 @@
+﻿Import('env')
+Import('env_modules')
+
+env_steering_behaviours = env_modules.Clone()
+env_steering_behaviours.add_source_files(env.modules_sources, "*.cpp")
+
+Export('env')
+
+
