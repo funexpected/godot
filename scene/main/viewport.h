@@ -418,6 +418,8 @@ public:
 	Ref<World2D> get_world_2d() const;
 	Ref<World2D> find_world_2d() const;
 
+	Control *find_control(const Vector2 &p_pos);
+
 	void set_canvas_transform(const Transform2D &p_transform);
 	Transform2D get_canvas_transform() const;
 
