@@ -2490,8 +2490,11 @@ void TextEdit::_gui_input(const Ref<InputEvent> &p_gui_input) {
 		const real_t delta = pan_gesture->get_delta().y;
 		if (delta < 0) {
 			_scroll_up(-delta);
+			if (target_v_scroll > 0) accept_event();
 		} else {
 			_scroll_down(delta);
+			int max_v_scroll = v_scroll->get_max() - v_scroll->get_page();
+			if (target_v_scroll < max_v_scroll) accept_event();
 		}
 		h_scroll->set_value(h_scroll->get_value() + pan_gesture->get_delta().x * 100);
 		if (v_scroll->get_value() != prev_v_scroll || h_scroll->get_value() != prev_h_scroll)
