@@ -110,6 +110,9 @@ private:
 	float lossy_storage_quality;
 	mutable Ref<BitMap> alpha_cache;
 	bool image_stored;
+#ifdef TOOLS_ENABLED
+	Ref<Image> original_image;
+#endif
 
 protected:
 	virtual void reload_from_file();
