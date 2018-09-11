@@ -198,6 +198,11 @@ void ImageTexture::create(int p_width, int p_height, Image::Format p_format, uin
 void ImageTexture::create_from_image(const Ref<Image> &p_image, uint32_t p_flags) {
 
 	ERR_FAIL_COND(p_image.is_null());
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint() && p_image.is_valid()){
+		original_image = p_image;
+	}
+#endif
 	flags = p_flags;
 	w = p_image->get_width();
 	h = p_image->get_height();
@@ -251,6 +256,12 @@ void ImageTexture::set_data(const Ref<Image> &p_image) {
 
 	ERR_FAIL_COND_MSG(p_image.is_null(), "Invalid image");
 
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint() && p_image.is_valid()){
+		original_image = p_image;
+	}
+#endif
+
 	VisualServer::get_singleton()->texture_set_data(texture, p_image);
 
 	_change_notify();
@@ -266,8 +277,12 @@ void ImageTexture::_resource_path_changed() {
 }
 
 Ref<Image> ImageTexture::get_data() const {
-
 	if (image_stored) {
+#ifdef TOOLS_ENABLED
+		if (Engine::get_singleton()->is_editor_hint() && original_image.is_valid()){
+			return original_image;
+		}
+#endif
 		return VisualServer::get_singleton()->texture_get_data(texture);
 	} else {
 		return Ref<Image>();
