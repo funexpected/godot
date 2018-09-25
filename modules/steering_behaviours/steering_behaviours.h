@@ -16,10 +16,11 @@ public:
         WANDER,
         AVOID_WALLS,
         FREEZE,
+        FOLLOW,
         SIZE
     };
 
-    const String BehaviourTypeNames[8] = {
+    const String BehaviourTypeNames[SIZE] = {
         String("seek"),
         String("flee"),
         String("arrive"),
@@ -27,7 +28,8 @@ public:
         String("avoid"),
         String("wander"),
         String("avoid_walls"),
-        String("freeze")
+        String("freeze"),
+        String("follow")
     };
 
     enum BehaviourLocomotion {
@@ -130,6 +132,8 @@ public:
     int get_smooth_frames() const;
     void set_target_position(Vector2 pos);
     Vector2 get_target_position() const;
+    void set_follow_target(Variant target);
+    Variant get_follow_target() const;
     void set_configuration(const Ref<SteeringBehaviourConfiguration> &conf);
     Ref<SteeringBehaviourConfiguration> get_configuration() const;
 
