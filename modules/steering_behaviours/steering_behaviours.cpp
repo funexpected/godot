@@ -205,6 +205,7 @@ void SteeringBehaviourConfiguration::_bind_methods(){
     BIND_ENUM_CONSTANT(WANDER);
     BIND_ENUM_CONSTANT(AVOID_WALLS);    
     BIND_ENUM_CONSTANT(FREEZE);    
+    BIND_ENUM_CONSTANT(FOLLOW);    
     BIND_ENUM_CONSTANT(SIZE);
 
     BIND_ENUM_CONSTANT(TRUNKATED_WEIGHTS);
@@ -479,6 +480,7 @@ Vector2 SteeringBehaviour::compose_trunkated_weights(SteeringBehaviours *ctrl){
             case SteeringBehaviourConfiguration::WANDER:    force += process_wander(ctrl) * weight; break;
             case SteeringBehaviourConfiguration::AVOID_WALLS: force += process_avoid_walls(ctrl) * weight; break;
             case SteeringBehaviourConfiguration::FREEZE:    force += process_freeze(ctrl) * weight; break;
+            case SteeringBehaviourConfiguration::FOLLOW:    force += process_follow(ctrl) * weight; break;
         }
     }
     return force;
@@ -521,6 +523,10 @@ Vector2 SteeringBehaviour::compose_priority_weights(SteeringBehaviours *controll
                 break;
             case SteeringBehaviourConfiguration::FREEZE:
                 if (weight > 0) cf = process_freeze(controller) * weight; 
+                if (!accumulate_force(force, cf)) return force;
+                break;
+            case SteeringBehaviourConfiguration::FOLLOW:
+                if (weight > 0) cf = process_follow(controller) * weight; 
                 if (!accumulate_force(force, cf)) return force;
                 break;
         }
@@ -710,6 +716,8 @@ int SteeringBehaviour::get_behaviour_mode() const { return behaviour_mode; }
 void SteeringBehaviour::set_smooth_frames(int frames) { smooth_frames = MAX(0, frames); }
 int SteeringBehaviour::get_smooth_frames() const { return smooth_frames; }
 void SteeringBehaviour::set_target_position(Vector2 pos) { target_position = pos; }
+void SteeringBehaviour::set_follow_target(Variant target) { follow_target.set_obj(target); }
+Variant SteeringBehaviour::get_follow_target()const { return Object::cast_to<Node2D>(follow_target.get_ref()); }
 void SteeringBehaviour::set_configuration(const Ref<SteeringBehaviourConfiguration> &conf) { configuration = conf; }
 Ref<SteeringBehaviourConfiguration> SteeringBehaviour::get_configuration() const { return configuration; }
 Vector2 SteeringBehaviour::get_target_position() const { return target_position; }
@@ -782,6 +790,8 @@ void SteeringBehaviour::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_behaviour_mode"), &SteeringBehaviour::get_behaviour_mode);
     ClassDB::bind_method(D_METHOD("set_target_position", "target_position"), &SteeringBehaviour::set_target_position);
     ClassDB::bind_method(D_METHOD("get_target_position"), &SteeringBehaviour::get_target_position);
+    ClassDB::bind_method(D_METHOD("set_follow_target", "follow_target"), &SteeringBehaviour::set_follow_target);
+    ClassDB::bind_method(D_METHOD("get_follow_target"), &SteeringBehaviour::get_follow_target);    
     ClassDB::bind_method(D_METHOD("set_configuration", "configuration"), &SteeringBehaviour::set_configuration);
     ClassDB::bind_method(D_METHOD("get_configuration"), &SteeringBehaviour::get_configuration);
 
@@ -793,6 +803,7 @@ void SteeringBehaviour::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_turn_rate"), "set_max_turn_rate", "get_max_turn_rate");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "smooth_frames", PROPERTY_HINT_RANGE, "0,100,1"), "set_smooth_frames", "get_smooth_frames");
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "target_position"), "set_target_position", "get_target_position");
+    ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "follow_target"), "set_follow_target", "get_follow_target");    
     ADD_PROPERTY(PropertyInfo(Variant::INT, "behaviour_mode", PROPERTY_HINT_ENUM, "idle,fixed,static"), "set_behaviour_mode", "get_behaviour_mode");
 
     ADD_SIGNAL(MethodInfo("arrived"));
