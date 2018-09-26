@@ -134,6 +134,8 @@ public:
     Vector2 get_target_position() const;
     void set_follow_target(Variant target);
     Variant get_follow_target() const;
+    void set_follow_offset(float target);
+    float get_follow_offset() const;
     void set_configuration(const Ref<SteeringBehaviourConfiguration> &conf);
     Ref<SteeringBehaviourConfiguration> get_configuration() const;
 
