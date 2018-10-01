@@ -1454,6 +1454,11 @@ bool _Geometry::point_is_inside_triangle(const Vector2 &s, const Vector2 &a, con
 	return Geometry::is_point_in_triangle(s, a, b, c);
 }
 
+bool _Geometry::point_is_inside_polygon(const Vector2 &point, const Vector<Vector2> &polygon) const{
+
+	return Geometry::is_point_in_polygon(point, polygon);
+}
+
 PoolVector<Vector3> _Geometry::segment_intersects_sphere(const Vector3 &p_from, const Vector3 &p_to, const Vector3 &p_sphere_pos, real_t p_sphere_radius) {
 
 	PoolVector<Vector3> r;
@@ -1565,6 +1570,7 @@ void _Geometry::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("segment_intersects_cylinder", "from", "to", "height", "radius"), &_Geometry::segment_intersects_cylinder);
 	ClassDB::bind_method(D_METHOD("segment_intersects_convex", "from", "to", "planes"), &_Geometry::segment_intersects_convex);
 	ClassDB::bind_method(D_METHOD("point_is_inside_triangle", "point", "a", "b", "c"), &_Geometry::point_is_inside_triangle);
+	ClassDB::bind_method(D_METHOD("point_is_inside_polygon", "point", "polygon"), &_Geometry::point_is_inside_polygon);
 
 	ClassDB::bind_method(D_METHOD("triangulate_polygon", "polygon"), &_Geometry::triangulate_polygon);
 	ClassDB::bind_method(D_METHOD("convex_hull_2d", "points"), &_Geometry::convex_hull_2d);
