@@ -262,7 +262,8 @@ void Node::_propagate_after_exit_tree() {
 }
 
 void Node::_propagate_exit_tree() {
-
+	if (data.exit_tree_event_blocked)
+		return;
 	//block while removing children
 
 #ifdef DEBUG_ENABLED
@@ -1215,6 +1216,20 @@ void Node::_propagate_validate_owner() {
 	}
 }
 
+void Node::reattach(Node * p_parent){
+	if (!p_parent)
+		return;
+
+	Node * par = get_parent();
+	if (!par)
+		return;
+
+	data.exit_tree_event_blocked = true;
+	par->remove_child(this);
+	p_parent->add_child(this);
+	data.exit_tree_event_blocked = false;
+}
+
 void Node::remove_child(Node *p_child) {
 
 	ERR_FAIL_NULL(p_child);
@@ -1250,6 +1265,7 @@ void Node::remove_child(Node *p_child) {
 	//}
 
 	remove_child_notify(p_child);
+	
 	p_child->notification(NOTIFICATION_UNPARENTED);
 
 	data.children.remove(idx);
@@ -2715,6 +2731,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "legible_unique_name"), &Node::add_child, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
+	ClassDB::bind_method(D_METHOD("reattach", "node"), &Node::reattach);
 	ClassDB::bind_method(D_METHOD("get_child_count"), &Node::get_child_count);
 	ClassDB::bind_method(D_METHOD("get_children"), &Node::_get_children);
 	ClassDB::bind_method(D_METHOD("get_child", "idx"), &Node::get_child);
@@ -2944,6 +2961,7 @@ Node::Node() {
 	data.use_placeholder = false;
 	data.display_folded = false;
 	data.ready_first = true;
+	data.exit_tree_event_blocked = false;
 
 	orphan_node_count++;
 }
