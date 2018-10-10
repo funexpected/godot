@@ -1233,6 +1233,13 @@ void Node::detach(){
 	par->remove_child(this);
 }
 
+void Node::attach_to(Node * p_parent){
+	if (!p_parent)
+		return;
+	
+	p_parent->add_child(this);
+}
+
 void Node::reattach(Node * p_parent){
 	if (!p_parent)
 		return;
@@ -2730,6 +2737,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
 	ClassDB::bind_method(D_METHOD("detach"), &Node::detach);		
 	ClassDB::bind_method(D_METHOD("reattach", "node"), &Node::reattach);	
+	ClassDB::bind_method(D_METHOD("attach_to", "node"), &Node::attach_to);		
 	ClassDB::bind_method(D_METHOD("get_child_count"), &Node::get_child_count);
 	ClassDB::bind_method(D_METHOD("get_children"), &Node::_get_children);
 	ClassDB::bind_method(D_METHOD("get_child", "idx"), &Node::get_child);

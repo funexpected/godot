@@ -565,6 +565,15 @@
 				Detach node from parent.
 			</description>
 		</method>		
+		<method name="attach_to">
+			<return type="void">
+			</return>
+			<argument index="0" name="node" type="Node">
+			</argument>
+			<description>
+				Attach node to parent.
+			</description>
+		</method>
 		<method name="reattach">
 			<return type="void">
 			</return>
@@ -573,7 +582,7 @@
 			<description>
 				Reattach node to another parent.
 			</description>
-		</method>
+		</method>		
 		<method name="remove_from_group">
 			<return type="void">
 			</return>
