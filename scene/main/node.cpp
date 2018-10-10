@@ -1225,6 +1225,14 @@ void Node::_propagate_validate_owner() {
 	}
 }
 
+void Node::detach(){
+	Node * par = get_parent();
+	if (!par)
+		return;
+
+	par->remove_child(this);
+}
+
 void Node::reattach(Node * p_parent){
 	if (!p_parent)
 		return;
@@ -2720,7 +2728,8 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "legible_unique_name"), &Node::add_child, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
-	ClassDB::bind_method(D_METHOD("reattach", "node"), &Node::reattach);
+	ClassDB::bind_method(D_METHOD("detach"), &Node::detach);		
+	ClassDB::bind_method(D_METHOD("reattach", "node"), &Node::reattach);	
 	ClassDB::bind_method(D_METHOD("get_child_count"), &Node::get_child_count);
 	ClassDB::bind_method(D_METHOD("get_children"), &Node::_get_children);
 	ClassDB::bind_method(D_METHOD("get_child", "idx"), &Node::get_child);
