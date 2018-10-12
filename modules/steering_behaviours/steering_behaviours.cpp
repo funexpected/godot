@@ -623,7 +623,7 @@ Vector2 SteeringBehaviour::process_avoid(SteeringBehaviours *controller) const{
 
     for (int i=0; i<controller->obstacles.size(); i++){
         SteeringBehaviour *obstacle = controller->obstacles[i];
-        if (obstacle == NULL || obstacle == this) continue;
+        if (obstacle == NULL || obstacle == this || !(avoid_mask_detect & obstacle->avoid_mask_self)) continue;
         if (obstacle->get_position().distance_squared_to(tr.get_origin()) > box_sq_len) continue;
         Vector2 local_pos = tr.xform_inv(obstacle->get_position());
         if (local_pos.x<0) continue;
@@ -718,6 +718,10 @@ void SteeringBehaviour::set_follow_target(Variant target) { follow_target.set_ob
 Variant SteeringBehaviour::get_follow_target()const { return Object::cast_to<Node2D>(follow_target.get_ref()); }
 void SteeringBehaviour::set_follow_offset(float offset) { follow_offset = offset; }
 float SteeringBehaviour::get_follow_offset()const { return follow_offset; }
+void SteeringBehaviour::set_avoid_mask_detect(int mask) { avoid_mask_detect = mask; }
+int SteeringBehaviour::get_avoid_mask_detect()const { return avoid_mask_detect; }
+void SteeringBehaviour::set_avoid_mask_self(int mask) { avoid_mask_self = mask; }
+int SteeringBehaviour::get_avoid_mask_self()const { return avoid_mask_self; }
 void SteeringBehaviour::set_configuration(const Ref<SteeringBehaviourConfiguration> &conf) { configuration = conf; }
 Ref<SteeringBehaviourConfiguration> SteeringBehaviour::get_configuration() const { return configuration; }
 Vector2 SteeringBehaviour::get_target_position() const { return target_position; }
@@ -794,6 +798,10 @@ void SteeringBehaviour::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_follow_target"), &SteeringBehaviour::get_follow_target);    
     ClassDB::bind_method(D_METHOD("set_follow_offset", "follow_offset"), &SteeringBehaviour::set_follow_offset);
     ClassDB::bind_method(D_METHOD("get_follow_offset"), &SteeringBehaviour::get_follow_offset);    
+    ClassDB::bind_method(D_METHOD("set_avoid_mask_detect", "avoid_mask_detect"), &SteeringBehaviour::set_avoid_mask_detect);
+    ClassDB::bind_method(D_METHOD("get_avoid_mask_detect"), &SteeringBehaviour::get_avoid_mask_detect);    
+    ClassDB::bind_method(D_METHOD("set_avoid_mask_self", "avoid_mask_self"), &SteeringBehaviour::set_avoid_mask_self);
+    ClassDB::bind_method(D_METHOD("get_avoid_mask_self"), &SteeringBehaviour::get_avoid_mask_self);
     ClassDB::bind_method(D_METHOD("set_configuration", "configuration"), &SteeringBehaviour::set_configuration);
     ClassDB::bind_method(D_METHOD("get_configuration"), &SteeringBehaviour::get_configuration);
 
@@ -808,6 +816,8 @@ void SteeringBehaviour::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::NIL, "follow_target"), "set_follow_target", "get_follow_target");    
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "follow_offset"), "set_follow_offset", "get_follow_offset");    
     ADD_PROPERTY(PropertyInfo(Variant::INT, "behaviour_mode", PROPERTY_HINT_ENUM, "idle,fixed,static"), "set_behaviour_mode", "get_behaviour_mode");
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "avoid_mask_detect"), "set_avoid_mask_detect", "get_avoid_mask_detect");    
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "avoid_mask_self"), "set_avoid_mask_self", "get_avoid_mask_self");    
 
     ADD_SIGNAL(MethodInfo("arrived"));
     ADD_SIGNAL(MethodInfo("arriving"));
@@ -831,6 +841,8 @@ SteeringBehaviour::SteeringBehaviour(){
     max_force = 100.0;
     max_turn_rate = 1.57;
     follow_offset = 1.f;
+    avoid_mask_detect = 1;
+    avoid_mask_self = 1;
 }
 
 SteeringBehaviour::~SteeringBehaviour(){

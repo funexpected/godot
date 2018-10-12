@@ -136,6 +136,11 @@ public:
     Variant get_follow_target() const;
     void set_follow_offset(float target);
     float get_follow_offset() const;
+    void set_avoid_mask_detect(int mask);
+    int get_avoid_mask_detect() const;
+    void set_avoid_mask_self(int mask);
+    int get_avoid_mask_self() const;
+
     void set_configuration(const Ref<SteeringBehaviourConfiguration> &conf);
     Ref<SteeringBehaviourConfiguration> get_configuration() const;
 
@@ -170,6 +175,9 @@ protected:
     Vector2 target_position;
     Vector2 emit_arrived_position;
     Vector2 emit_arriving_position;
+
+    int avoid_mask_detect;
+    int avoid_mask_self;
 
     void process_motion(float delta);
     bool accumulate_force(Vector2 &current, Vector2 force_to_add) const;
