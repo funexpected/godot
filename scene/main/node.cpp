@@ -1248,10 +1248,13 @@ void Node::reattach(Node * p_parent){
 	if (!par)
 		return;
 
+	print_line("reattach start");
+
 	data.exit_tree_event_blocked = true;
 	par->remove_child(this);
 	p_parent->add_child(this);
 	data.exit_tree_event_blocked = false;
+	print_line("reattach end");
 }
 
 void Node::remove_child(Node *p_child) {
