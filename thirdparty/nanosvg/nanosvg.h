@@ -2613,6 +2613,29 @@ static void nsvg__parseGradient(NSVGparser* p, const char** attr, char type)
 			}
 		}
 	}
+	if (grad->units == NSVG_OBJECT_SPACE){
+		if (grad->type == NSVG_PAINT_LINEAR_GRADIENT){
+			grad->linear.x1.units = NSVG_UNITS_PERCENT;
+			grad->linear.x1.value *= 100.0;
+			grad->linear.y1.units = NSVG_UNITS_PERCENT;
+			grad->linear.y1.value *= 100.0;
+			grad->linear.x2.units = NSVG_UNITS_PERCENT;
+			grad->linear.x2.value *= 100.0;
+			grad->linear.y2.units = NSVG_UNITS_PERCENT;
+			grad->linear.y2.value *= 100.0;
+		} else {
+			grad->radial.cx.units = NSVG_UNITS_PERCENT;
+			grad->radial.cx.value *= 100.0;
+			grad->radial.cy.units = NSVG_UNITS_PERCENT;
+			grad->radial.cy.value *= 100.0;
+			grad->radial.r.units = NSVG_UNITS_PERCENT;
+			grad->radial.r.value *= 100.0;
+			grad->radial.fx.units = NSVG_UNITS_PERCENT;
+			grad->radial.fx.value *= 100.0;
+			grad->radial.fy.units = NSVG_UNITS_PERCENT;
+			grad->radial.fy.value *= 100.0;
+		}
+	}
 
 	grad->next = p->gradients;
 	p->gradients = grad;
