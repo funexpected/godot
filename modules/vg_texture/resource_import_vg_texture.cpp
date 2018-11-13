@@ -18,7 +18,7 @@ void ResourceImporterVGTexture::get_recognized_extensions(List<String> *p_extens
 };
 
 String ResourceImporterVGTexture::get_save_extension() const {
-    return "res";
+    return "tres";
 };
 
 String ResourceImporterVGTexture::get_resource_type() const {
@@ -64,26 +64,68 @@ Error ResourceImporterVGTexture::import(const String &p_source_file, const Strin
     tex.instance();
     tex->size.x = svg_image->width;
     tex->size.y = svg_image->height;
-    
+    float *xf;
+    /*
+    0.000518423738
+    0.00068553997
+    0.00068553997
+    -0.000518423738
+    -0.558682323
+    0.370766491
+    */
     for (NSVGshape *shape = svg_image->shapes; shape!= NULL; shape = shape->next){
+        bool print_gradient = false;
         Ref<VGShape> vg_shape;
         vg_shape.instance();
+        Ref<VGGradient> vg_grad;
+        vg_grad.instance();
+        vg_shape->set_color(vg_grad);
+        if (shape->fill.type == NSVG_PAINT_COLOR){
+            vg_grad->set_gradient_type(VGGradient::SOLID);
+            vg_grad->set_color(0, Color((0x0000FF&shape->fill.color)/255.0, ((0x00FF00&shape->fill.color)>>8)/255.0, ((0xFF0000&shape->fill.color)>>16)/255.0));
+            vg_grad->set_color(1, vg_grad->get_color(0));
+        } else if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT){
+            float *xf = shape->fill.gradient->xform;
+            vg_grad->set_gradient_type(VGGradient::LINEAR);
+            vg_grad->set_gradient_transform(Transform2D(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]));
+        } else if (shape->fill.type == NSVG_PAINT_RADIAL_GRADIENT){
+            float *xf = shape->fill.gradient->xform;
+            vg_grad->set_gradient_type(VGGradient::RADIAL);
+            vg_grad->set_gradient_transform(Transform2D(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]));
+            vg_grad->set_focal_point(Vector2(shape->fill.gradient->fx, shape->fill.gradient->fy));
+        }
+        if (shape->fill.type == NSVG_PAINT_LINEAR_GRADIENT || shape->fill.type == NSVG_PAINT_RADIAL_GRADIENT){
+            Ref<VGGradient> gr = vg_shape->get_color();
+            switch (shape->fill.gradient->spread){
+                case NSVG_SPREAD_PAD: gr->set_spread_method(VGGradient::PAD); break;
+                case NSVG_SPREAD_REFLECT: gr->set_spread_method(VGGradient::REFLECT); break;
+                case NSVG_SPREAD_REPEAT: gr->set_spread_method(VGGradient::REPEAT); break;
+            };
 
-        vg_shape->set_color(Color((0x0000FF&shape->fill.color)/255.0, ((0x00FF00&shape->fill.color)>>8)/255.0, ((0xFF0000&shape->fill.color)>>16)/255.0));
-        print_line(String("Shape color: #") + vg_shape->get_color().to_html());
+            for (int i=0; i<shape->fill.gradient->nstops; i++){
+                Color c = Color((0x0000FF&shape->fill.gradient->stops[i].color)/255.0, ((0x00FF00&shape->fill.gradient->stops[i].color)>>8)/255.0, ((0xFF0000&shape->fill.gradient->stops[i].color)>>16)/255.0);
+                float offset = shape->fill.gradient->stops[i].offset;
+                if (i >= gr->get_points_count()){
+                    gr->add_point(offset, c);
+                } else {
+                    gr->set_offset(i, offset);
+                    gr->set_color(i, c);
+                }
+            }
+        }
+        //if (shape->fill.type == NSVG_
+        //print_line(String("Shape color: #") + vg_shape->get_color().to_html());
         tex->add_shape(vg_shape);
         NSVGpath *path = shape->paths;
         for (NSVGpath *path = shape->paths; path != NULL; path = path->next){
             Ref<VGPath> vg_path;
             vg_path.instance();
             vg_path->set_closed(path->closed);
-            vg_path->set_bounds(Rect2(path->bounds[0], path->bounds[1], path->bounds[2], path->bounds[3]));
+            vg_path->set_bounds(Rect2(path->bounds[0], path->bounds[1], path->bounds[2]-path->bounds[0], path->bounds[3]-path->bounds[1]));
             float *pts = path->pts;
             Vector2 pt;
-            print_line(String("create curve of ") + Variant(path->npts) + " points");
-            //Vector2 last_point;
-            //Vector2 last_out;
-            //c.add_point(Vector2(pts[0], pts[1]), Vector2(), Vector2(pts[1], pts[2]]));
+            print_line(String("create curve of ") + Variant(path->npts) + " points with bounds " + Variant(vg_path->get_bounds()));
+
             for (int i=0; i<path->npts-1; i+=3){
                 float* p = &path->pts[i*2];
                 if (i==0){
