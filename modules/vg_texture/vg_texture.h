@@ -4,6 +4,47 @@
 
 #include "scene/resources/texture.h"
 #include "scene/resources/curve.h"
+#include "scene/resources/shader.h"
+#include "scene/resources/material.h"
+#include "scene/resources/color_ramp.h"
+#include "scene/2d/canvas_item.h"
+
+class VGGradient: public Gradient {
+    GDCLASS(VGGradient, Gradient);
+public:
+    enum GradientType {
+        SOLID,
+        LINEAR,
+        RADIAL
+    };
+    enum SpreadMethod {
+        PAD,
+        REPEAT,
+        REFLECT
+    };
+protected:
+    GradientType gradient_type;
+    SpreadMethod  spread_method;
+    static void _bind_methods();
+    Transform2D transform;
+    Vector2 focal_point;
+public:
+    SpreadMethod get_spread_method() const;
+    void set_spread_method(SpreadMethod p_method);
+    GradientType get_gradient_type() const;
+    void set_gradient_type(GradientType p_type);
+    Transform2D get_gradient_transform() const;
+    void set_gradient_transform(Transform2D p_transform);
+    Vector2 get_focal_point() const;
+    void set_focal_point(Vector2 p_point);
+
+    VGGradient();
+    ~VGGradient();
+};
+
+VARIANT_ENUM_CAST(VGGradient::GradientType);
+VARIANT_ENUM_CAST(VGGradient::SpreadMethod);
+
 
 class VGPath: public Curve2D {
     GDCLASS(VGPath, Curve2D);
@@ -21,14 +62,15 @@ public:
 class VGShape: public Resource {
     GDCLASS(VGShape, Resource);
 protected:
-    Color color;
+    Ref<VGGradient> color;
     Vector< Ref<VGPath> > pathes;
     void _set_pathes(const Array &p_pathes);
     Array _get_pathes() const;
     static void _bind_methods();
 public:
-    void set_color(const Color &p_color);
-    Color get_color() const;
+    PoolColorArray get_config() const;
+    void set_color(const Ref<VGGradient> &p_color);
+    Ref<VGGradient> get_color() const;
     void add_path(const Ref<VGPath> &p_pathes);
     int get_path_count() const;
     Ref<VGPath> get_path(int idx) const;
@@ -41,13 +83,24 @@ class VGTexture: public Texture {
     friend class ResourceImporterVGTexture;
 
 protected:
+    //static HashMap<int, Ref<Shader>> shader_cache;
+    //static HashMap<RID, Ref<Material>> material_cache;
+    //static HashMap<RID, WeakRef> items_cache;
+
     Size2i size;
+    Ref<ShaderMaterial> material;
     Vector< Ref<VGShape> > shapes;
+
     static void _bind_methods();
     void _set_shapes(const Array &p_shapes);
     Array _get_shapes() const;
     void _set_size(const Vector2 &p_size);
     Vector2  _get_size() const;
+    Ref<Texture> create_config();
+    Ref<Shader> create_shader();
+    Ref<ShaderMaterial> create_material();
+
+    //CanvasItem find_canvas_item(RID p_canvas_item_rid) const;
 
 public:
     int get_width() const;

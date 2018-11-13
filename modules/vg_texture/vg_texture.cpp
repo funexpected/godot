@@ -1,5 +1,75 @@
 #include "vg_texture.h"
 
+
+// VGGradient
+
+VGGradient::SpreadMethod VGGradient::get_spread_method() const {
+    return spread_method;
+}
+
+void VGGradient::set_spread_method(VGGradient::SpreadMethod p_method) {
+    spread_method = p_method;
+}
+
+VGGradient::GradientType VGGradient::get_gradient_type() const {
+    return gradient_type;
+}
+
+void VGGradient::set_gradient_type(VGGradient::GradientType p_type) {
+    gradient_type = p_type;
+}
+
+Transform2D VGGradient::get_gradient_transform() const {
+    return transform;
+}
+
+void VGGradient::set_gradient_transform(Transform2D p_transform) {
+    transform = p_transform;
+}
+
+Vector2 VGGradient::get_focal_point() const {
+    return focal_point;
+}
+
+void VGGradient::set_focal_point(Vector2 p_point) {
+    focal_point = p_point;
+}
+
+void VGGradient::_bind_methods(){
+    ClassDB::bind_method(D_METHOD("set_spread_method", "method"), &VGGradient::set_spread_method);
+    ClassDB::bind_method(D_METHOD("get_spread_method"), &VGGradient::get_spread_method);
+    ClassDB::bind_method(D_METHOD("set_gradient_type", "type"), &VGGradient::set_gradient_type);
+    ClassDB::bind_method(D_METHOD("get_gradient_type"), &VGGradient::get_gradient_type);
+    ClassDB::bind_method(D_METHOD("set_transform", "transform"), &VGGradient::set_gradient_transform);
+    ClassDB::bind_method(D_METHOD("get_transform"), &VGGradient::get_gradient_transform);
+    ClassDB::bind_method(D_METHOD("set_focal_point", "focal_point"), &VGGradient::set_focal_point);
+    ClassDB::bind_method(D_METHOD("get_focal_point"), &VGGradient::get_focal_point);
+
+
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "spread_method"), "set_spread_method", "get_spread_method");
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "gradient_type"), "set_gradient_type", "get_gradient_type");
+    ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "gradient_transform"), "set_transform", "get_transform");
+    ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "focal_point"), "set_focal_point", "get_focal_point");
+    BIND_ENUM_CONSTANT(PAD);
+    BIND_ENUM_CONSTANT(REPEAT);
+    BIND_ENUM_CONSTANT(REFLECT);
+    BIND_ENUM_CONSTANT(SOLID);
+    BIND_ENUM_CONSTANT(LINEAR);
+    BIND_ENUM_CONSTANT(RADIAL);
+};
+
+VGGradient::VGGradient() {
+    gradient_type = VGGradient::SOLID;
+    spread_method = VGGradient::PAD;
+    transform = Transform2D();
+    focal_point = Vector2();
+}
+
+VGGradient::~VGGradient() {
+
+}
+
+
 // VGPath
 
 void VGPath::set_bounds(const Rect2 &p_bounds) {
@@ -43,6 +113,49 @@ Array VGShape::_get_pathes() const {
     }
     return res;
 };
+
+PoolColorArray VGShape::get_config() const {
+    PoolColorArray raw;
+    Ref<VGGradient> gr = get_color();
+    int colors_count = gr->get_gradient_type() == VGGradient::SOLID ? 2 : gr->get_points_count();
+    raw.push_back(Color(
+        1.0,                                            // alpha
+        (float)gr->get_gradient_type(),                        // gradient type
+        (float)colors_count,                                   // gradient points count
+        0                                               // textures count
+    ));
+    if (gr->get_gradient_type() != VGGradient::SOLID){
+        Transform2D gtr = gr->get_gradient_transform();
+        raw.push_back(Color(
+            gtr.elements[0].x,                          // gradient transform axes
+            gtr.elements[0].y,
+            gtr.elements[1].x,
+            gtr.elements[1].y
+        ));
+        if (gr->get_gradient_type() == VGGradient::LINEAR){
+            raw.push_back(Color(
+                gtr.elements[2].x,                      // linear gradient offset
+                gtr.elements[2].y,
+                0.0, 0.0                                    // zero padded      
+            ));
+        } else {
+            raw.push_back(Color(
+                gtr.elements[2].x,                      // radial gradient position
+                gtr.elements[2].y,
+                gr->get_focal_point().x,                // with focal point
+                gr->get_focal_point().y
+            ));
+        }
+
+    } 
+    for (int i=0; i<colors_count; i++){
+        Color p = gr->get_color(i);
+        float w = gr->get_offset(i);
+        raw.push_back(Color(p.r, p.g, p.b, w));
+    }
+    return raw;
+}
+
 void VGShape::_bind_methods() {
     ClassDB::bind_method(D_METHOD("_set_pathes", "pathes"), &VGShape::_set_pathes);
     ClassDB::bind_method(D_METHOD("_get_pathes"), &VGShape::_get_pathes);
@@ -52,11 +165,11 @@ void VGShape::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::COLOR, "color"), "set_color", "get_color");
 }
 
-void VGShape::set_color(const Color &p_color){
+void VGShape::set_color(const Ref<VGGradient> &p_color){
     color = p_color;
 }
 
-Color VGShape::get_color() const {
+Ref<VGGradient> VGShape::get_color() const {
     return color;
 }
 void VGShape::add_path(const Ref<VGPath> &p_path) {
@@ -75,6 +188,135 @@ Ref<VGPath> VGShape::get_path(int idx) const {
 void VGShape::set_path(int idx, const Ref<VGPath> &p_path){
     ERR_FAIL_COND(pathes.size()<=idx);
     pathes.write[idx] = p_path;
+}
+
+// VGTexture
+Ref<Texture> VGTexture::create_config() {
+    Vector<PoolColorArray> colors;
+    int min_width = 0;
+    for (int i=0; i<get_shapes_count(); i++){
+        Ref<VGShape> shape = get_shape(i);
+        PoolColorArray raw = shape->get_config();
+        min_width = MAX(raw.size(), min_width);
+        colors.push_back(raw);
+        //for (int j=0; j<raw.size(); j++){
+        //    print_line(String("  tex raw ") + Variant(i) + " " + Variant(raw[j]));
+        //}
+    }
+    Ref<Image> img;
+    img.instance();
+    img->create(min_width, colors.size(), false, Image::FORMAT_RGBAF);
+    img->resize_to_po2();
+    img->lock();
+    for (int i=0; i<colors.size(); i++){
+        PoolColorArray raw = colors[i];
+        for (int j=0; j<raw.size(); j++){
+            Color c = raw[j];
+            img->set_pixel(j, i, c);
+        }
+    }
+    img->unlock();
+    Ref<ImageTexture> tex;
+    tex.instance();
+    tex->create_from_image(img, 0);
+    print_line(String("Creating config texture ") + Variant(img->get_size()));
+    return tex;
+}
+
+Ref<Shader> VGTexture::create_shader() {
+    Ref<Shader> shader;
+    shader.instance();
+    shader->set_code(String("shader_type canvas_item;\n") +
+        "\n" +
+        "uniform sampler2D config : hint_black;\n" +
+        "\n" +
+        
+        // interpolate local vertex
+        "varying noperspective vec2 point;\n" +
+        "\n" +
+        "void vertex(){\n" +
+        "\tpoint = VERTEX;\n" +
+        "}\n" +
+        "\n" +
+
+        "void fragment(){\n" +
+        // setup 
+        "\tfloat raw = floor(UV.x);\n" +
+        "\tvec2 uv = UV - vec2(raw);\n" +
+        "\tint cy = int(round(raw));\n"+
+        "\tvec4 header = texelFetch(config, ivec2(0, cy), 0);\n" +
+        "\tfloat gradient_type = header.g;\n" +
+        "\tint colors_count = int(header.b);\n" +
+        "\tint textures_count = int(header.a);\n" +
+        "\tint cx = 1;\n" +
+        "\tfloat gradient_offset=1.0;\n" +
+
+        // calculate linear gradient
+        "\tif (gradient_type == 1.0) { // linear\n" +
+        "\t\tvec4 axes = texelFetch(config, ivec2(cx, cy), 0);\n" +
+        "\t\tcx += 1;\n" +
+        "\t\tvec4 origin = texelFetch(config, ivec2(cx, cy), 0);\n" +
+        "\t\tcx += 1;\n" +
+        "\t\tgradient_offset = point.x*axes.g + point.y*axes.a + origin.g;\n" +
+
+        // calculate radial gradient
+        "\t} else if (gradient_type == 2.0) { // radial\n" +
+        "\t\tvec4 axes = texelFetch(config, ivec2(cx, cy), 0);\n" +
+        "\t\tcx += 1;\n" +
+        "\t\tvec4 origin = texelFetch(config, ivec2(cx, cy), 0);\n" +
+        "\t\tcx += 1;\n" +
+        "\t\tgradient_offset = length(vec2(\n" +
+        "\t\t\tpoint.x*axes.r + point.y*axes.b + origin.r,\n" +
+        "\t\t\tpoint.x*axes.g + point.y*axes.a + origin.g\n" +
+        "\t\t));\n" +
+
+        // fallback to solid color
+        "\t} else {\n" +
+        "\t\tgradient_offset = 0.0;\n" +
+        "\t}\n" +
+
+        // detect current point of gradient
+        "\tvec3 back = vec3(1.0);\n"
+        "\tvec4 from = vec4(1.0);\n"
+        "\tvec4 to = vec4(1.0);\n"
+
+
+        "\tfor (int i=0; i<colors_count; i++){\n" +
+        "\t\tvec4 c = texelFetch(config, ivec2(cx, cy), 0);\n" +
+        "\t\tcx += 1;\n" +
+        "\t\tif (i==0) {\n" +
+        "\t\t\tfrom = c;\n" +
+        "\t\t\tto = c;\n" +
+        "\t\t}\n" +
+        "\t\tif (c.a >= gradient_offset || i+1==colors_count){\n" +
+        "\t\t\tto = c;\n" +
+        "\t\t\tbreak;\n" +
+        "\t\t}\n"
+        "\t\tfrom = c;\n" +
+        "\t}\n" +
+
+        // calcualte actual gradient
+        "\tfloat delta = to.a - from.a;\n" +
+        "\tif (delta > 0.0){\n"
+        "\t\tCOLOR.rgb = mix(from.rgb, to.rgb, (gradient_offset - from.a)/delta);\n" +
+        "\t} else {\n" +
+        "\t\tCOLOR.rgb = from.rgb;\n" +
+        "\t}" +
+        
+        "}"
+    );
+    print_line(String("generated shader code:\n") + shader->get_code());
+    return shader;
+}
+
+Ref<ShaderMaterial> VGTexture::create_material() {
+    if (material.is_valid()){
+        return material;
+    }
+    material.instance();
+    material->set_shader(create_shader());
+    material->set_shader_param("config", create_config());
+    return material;
 }
 
 
@@ -116,49 +358,71 @@ void VGTexture::draw(RID p_canvas_item, const Point2 &p_pos, const Color &p_modu
 }
 
 void VGTexture::draw_rect(RID p_canvas_item, const Rect2 &p_rect, bool p_tile, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map) const {
-    /*
-    print_line(String("VGTexture::draw_rect") + " rect:" + Variant(p_rect) + ", tile: " + Variant(p_tile) + ", transpose: " + Variant(p_transpose));
-    float r = 300;
-    float k = r*0.552284749831;
-    Curve2D c;
-    c.add_point(Vector2(0,-r), Vector2(0, 0), Vector2(k, 0));
-	c.add_point(Vector2(r, 0), Vector2(0, -k), Vector2(0, k));
-	c.add_point(Vector2(0, r), Vector2(k, 0), Vector2(-k, 0));
-	c.add_point(Vector2(-r, 0), Vector2(0, k), Vector2(0, -k));
-	c.add_point(Vector2(0,-r), Vector2(-k, 0), Vector2(0, 0));
+    Transform2D tr;
+    tr.scale(p_rect.size/_get_size());
+    tr.set_origin(tr.get_origin()+p_rect.position);
+    VS::get_singleton()->canvas_item_add_set_transform(p_canvas_item, tr);
+    VS::get_singleton()->canvas_item_set_material(p_canvas_item, material->get_rid());
 
-    PoolVector2Array pp = c.tessellate(6, 2.0);
-    
-    Vector<Vector2> points;
-    Vector<Color> colors;
-    for (int i=0; i<pp.size(); i++){
-        points.push_back(pp[i]);
-        colors.push_back(Color(1,1,1));
-    }
-    VS::get_singleton()->canvas_item_add_polygon(p_canvas_item, points, colors);
-    //VS::get_singleton()->canvas_item_add_triangle_array()
-    */
-   //VS::get_singleton()->canvas_item_add_triangle_array(p_canvas_item, triangles, vertices, colors);
-   for (int i=0; i<shapes.size();i++){
+    print_line(String("VGTexture::draw_rect") + " rect:" + Variant(p_rect) + ", tile: " + Variant(p_tile) + ", transpose: " + Variant(p_transpose));
+    for (int i=0; i<shapes.size();i++){
        Ref<VGShape> shape = shapes[i];
-       for (int j=0; j<shape->get_path_count(); j++){
-           Ref<VGPath> path = shape->get_path(j);
-           PoolVector2Array pool_points = path->tessellate(4, 2);
-           Vector<Vector2> points;
-           Vector<Color> colors;
-           points.resize(pool_points.size());
-           colors.resize(pool_points.size());
-           for (int k=0; k<pool_points.size();k++){
-               colors.write[k] = shape->get_color();
-               points.write[k] = pool_points[k];
-           }
-           VS::get_singleton()->canvas_item_add_polygon(p_canvas_item, points, colors, Vector<Vector2>(), RID(), RID(), true);
-       }
-   }
+        for (int j=0; j<shape->get_path_count(); j++){
+            Ref<VGPath> path = shape->get_path(j);
+            PoolVector2Array pool_points = path->tessellate(4, 2);
+            Vector<Vector2> points;
+            Vector<Color> colors;
+            Vector<Vector2> uvs;
+            points.resize(pool_points.size());
+            colors.resize(pool_points.size());
+            uvs.resize(pool_points.size());
+            for (int k=0; k<pool_points.size();k++){
+                colors.write[k] = Color(1,1,1,1);
+                points.write[k] = pool_points[k];
+                uvs.write[k] = Vector2(i,i) + (pool_points[k] - path->get_bounds().position) / path->get_bounds().size;
+                //print_line(String("UV for bounds: ") + Variant(path->get_bounds()) + " " + Variant(uvs[k]));
+            }
+
+            VS::get_singleton()->canvas_item_add_polygon(p_canvas_item, points, colors, uvs, RID(), RID(), true);
+            //VS::get_singleton()->canvas_item_add_set_transform()
+            //VS::get_singleton()->canvas_item_set_clip(p_canvas_item, true);
+        }
+    }
 }
 
 void VGTexture::draw_rect_region(RID p_canvas_item, const Rect2 &p_rect, const Rect2 &p_src_rect, const Color &p_modulate, bool p_transpose, const Ref<Texture> &p_normal_map, bool p_clip_uv) const {
-    print_line("VGTexture::draw_rect_region");
+    print_line(String("VGTexture::draw_rect_region") + " rect:" + Variant(p_rect) + ", p_src_rect: " + Variant(p_src_rect) + ", clip: " + Variant(p_clip_uv) + ", transpose: " + Variant(p_transpose));
+    Transform2D tr;
+    tr.scale(p_rect.size/p_src_rect.size);
+    tr.set_origin(tr.get_origin()-p_src_rect.position*tr.get_scale() + p_rect.position);
+    VS::get_singleton()->canvas_item_add_set_transform(p_canvas_item, tr);
+    VS::get_singleton()->canvas_item_set_custom_rect(p_canvas_item, true, p_rect);
+    VS::get_singleton()->canvas_item_set_clip(p_canvas_item, true);
+    //
+    for (int i=0; i<shapes.size();i++){
+       Ref<VGShape> shape = shapes[i];
+        for (int j=0; j<shape->get_path_count(); j++){
+            Ref<VGPath> path = shape->get_path(j);
+            PoolVector2Array pool_points = path->tessellate(4, 2);
+            Vector<Vector2> points;
+            Vector<Color> colors;
+            points.resize(pool_points.size());
+            colors.resize(pool_points.size());
+            for (int k=0; k<pool_points.size();k++){
+                colors.write[k] = Color(1,1,1,1);
+                points.write[k] = pool_points[k];
+            }
+
+            VS::get_singleton()->canvas_item_add_polygon(p_canvas_item, points, colors, Vector<Vector2>(), RID(), RID(), true);
+            //VS::get_singleton()->canvas_item_add_set_transform()
+            //VS::get_singleton()->canvas_item_set_clip(p_canvas_item, true);
+        }
+    }
+    Transform2D tr2;
+    //tr.scale(p_rect.size/p_src_rect.size);
+    //tr2.set_origin(tr2.get_origin()+p_rect.position);
+    //VS::get_singleton()->canvas_item_add_set_transform(p_canvas_item, tr2);
+    //VS::get_singleton()->rect
 }
 
 void VGTexture::_bind_methods(){
@@ -175,6 +439,8 @@ void VGTexture::_set_shapes(const Array &p_shapes) {
     for (int i=0; i<p_shapes.size(); i++){
         shapes.write[i] = p_shapes[i];
     }
+    material = Ref<ShaderMaterial>();
+    create_material();
 }
 
 Array VGTexture::_get_shapes() const {
