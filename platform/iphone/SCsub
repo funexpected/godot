@@ -17,6 +17,8 @@ iphone_lib = [
 ]
 
 env_ios = env.Clone()
+env_ios.Append(CPPFLAGS=["-Ithirdparty/openssl/include"])
+env_ios.Append(CPPFLAGS=["-Ithirdparty/mbedtls/include"])
 ios_lib = env_ios.add_library('iphone', iphone_lib)
 
 def combine_libs(target=None, source=None, env=None):
