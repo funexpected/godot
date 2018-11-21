@@ -53,11 +53,14 @@ public:
 	Variant pop_pending_event();
 	void finish_transaction(String product_id);
 	void set_auto_finish_transaction(bool b);
+	Dictionary get_payload();
+
 
 	void _post_event(Variant p_event);
 	void _record_purchase(String product_id);
 
 	static InAppStore *get_singleton();
+	static Dictionary _validate_payload(char* buff, int length);
 
 	InAppStore();
 	~InAppStore();
