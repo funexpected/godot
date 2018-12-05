@@ -174,7 +174,7 @@ static void on_focus_in(ViewController *view_controller, bool *is_focus_out) {
 		if (OSIPhone::get_singleton()->native_video_is_playing()) {
 			OSIPhone::get_singleton()->native_video_unpause();
 		}
-
+	
 		AudioDriverCoreAudio *audio = dynamic_cast<AudioDriverCoreAudio *>(AudioDriverCoreAudio::get_singleton());
 		if (audio)
 			audio->start();
@@ -691,6 +691,7 @@ static int frame_count = 0;
 			on_focus_out(view_controller, &is_focus_out);
 		} else if ([[notification.userInfo valueForKey:AVAudioSessionInterruptionTypeKey] isEqualToNumber:[NSNumber numberWithInt:AVAudioSessionInterruptionTypeEnded]]) {
 			NSLog(@"Audio interruption ended");
+			[NSThread sleepForTimeInterval:0.4];
 			on_focus_in(view_controller, &is_focus_out);
 		}
 	}
