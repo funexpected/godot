@@ -14,9 +14,38 @@ iphone_lib = [
     'in_app_store.mm',
     'icloud.mm',
     'ios.mm',
+
+    # "receipt/BIT_STRING.c",
+    # "receipt/OCTET_STRING.c",
+    # "receipt/ber_tlv_length.c",
+    # "receipt/xer_decoder.c",
+    # "receipt/INTEGER.c",
+    # "receipt/Payload.c",
+    # "receipt/ber_tlv_tag.c",
+    # "receipt/der_encoder.c",
+    # "receipt/xer_encoder.c",
+    # "receipt/InAppAttribute.c",
+    # "receipt/ReceiptAttribute.c",
+    # "receipt/constr_SEQUENCE.c",
+    # "receipt/per_decoder.c",
+    # "receipt/xer_support.c",
+    # "receipt/InAppReceipt.c",
+    # "receipt/asn_SET_OF.c",
+    # "receipt/constr_SET_OF.c",
+    # "receipt/per_encoder.c",
+    # "receipt/NativeEnumerated.c",
+    # "receipt/asn_codecs_prim.c",
+    # "receipt/constr_TYPE.c",
+    # "receipt/per_opentype.c",
+    # "receipt/NativeInteger.c",
+    # "receipt/ber_decoder.c",
+    # "receipt/constraints.c",
+    # "receipt/per_support.c"
 ]
 
 env_ios = env.Clone()
+env_ios.Append(CPPFLAGS=["-Ithirdparty/openssl/include"])
+env_ios.Append(CPPFLAGS=["-Ithirdparty/mbedtls/include"])
 ios_lib = env_ios.add_library('iphone', iphone_lib)
 
 def combine_libs(target=None, source=None, env=None):
@@ -27,4 +56,9 @@ def combine_libs(target=None, source=None, env=None):
         libtool = "$IPHONEPATH/usr/bin/libtool"
     env.Execute(libtool + ' -static -o "' + lib_path + '" ' + ' '.join([('"' + lib.srcnode().abspath + '"') for lib in source]))
 
-combine_command = env_ios.Command('#bin/libgodot' + env_ios['LIBSUFFIX'], [ios_lib] + env_ios['LIBS'], combine_libs)
+libcrypto = ""
+if (env["arch"] == "arm" or env["arch"] == "arm32" or env["arch"] == "armv7" or env["bits"] == "32"):
+    libcrypto = "../../thirdparty/openssl/libcrypto.%s.armv7.a" % ("debug" if env["target"] == "debug" else "release")
+else:
+    libcrypto = "../../thirdparty/openssl/libcrypto.%s.arm64.a" % ("debug" if env["target"] == "debug" else "release")
+combine_command = env_ios.Command('#bin/libgodot' + env_ios['LIBSUFFIX'], [ios_lib, libcrypto] + env_ios['LIBS'], combine_libs)
