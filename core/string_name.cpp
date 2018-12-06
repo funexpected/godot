@@ -90,12 +90,13 @@ void StringName::cleanup() {
 	lock->unlock();
 
 	memdelete(lock);
+	lock = NULL;
 }
 
 void StringName::unref() {
 
 	ERR_FAIL_COND(!configured);
-
+	if (lock == NULL) return;
 	if (_data && _data->refcount.unref()) {
 
 		lock->lock();
