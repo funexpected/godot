@@ -356,7 +356,7 @@ Dictionary InAppStore::_validate_payload(char* buff, int buff_size){
 						//	iap["web_order_id"] = web_order_id;
 						//	break;
 						default:
-							print_line("skip iap attr (type " + itos(iap_type) + ", tag " + itos(*ptr) + ")");
+							//print_line("skip iap attr (type " + itos(iap_type) + ", tag " + itos(*ptr) + ")");
 							ptr += len;
 							break;
 					}
@@ -364,7 +364,7 @@ Dictionary InAppStore::_validate_payload(char* buff, int buff_size){
 				iap_receipts.push_back(iap);
 				} break;
 			default:
-				print_line("skip receipt attr");
+				//print_line("skip receipt attr");
 				ptr += len;
 				break;
 		}
