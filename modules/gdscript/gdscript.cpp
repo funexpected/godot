@@ -1328,11 +1328,13 @@ GDScriptInstance::GDScriptInstance() {
 GDScriptInstance::~GDScriptInstance() {
 	if (script.is_valid() && owner) {
 #ifndef NO_THREADS
+		if (GDScriptLanguage::singleton != NULL && GDScriptLanguage::singleton->lock != NULL) 
 		GDScriptLanguage::singleton->lock->lock();
 #endif
 
 		script->instances.erase(owner);
 #ifndef NO_THREADS
+		if (GDScriptLanguage::singleton != NULL && GDScriptLanguage::singleton->lock != NULL)
 		GDScriptLanguage::singleton->lock->unlock();
 #endif
 	}
