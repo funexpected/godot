@@ -243,6 +243,7 @@ static const LoadingScreenInfo loading_screen_infos[] = {
 	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png", Vector2(1242,2208) }
 };
 
+
 void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) {
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "custom_package/debug", PROPERTY_HINT_GLOBAL_FILE, "*.zip"), ""));
@@ -493,18 +494,19 @@ Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_pr
 		IconInfo info = icon_infos[i];
 		String icon_path = p_preset->get(info.preset_key);
 		if (icon_path.length() == 0) {
-			if (info.is_required) {
-				ERR_PRINT("Required icon is not specified in the preset");
-				return ERR_UNCONFIGURED;
+			Ref<Image> img = memnew(Image());
+			img->load(GLOBAL_DEF("application/config/icon", "res://icon.png"));
+			int size = String(info.actual_size_side).to_int();
+			img->resize(size, size, Image::INTERPOLATE_CUBIC);
+			img->save_png(p_iconset_dir + info.export_name);
+		} else {
+			Error err = da->copy(icon_path, p_iconset_dir + info.export_name);
+			if (err) {
+				memdelete(da);
+				String err_str = String("Failed to export icon: ") + icon_path;
+				ERR_PRINT(err_str.utf8().get_data());
+				return err;
 			}
-			continue;
-		}
-		Error err = da->copy(icon_path, p_iconset_dir + info.export_name);
-		if (err) {
-			memdelete(da);
-			String err_str = String("Failed to export icon: ") + icon_path;
-			ERR_PRINT(err_str.utf8().get_data());
-			return err;
 		}
 		sizes += String(info.actual_size_side) + "\n";
 		if (i > 0) {
