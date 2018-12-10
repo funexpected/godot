@@ -181,21 +181,27 @@ Dictionary InAppStore::get_payload(){
 	NSData *receipt = nil;
 	NSURL *receiptFileURL = nil;
 	NSBundle *bundle = [NSBundle mainBundle];
+	bool sandbox = true;
 	if ([bundle respondsToSelector:@selector(appStoreReceiptURL)]) {
 
 		// Get the transaction receipt file path location in the app bundle.
 		receiptFileURL = [bundle appStoreReceiptURL];
-
+		if (![[receiptFileURL lastPathComponent] isEqualToString:@"sandboxReceipt"]){
+			sandbox = false;
+		}
 		// Read in the contents of the transaction file.
 		receipt = [NSData dataWithContentsOfURL:receiptFileURL];
 	} 
 	if (receipt != nil) {
 		const void *_Nullable rawData = [receipt bytes];
 		char *data = (char *)rawData;
-		return InAppStore::_validate_payload(data, [receipt length]);
+		Dictionary res = InAppStore::_validate_payload(data, [receipt length]);
+		res["sandbox"] = sandbox;
+		return res;
 	} else {
 		Dictionary res;
 		res["error"] = "Payload not available";
+		res["sandbox"] = sandbox;
 		return res;
 	}
 
