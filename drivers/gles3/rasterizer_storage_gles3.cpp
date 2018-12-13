@@ -1058,7 +1058,7 @@ Ref<Image> RasterizerStorageGLES3::texture_get_data(RID p_texture, int p_layer) 
 	ERR_FAIL_COND_V(!texture->active, Ref<Image>());
 	ERR_FAIL_COND_V(texture->data_size == 0 && !texture->render_target, Ref<Image>());
 
-	if (texture->type == VS::TEXTURE_TYPE_CUBEMAP && p_layer < 6 && !texture->images[p_layer].is_null()) {
+	if (texture->type == VS::TEXTURE_TYPE_CUBEMAP && p_layer < texture->images.size() && !texture->images[p_layer].is_null()) {
 		return texture->images[p_layer];
 	}
 
