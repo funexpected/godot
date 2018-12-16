@@ -34,6 +34,7 @@
 #include "core/os/os.h"
 #include "core/project_settings.h"
 #include "scene/2d/collision_object_2d.h"
+#include "scene/2d/parallax_layer.h"
 #include "scene/3d/camera.h"
 #include "scene/3d/collision_object.h"
 #include "scene/3d/listener.h"
@@ -1590,7 +1591,7 @@ Control *Viewport::find_control(const Vector2 &p_pos){
 Control *Viewport::_gui_find_control(const Point2 &p_global) {
 
 	_gui_prepare_subwindows();
-
+	
 	for (List<Control *>::Element *E = gui.subwindows.back(); E; E = E->prev()) {
 
 		Control *sw = E->get();
@@ -1632,6 +1633,8 @@ Control *Viewport::_gui_find_control(const Point2 &p_global) {
 	return NULL;
 }
 
+
+
 Control *Viewport::_gui_find_control_at_pos(CanvasItem *p_node, const Point2 &p_global, const Transform2D &p_xform, Transform2D &r_inv_xform) {
 
 	if (Object::cast_to<Viewport>(p_node))
@@ -1663,6 +1666,20 @@ Control *Viewport::_gui_find_control_at_pos(CanvasItem *p_node, const Point2 &p_
 				continue;
 
 			Control *ret = _gui_find_control_at_pos(ci, p_global, matrix, r_inv_xform);
+			if (ret)
+				return ret;
+			Size2 mirroring = Size2();
+			ParallaxLayer *pl = Object::cast_to<ParallaxLayer>(ci);
+			if (pl){ 
+				mirroring = pl->get_mirroring() * pl->get_global_scale();
+				print_line(String("mirroring ") + Variant(mirroring) + " " + Variant(pl->get_mirroring()));
+			} else {
+				print_line(String("no ParallaxLayer ") + Variant(ci->get_path()));
+			}
+		
+			if (mirroring.width || mirroring.height){
+				ret = _gui_find_control_at_pos(ci, p_global-mirroring, matrix, r_inv_xform);
+			}
 			if (ret)
 				return ret;
 		}
