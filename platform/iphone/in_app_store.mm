@@ -190,19 +190,12 @@ Error InAppStore::restore_purchases() {
 
 Dictionary InAppStore::get_payload(){
 	NSData *receipt = nil;
-	NSURL *receiptFileURL = nil;
 	NSBundle *bundle = [NSBundle mainBundle];
-	bool sandbox = true;
-	if ([bundle respondsToSelector:@selector(appStoreReceiptURL)]) {
-
-		// Get the transaction receipt file path location in the app bundle.
-		receiptFileURL = [bundle appStoreReceiptURL];
-		if (![[receiptFileURL lastPathComponent] isEqualToString:@"sandboxReceipt"]){
-			sandbox = false;
-		}
-		// Read in the contents of the transaction file.
-		receipt = [NSData dataWithContentsOfURL:receiptFileURL];
-	} 
+	NSURL *url = [bundle appStoreReceiptURL];
+	String url_string = String([[url absoluteString] UTF8String]);
+	bool sandbox = url_string.find("sandboxReceipt") >= 0;
+	print_line(String("appstorereceipturl: ") + url_string + ", sandbox: " + Variant(sandbox));
+	receipt = [NSData dataWithContentsOfURL:url];
 	if (receipt != nil) {
 		const void *_Nullable rawData = [receipt bytes];
 		char *data = (char *)rawData;
