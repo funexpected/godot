@@ -1662,9 +1662,9 @@ Control *Viewport::_gui_find_control_at_pos(CanvasItem *p_node, const Point2 &p_
 			ParallaxLayer *pl = Object::cast_to<ParallaxLayer>(ci);
 			if (pl){ 
 				mirroring = pl->get_mirroring() * pl->get_global_scale();
-				print_line(String("mirroring ") + Variant(mirroring) + " " + Variant(pl->get_mirroring()));
+				//print_line(String("mirroring ") + Variant(mirroring) + " " + Variant(pl->get_mirroring()));
 			} else {
-				print_line(String("no ParallaxLayer ") + Variant(ci->get_path()));
+				//print_line(String("no ParallaxLayer ") + Variant(ci->get_path()));
 			}
 		
 			if (mirroring.width || mirroring.height){
