@@ -220,13 +220,13 @@ void AudioStreamPlayer2D::_notification(int p_what) {
 				if (vp->is_audio_listener_2d()) {
 
 					//compute matrix to convert to screen
-					Transform2D to_screen = vp->get_global_canvas_transform() * vp->get_canvas_transform();
+					//Transform2D to_screen = vp->get_global_canvas_transform() * vp->get_canvas_transform();
 					Vector2 screen_size = vp->get_visible_rect().size;
 
 					//screen in global is used for attenuation
-					Vector2 screen_in_global = to_screen.affine_inverse().xform(screen_size * 0.5);
+					//Vector2 screen_in_global = to_screen.affine_inverse().xform(screen_size * 0.5);
 
-					float dist = global_pos.distance_to(screen_in_global); //distance to screen center
+					float dist = global_pos.distance_to(screen_size*0.5); //distance to screen center
 
 					if (dist > max_distance)
 						continue; //can't hear this sound in this viewport
@@ -235,7 +235,7 @@ void AudioStreamPlayer2D::_notification(int p_what) {
 					multiplier *= Math::db2linear(volume_db); //also apply player volume!
 
 					//point in screen is used for panning
-					Vector2 point_in_screen = to_screen.xform(global_pos);
+					Vector2 point_in_screen = screen_size*0.5;//to_screen.xform(global_pos);
 
 					float pan = CLAMP(point_in_screen.x / screen_size.width, 0.0, 1.0);
 
