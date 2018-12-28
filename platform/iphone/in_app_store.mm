@@ -365,6 +365,17 @@ Dictionary InAppStore::_validate_payload(char* buff, int buff_size){
 						//	ERR_FAIL_COND_V(mbedtls_asn1_get_int(&ptr, iend, &web_order_id), res);
 						//	iap["web_order_id"] = web_order_id;
 						//	break;
+						case 1719: 
+							int introductory_price_period;
+							ERR_FAIL_COND_V(mbedtls_asn1_get_int(&ptr, iend, &introductory_price_period), res);
+							iap["introductory_price_period"] = introductory_price_period;
+							break;
+						case 1713: // web order id
+							int trial_period;
+							ERR_FAIL_COND_V(mbedtls_asn1_get_int(&ptr, iend, &trial_period), res);
+							iap["trial_period"] = trial_period;
+							break;
+
 						default:
 							//print_line("skip iap attr (type " + itos(iap_type) + ", tag " + itos(*ptr) + ")");
 							ptr += len;
