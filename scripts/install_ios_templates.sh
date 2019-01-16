@@ -12,8 +12,8 @@ cp -R misc/dist/ios_xcode/ iphone/
 #scons p=iphone tools=no bits=64 target=release arch=arm64 module_firebase_enabled=no module_websocket_enabled=no game_center=no
 #scons p=iphone tools=no bits=64 target=debug arch=arm64 module_firebase_enabled=no module_websocket_enabled=no game_center=no
 
-scons p=iphone target=release arch=arm64 separate_debug_symbols=yes debug_symbols=no optimize=size use_lto=yes tools=no module_bullet_enabled=no module_firebase_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes 
-scons p=iphone target=debug arch=arm64 separate_debug_symbols=yes debug_symbols=no optimize=size use_lto=yes tools=no module_bullet_enabled=no module_firebase_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes 
+scons p=iphone target=release arch=arm64 optimize=size use_lto=yes tools=no module_bullet_enabled=no module_firebase_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes 
+scons p=iphone target=debug arch=arm64 optimize=size use_lto=yes tools=no module_bullet_enabled=no module_firebase_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes 
 
 # no need to compile armv7 as far as we target only arm64 devices
 #scons p=iphone tools=no bits=32 target=release arch=armv7 module_firebase_enabled=no module_websocket_enabled=no game_center=no
