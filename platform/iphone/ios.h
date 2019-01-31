@@ -37,12 +37,15 @@ class iOS : public Object {
 
 	GDCLASS(iOS, Object);
 
+	Variant launch_options;
 	static void _bind_methods();
 
 public:
 	static void alert(const char *p_alert, const char *p_title);
 
 	String get_rate_url(int p_app_id) const;
+	Variant get_launch_options() const;
+	void set_launch_options(const Variant &p_options);
 
 	iOS();
 };

@@ -35,6 +35,9 @@
 void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
+	ClassDB::bind_method(D_METHOD("get_launch_options"), &iOS::get_launch_options);
+	ClassDB::bind_method(D_METHOD("set_launch_options", "options"), &iOS::set_launch_options);
+	
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -64,5 +67,13 @@ String iOS::get_rate_url(int p_app_id) const {
 	printf("returning rate url %ls\n", ret.c_str());
 	return ret;
 };
+
+void iOS::set_launch_options(const Variant &p_options){
+	launch_options = p_options;
+}
+
+Variant iOS::get_launch_options() const {
+	return launch_options;
+}
 
 iOS::iOS(){};
