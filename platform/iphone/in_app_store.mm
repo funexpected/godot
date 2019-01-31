@@ -180,9 +180,39 @@ Error InAppStore::request_product_info(Variant p_params) {
 	return OK;
 };
 
+@interface ReceiptRestoreDelegate : NSObject <SKRequestDelegate> {
+};
+@end
+
+@implementation ReceiptRestoreDelegate
+
+- (void)requestDidFinish:(SKRequest *)request {
+	Dictionary ret;
+	ret["type"] = "receipt_restored";
+	ret["result"] = "ok";
+	InAppStore::get_singleton()->_post_event(ret);
+
+};
+
+- (void)request:(SKRequest *)request didFailWithError:(NSError *)error {
+	Dictionary ret;
+	ret["type"] = "receipt_restored";
+	ret["result"] = "error";
+	InAppStore::get_singleton()->_post_event(ret);
+};
+
+@end
+
 Error InAppStore::restore_purchases() {
 
 	printf("restoring purchases!\n");
+	ReceiptRestoreDelegate *delegate = [[ReceiptRestoreDelegate alloc] init] ;
+	SKReceiptRefreshRequest *request = [[SKReceiptRefreshRequest alloc] init];
+	request.delegate = delegate;
+	[request start];
+	
+
+
 	[[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
 
 	return OK;
