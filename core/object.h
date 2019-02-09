@@ -550,6 +550,8 @@ protected:
 
 	Variant _call_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	Variant _call_deferred_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
+	Variant _call_multilevel_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
+	Variant _call_multilevel_reversed_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 
 	virtual const StringName *_get_class_namev() const {
 		if (!_class_name)
