@@ -460,14 +460,36 @@ Node::PauseMode Node::get_pause_mode() const {
 	return data.pause_mode;
 }
 
+void Node::set_branch_paused(bool p_paused){
+	if (p_paused == data.branch_paused) {
+		return;
+	}
+	if (data.parent && !p_paused) {
+		_propagate_branch_paused(data.parent->data.branch_paused);
+	} else {
+		_propagate_branch_paused(p_paused);
+	}
+}
+
+bool Node::is_branch_paused() const {
+	return data.branch_paused;
+}
+
+
 void Node::_propagate_pause_owner(Node *p_owner) {
 
 	if (this != p_owner && data.pause_mode != PAUSE_MODE_INHERIT)
 		return;
 	data.pause_owner = p_owner;
 	for (int i = 0; i < data.children.size(); i++) {
-
 		data.children[i]->_propagate_pause_owner(p_owner);
+	}
+}
+
+void Node::_propagate_branch_paused(bool p_paused) {
+	data.branch_paused = p_paused;
+	for (int i = 0; i < data.children.size(); i++) {
+		data.children[i]->_propagate_branch_paused(p_paused);
 	}
 }
 
@@ -753,7 +775,7 @@ bool Node::can_process() const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	if (get_tree()->is_paused()) {
+	if (get_tree()->is_paused() || data.branch_paused) {
 
 		if (data.pause_mode == PAUSE_MODE_STOP)
 			return false;
@@ -2801,6 +2823,8 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_processing_unhandled_key_input"), &Node::is_processing_unhandled_key_input);
 	ClassDB::bind_method(D_METHOD("set_pause_mode", "mode"), &Node::set_pause_mode);
 	ClassDB::bind_method(D_METHOD("get_pause_mode"), &Node::get_pause_mode);
+	ClassDB::bind_method(D_METHOD("set_branch_paused", "paused"), &Node::set_branch_paused);
+	ClassDB::bind_method(D_METHOD("is_branch_paused"), &Node::is_branch_paused);
 	ClassDB::bind_method(D_METHOD("can_process"), &Node::can_process);
 	ClassDB::bind_method(D_METHOD("print_stray_nodes"), &Node::_print_stray_nodes);
 	ClassDB::bind_method(D_METHOD("get_position_in_parent"), &Node::get_position_in_parent);
@@ -2977,6 +3001,7 @@ Node::Node() {
 	data.unhandled_key_input = false;
 	data.pause_mode = PAUSE_MODE_INHERIT;
 	data.pause_owner = NULL;
+	data.branch_paused = false;
 	data.network_master = 1; //server by default
 	data.path_cache = NULL;
 	data.parent_owned = false;
