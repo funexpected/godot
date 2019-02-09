@@ -526,6 +526,7 @@ Dictionary InAppStore::_validate_payload(char* buff, int buff_size){
 				ret["result"] = "error";
 				ret["product_id"] = pid;
 				ret["error"] = String::utf8([transaction.error.localizedDescription UTF8String]);
+				ret["error_code"] = Variant(transaction.error.code);
 				InAppStore::get_singleton()->_post_event(ret);
 				[[SKPaymentQueue defaultQueue] finishTransaction:transaction];
 			} break;
