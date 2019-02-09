@@ -116,6 +116,7 @@ private:
 
 		PauseMode pause_mode;
 		Node *pause_owner;
+		bool branch_paused;
 
 		int network_master;
 		Map<StringName, MultiplayerAPI::RPCMode> rpc_methods;
@@ -171,6 +172,7 @@ private:
 	void _propagate_validate_owner();
 	void _print_stray_nodes();
 	void _propagate_pause_owner(Node *p_owner);
+	void _propagate_branch_paused(bool p_paused);
 	Array _get_node_and_resource(const NodePath &p_path);
 
 	void _duplicate_signals(const Node *p_original, Node *p_copy) const;
@@ -387,6 +389,8 @@ public:
 
 	void set_pause_mode(PauseMode p_mode);
 	PauseMode get_pause_mode() const;
+	void set_branch_paused(bool p_paused);
+	bool is_branch_paused() const;
 	bool can_process() const;
 	bool can_process_notification(int p_what) const;
 
