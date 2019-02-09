@@ -699,6 +699,46 @@ Variant Object::_call_deferred_bind(const Variant **p_args, int p_argcount, Vari
 	return Variant();
 }
 
+Variant Object::_call_multilevel_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	if (p_argcount < 1) {
+		r_error.error = Variant::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
+		r_error.argument = 0;
+		return Variant();
+	}
+
+	if (p_args[0]->get_type() != Variant::STRING) {
+		r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
+		r_error.argument = 0;
+		r_error.expected = Variant::STRING;
+		return Variant();
+	}
+	r_error.error = Variant::CallError::CALL_OK;
+	
+	StringName method = *p_args[0];
+	call_multilevel(method, &p_args[1], p_argcount - 1);
+	return Variant();
+}
+
+Variant Object::_call_multilevel_reversed_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	if (p_argcount < 1) {
+		r_error.error = Variant::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
+		r_error.argument = 0;
+		return Variant();
+	}
+
+	if (p_args[0]->get_type() != Variant::STRING) {
+		r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
+		r_error.argument = 0;
+		r_error.expected = Variant::STRING;
+		return Variant();
+	}
+	r_error.error = Variant::CallError::CALL_OK;
+
+	StringName method = *p_args[0];
+	call_multilevel_reversed(method, &p_args[1], p_argcount - 1);
+	return Variant();
+}
+
 #ifdef DEBUG_ENABLED
 static void _test_call_error(const StringName &p_func, const Variant::CallError &error) {
 
@@ -1701,9 +1741,26 @@ void Object::_bind_methods() {
 		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "call_deferred", &Object::_call_deferred_bind, mi, varray(), false);
 	}
 
+	{
+		MethodInfo mi;
+		mi.name = "call_multilevel";
+		mi.arguments.push_back(PropertyInfo(Variant::STRING, "method"));
+
+		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "call_multilevel", &Object::_call_multilevel_bind, mi);
+	}
+
+	{
+		MethodInfo mi;
+		mi.name = "call_multilevel_reversed";
+		mi.arguments.push_back(PropertyInfo(Variant::STRING, "method"));
+
+		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "call_multilevel_reversed", &Object::_call_multilevel_reversed_bind, mi);
+	}
+
 	ClassDB::bind_method(D_METHOD("set_deferred", "property", "value"), &Object::set_deferred);
 
 	ClassDB::bind_method(D_METHOD("callv", "method", "arg_array"), &Object::callv);
+	//ClassDB::bind_method(D_METHOD)
 
 	ClassDB::bind_method(D_METHOD("has_method", "method"), &Object::has_method);
 
