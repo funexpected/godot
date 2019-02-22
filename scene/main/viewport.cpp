@@ -1633,7 +1633,6 @@ Control *Viewport::_gui_find_control(const Point2 &p_global) {
 }
 
 Control *Viewport::_gui_find_control_at_pos(CanvasItem *p_node, const Point2 &p_global, const Transform2D &p_xform, Transform2D &r_inv_xform) {
-
 	if (Object::cast_to<Viewport>(p_node))
 		return NULL;
 
@@ -1665,6 +1664,7 @@ Control *Viewport::_gui_find_control_at_pos(CanvasItem *p_node, const Point2 &p_
 			Control *ret = _gui_find_control_at_pos(ci, p_global, matrix, r_inv_xform);
 			if (ret)
 				return ret;
+		}
 	}
 
 	if (!c)
