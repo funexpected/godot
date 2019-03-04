@@ -334,7 +334,8 @@ void ScrollContainer::_notification(int p_what) {
 
 				float sgn_x = drag_speed.x < 0 ? -1 : 1;
 				float val_x = Math::abs(drag_speed.x);
-				val_x -= 1000 * get_physics_process_delta_time();
+				
+				val_x -= scroll_smooth_factor * get_physics_process_delta_time();
 
 				if (val_x < 0) {
 					turnoff_h = true;
@@ -342,7 +343,7 @@ void ScrollContainer::_notification(int p_what) {
 
 				float sgn_y = drag_speed.y < 0 ? -1 : 1;
 				float val_y = Math::abs(drag_speed.y);
-				val_y -= 1000 * get_physics_process_delta_time();
+				val_y -= scroll_smooth_factor * get_physics_process_delta_time();
 
 				if (val_y < 0) {
 					turnoff_v = true;
@@ -544,6 +545,8 @@ void ScrollContainer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "scroll_deadzone"), "set_deadzone", "get_deadzone");
 
 	GLOBAL_DEF("gui/common/default_scroll_deadzone", 0);
+	GLOBAL_DEF("gui/common/scroll_smooth_factor", 1000);
+	
 };
 
 ScrollContainer::ScrollContainer() {
@@ -567,6 +570,7 @@ ScrollContainer::ScrollContainer() {
 	scroll_v = true;
 
 	deadzone = GLOBAL_GET("gui/common/default_scroll_deadzone");
+	scroll_smooth_factor = GLOBAL_GET("gui/common/scroll_smooth_factor");
 
 	set_clip_contents(true);
 };

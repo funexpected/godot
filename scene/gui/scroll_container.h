@@ -63,6 +63,8 @@ class ScrollContainer : public Container {
 
 	int deadzone;
 
+	int scroll_smooth_factor;
+
 	void _cancel_drag();
 
 protected:
