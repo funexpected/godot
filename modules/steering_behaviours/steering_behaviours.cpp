@@ -805,7 +805,7 @@ void SteeringBehaviour::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_configuration", "configuration"), &SteeringBehaviour::set_configuration);
     ClassDB::bind_method(D_METHOD("get_configuration"), &SteeringBehaviour::get_configuration);
 
-    ADD_PROPERTYNZ(PropertyInfo(Variant::OBJECT, "configuration", PROPERTY_HINT_RESOURCE_TYPE, "SteeringBehaviourConfiguration"), "set_configuration", "get_configuration");
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "configuration", PROPERTY_HINT_RESOURCE_TYPE, "SteeringBehaviourConfiguration"), "set_configuration", "get_configuration");
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "mass"), "set_mass", "get_mass");
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "size"), "set_size", "get_size");
     ADD_PROPERTY(PropertyInfo(Variant::REAL, "max_speed"), "set_max_speed", "get_max_speed");
