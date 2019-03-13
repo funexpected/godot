@@ -383,7 +383,7 @@ Error EditorExportPlatformJavaScript::export_project(const Ref<EditorExportPrese
 	}
 
 	String pck_path = p_path.get_basename() + ".pck";
-	Error error = save_pack(p_preset, pck_path);
+	Error error = save_pack(p_preset, pck_path, p_debug);
 	if (error != OK) {
 		EditorNode::get_singleton()->show_warning(TTR("Could not write file:") + "\n" + pck_path);
 		return error;

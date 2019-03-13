@@ -2297,7 +2297,7 @@ public:
 			APKExportData ed;
 			ed.ep = &ep;
 			ed.apk = unaligned_apk;
-			err = export_project_files(p_preset, ignore_apk_file, &ed, save_apk_so);
+			err = export_project_files(p_preset, ignore_apk_file, &ed, p_debug, save_apk_so);
 		} else {
 			//all files
 
@@ -2305,7 +2305,7 @@ public:
 
 				String apkfname = "main." + itos(version_code) + "." + get_package_name(package_name) + ".obb";
 				String fullpath = p_path.get_base_dir().plus_file(apkfname);
-				err = save_pack(p_preset, fullpath);
+				err = save_pack(p_preset, fullpath, p_debug);
 
 				if (err != OK) {
 					unzClose(pkg);
@@ -2326,7 +2326,7 @@ public:
 				ed.ep = &ep;
 				ed.apk = unaligned_apk;
 
-				err = export_project_files(p_preset, save_apk_file, &ed, save_apk_so);
+				err = export_project_files(p_preset, save_apk_file, &ed, p_debug, save_apk_so);
 			}
 		}
 
