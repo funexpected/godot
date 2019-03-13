@@ -694,7 +694,7 @@ EditorExportPlatform::ExportNotifier::~ExportNotifier() {
 	}
 }
 
-Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &p_preset, EditorExportSaveFunction p_func, void *p_udata, EditorExportSaveSharedObject p_so_func) {
+Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &p_preset, EditorExportSaveFunction p_func, void *p_udata, bool p_debug, EditorExportSaveSharedObject p_so_func) {
 	//figure out paths of files that will be exported
 	Set<String> paths;
 	Vector<String> path_remaps;
@@ -741,6 +741,13 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 	FeatureContainers feature_containers = get_feature_containers(p_preset);
 	Set<String> &features = feature_containers.features;
 	PoolVector<String> &features_pv = feature_containers.features_pv;
+	if (p_debug) {
+		features.insert("debug");
+		features_pv.append("debug");
+	} else {
+		features.insert("release");
+		features_pv.append("release");
+	}
 
 	//store everything in the export medium
 	int idx = 0;
@@ -940,7 +947,7 @@ Error EditorExportPlatform::_add_shared_object(void *p_userdata, const SharedObj
 	return OK;
 }
 
-Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, const String &p_path, Vector<SharedObject> *p_so_files, bool p_embed, int64_t *r_embedded_start, int64_t *r_embedded_size) {
+Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug, Vector<SharedObject> *p_so_files, bool p_embed, int64_t *r_embedded_start, int64_t *r_embedded_size) {
 
 	EditorProgress ep("savepack", TTR("Packing"), 102, true);
 
@@ -953,7 +960,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, c
 	pd.f = ftmp;
 	pd.so_files = p_so_files;
 
-	Error err = export_project_files(p_preset, _save_pack_file, &pd, _add_shared_object);
+	Error err = export_project_files(p_preset, _save_pack_file, &pd, p_debug, _add_shared_object);
 
 	memdelete(ftmp); //close tmp file
 
@@ -1090,7 +1097,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, c
 	return OK;
 }
 
-Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
+Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug) {
 
 	EditorProgress ep("savezip", TTR("Packing"), 102, true);
 
@@ -1102,7 +1109,7 @@ Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, co
 	zd.ep = &ep;
 	zd.zip = zip;
 
-	Error err = export_project_files(p_preset, _save_zip_file, &zd);
+	Error err = export_project_files(p_preset, _save_zip_file, &zd, p_debug);
 	if (err != OK && err != ERR_SKIP)
 		ERR_PRINT("Failed to export project files");
 
@@ -1113,12 +1120,12 @@ Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, co
 
 Error EditorExportPlatform::export_pack(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
 	ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
-	return save_pack(p_preset, p_path);
+	return save_pack(p_preset, p_path, p_debug);
 }
 
 Error EditorExportPlatform::export_zip(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
 	ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
-	return save_zip(p_preset, p_path);
+	return save_zip(p_preset, p_path, p_debug);
 }
 
 void EditorExportPlatform::gen_export_flags(Vector<String> &r_flags, int p_flags) {
@@ -1609,7 +1616,7 @@ Error EditorExportPlatformPC::export_project(const Ref<EditorExportPreset> &p_pr
 
 		int64_t embedded_pos;
 		int64_t embedded_size;
-		err = save_pack(p_preset, pck_path, &so_files, p_preset->get("binary_format/embed_pck"), &embedded_pos, &embedded_size);
+		err = save_pack(p_preset, pck_path, p_debug, &so_files, p_preset->get("binary_format/embed_pck"), &embedded_pos, &embedded_size);
 		if (err == OK && p_preset->get("binary_format/embed_pck")) {
 
 			if (embedded_size >= 0x100000000 && !p_preset->get("binary_format/64_bits")) {
