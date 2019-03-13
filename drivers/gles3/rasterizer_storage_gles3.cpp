@@ -1059,7 +1059,7 @@ Ref<Image> RasterizerStorageGLES3::texture_get_data(RID p_texture, int p_layer) 
 	ERR_FAIL_COND_V(!texture->active, Ref<Image>());
 	ERR_FAIL_COND_V(texture->data_size == 0 && !texture->render_target, Ref<Image>());
 
-	if (texture->type == VS::TEXTURE_TYPE_CUBEMAP && p_layer < texture->images.size() && !texture->images[p_layer].is_null()) {
+	if (texture->type == VS::TEXTURE_TYPE_CUBEMAP && p_layer < 6 && !texture->images[p_layer].is_null()) {
 		return texture->images[p_layer];
 	}
 
@@ -1260,46 +1260,6 @@ Ref<Image> RasterizerStorageGLES3::texture_get_data(RID p_texture, int p_layer) 
 
 	return Ref<Image>(img);
 #else
-	PoolVector<uint8_t> data;
-
-	int w = texture->alloc_width;
-	int h = texture->alloc_height;
-	int data_size = Image::get_image_data_size(w, h, Image::Format::FORMAT_RGBA8, 0);
-
-	data.resize(data_size * 2); //add some memory at the end, just in case for buggy drivers
-	PoolVector<uint8_t>::Write wb = data.write();
-
-	//glActiveTexture(GL_TEXTURE0);
-
-	//glBindTexture(texture->target, texture->tex_id);
-
-	//glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-
-	//print_line("GET FORMAT: " + Image::get_format_name(texture->format) + " mipmaps: " + itos(texture->mipmaps));
-	//print_line("fb bind");
-	glBindFramebuffer(GL_FRAMEBUFFER, texture->render_target->fbo);
-	//glBindRenderbuffer(GL_RENDERBUFFER, texture->render_target->fbo);
-	//glViewport(0, 0, w, h);
-	//glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	//print_line("read pixels " + itos(texture->width) + "x" + itos(texture->height) + " (" + itos(data_size) + ")" + ", format " + itos(texture->gl_internal_format_cache) + ", mipmaps: " + itos(texture->mipmaps));
-	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &wb[0]);
-	//print_line("creating image");
-
-
-
-	Image::Format img_format = Image::Format::FORMAT_RGBA8;
-
-	//convert special case RGB10_A2 to RGBA8 because it's not a supported image format
-	if (texture->gl_internal_format_cache == GL_RGB10_A2) {
-
-		img_format = Image::FORMAT_RGBA8;
-
-		uint32_t *ptr = (uint32_t *)wb.ptr();
-		uint32_t num_pixels = data_size / 4;
-
-		for (int ofs = 0; ofs < num_pixels; ofs++) {
-			uint32_t px = ptr[ofs];
-			uint32_t a = px >> 30 & 0xFF;
 
 	Image::Format real_format;
 	GLenum gl_format;
