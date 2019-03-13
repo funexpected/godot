@@ -934,7 +934,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	ep.step("Making .pck", 0);
 	String pack_path = dest_dir + binary_name + ".pck";
 	Vector<SharedObject> libraries;
-	Error err = save_pack(p_preset, pack_path, &libraries);
+	Error err = save_pack(p_preset, pack_path, p_debug, &libraries);
 	if (err)
 		return err;
 
