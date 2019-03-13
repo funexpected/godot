@@ -2199,7 +2199,7 @@ public:
 
 				String apkfname = "main." + itos(version_code) + "." + get_package_name(package_name) + ".obb";
 				String fullpath = p_path.get_base_dir().plus_file(apkfname);
-				err = save_pack(p_preset, fullpath);
+				err = save_pack(p_preset, fullpath, p_debug);
 
 				if (err != OK) {
 					unzClose(pkg);

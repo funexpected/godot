@@ -31,8 +31,8 @@
 #ifdef STOREKIT_ENABLED
 
 #include "in_app_store.h"
-#include "project_settings.h"
-#include "os/file_access.h"
+#include "core/project_settings.h"
+#include "core/os/file_access.h"
 
 #include "openssl/bio.h"
 #include "openssl/x509v3.h"
