@@ -729,6 +729,8 @@ public:
 	void set_editor_hint(bool p_enabled);
 	bool is_editor_hint() const;
 
+	String get_stack() const;
+
 	_Engine();
 };
 
