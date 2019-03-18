@@ -387,10 +387,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 	String err_text;
 
-#ifdef DEBUG_ENABLED
 
-	if (ScriptDebugger::get_singleton())
-		GDScriptLanguage::get_singleton()->enter_function(p_instance, this, stack, &ip, &line);
+	GDScriptLanguage::get_singleton()->enter_function(p_instance, this, stack, &ip, &line);
+#ifdef DEBUG_ENABLED
 
 #define GD_ERR_BREAK(m_cond)                                                                                           \
 	{                                                                                                                  \
@@ -1599,7 +1598,6 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		profile.frame_self_time += time_taken - function_call_time;
 		GDScriptLanguage::get_singleton()->script_frame_time += time_taken - function_call_time;
 	}
-
 	// Check if this is the last time the function is resuming from yield
 	// Will be true if never yielded as well
 	// When it's the last resume it will postpone the exit from stack,
@@ -1608,7 +1606,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		if (ScriptDebugger::get_singleton())
 			GDScriptLanguage::get_singleton()->exit_function();
 #endif
-
+#ifndef DEBUG_ENABLED
+	GDScriptLanguage::get_singleton()->exit_function();
+#endif
 		if (_stack_size) {
 			//free stack
 			for (int i = 0; i < _stack_size; i++)
