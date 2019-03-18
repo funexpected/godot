@@ -126,6 +126,8 @@ public:
 	Dictionary get_license_info() const;
 	String get_license_text() const;
 
+	String get_stack() const;
+
 	Engine();
 	virtual ~Engine() {}
 };
