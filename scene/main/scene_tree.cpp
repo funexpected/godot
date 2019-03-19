@@ -114,7 +114,7 @@ SceneTree::Group *SceneTree::add_to_group(const StringName &p_group, Node *p_nod
 
 	if (E->get().nodes.find(p_node) != -1) {
 		ERR_EXPLAIN("Already in group: " + p_group);
-		ERR_FAIL_V(&E->get());
+		return(&E->get());
 	}
 	E->get().nodes.push_back(p_node);
 	//E->get().last_tree_version=0;
