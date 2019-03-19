@@ -1,5 +1,5 @@
 #! /bin/sh
-VERSION=`python -c 'import version; print "%s.%s.%s" % (version.major, version.minor, version.patch if "patch" in dir(version) else version.status)'`
+VERSION=`python -c 'import version; print "%s.%s%s.%s" % (version.major, version.minor, "."+str(version.patch) if "patch" in dir(version) else "", version.status)'`
 TEMPLATES="$HOME/Library/Application Support/Godot/templates/$VERSION"
 if [ ! -d "$TEMPLATE" ]; then
     mkdir "$TEMPLATES"
