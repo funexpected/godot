@@ -1139,8 +1139,10 @@ void EditorFileSystem::_notification(int p_what) {
 						thread_sources = NULL;
 						if (_update_scan_actions())
 							emit_signal("filesystem_changed");
-						emit_signal("sources_changed", sources_changed.size() > 0);
 						_queue_update_script_classes();
+						if (first_scan)
+							update_script_classes();
+						emit_signal("sources_changed", sources_changed.size() > 0);
 						first_scan = false;
 					}
 				} else if (!scanning) {
