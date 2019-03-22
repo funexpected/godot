@@ -136,13 +136,13 @@ bool SteeringBehaviourConfiguration::_set(const String &p_name, const Variant &p
 
     int type_id = -1;
     for (int i=0; i<BehaviourType::SIZE; i++){
-        print_line("check " + BehaviourTypeNames[i] + ", vs " + parts[0]);
+        //print_line("check " + BehaviourTypeNames[i] + ", vs " + parts[0]);
         if (BehaviourTypeNames[i] == parts[0]){
             type_id = i;
             break;
         }
     }
-    print_line("found type_id: " + itos(type_id));
+    //print_line("found type_id: " + itos(type_id));
     if (type_id == -1) return false;
 
     int type_idx = -1;
@@ -157,9 +157,9 @@ bool SteeringBehaviourConfiguration::_set(const String &p_name, const Variant &p
         order.append(type_id);
         weights.append(1.0);
     }
-    print_line("name: " + p_name + ", idx: " + itos(type_idx));
+    //print_line("name: " + p_name + ", idx: " + itos(type_idx));
     if (parts[1]=="weight"){
-        print_line("set weights " + itos(type_idx) + " to " + p_value + " (" + rtos((float)p_value)+")");
+        //print_line("set weights " + itos(type_idx) + " to " + p_value + " (" + rtos((float)p_value)+")");
         weights.set(type_idx, (float)p_value);
         return true;
     }
