@@ -9,8 +9,8 @@ rm -rf iphone*
 cp -R misc/dist/ios_xcode/ iphone/
 
 # this is min required build, but for now try size-optimized build
-scons p=iphone -j 4 tools=no bits=64 target=release arch=arm64 module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes debug_symbols=full separate_debug_symbols=yes || exit 1
-scons p=iphone -j 4 tools=no bits=64 target=debug arch=arm64 module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes debug_symbols=full separate_debug_symbols=yes || exit 1
+scons p=iphone -j 4 tools=no bits=64 target=release arch=arm64 module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes debug_symbols=yes separate_debug_symbols=yes || exit 1
+scons p=iphone -j 4 tools=no bits=64 target=debug arch=arm64 module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes debug_symbols=yes separate_debug_symbols=yes || exit 1
 
 # this is optimized build, but it is too slow on export
 #scons p=iphone target=release arch=arm64 optimize=size use_lto=yes tools=no module_bullet_enabled=no module_firebase_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes 
