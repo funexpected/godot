@@ -249,8 +249,6 @@ void Node::_propagate_after_exit_tree() {
 }
 
 void Node::_propagate_exit_tree() {
-	if (data.exit_tree_event_blocked)
-		return;
 	//block while removing children
 
 #ifdef DEBUG_ENABLED
@@ -1247,7 +1245,7 @@ void Node::_propagate_validate_owner() {
 	}
 }
 
-void Node::detach(){
+void Node::remove(){
 	Node * par = get_parent();
 	if (!par)
 		return;
@@ -1255,25 +1253,15 @@ void Node::detach(){
 	par->remove_child(this);
 }
 
-void Node::attach_to(Node * p_parent){
-	if (!p_parent)
-		return;
-	
-	p_parent->add_child(this);
-}
-
-void Node::reattach(Node * p_parent){
+void Node::set_parent(Node * p_parent){
 	if (!p_parent)
 		return;
 
 	Node * par = get_parent();
-	if (!par)
-		return;
+	if (par)
+		par->remove_child(this);
 
-	data.exit_tree_event_blocked = true;
-	par->remove_child(this);
 	p_parent->add_child(this);
-	data.exit_tree_event_blocked = false;
 }
 
 void Node::remove_child(Node *p_child) {
@@ -2757,9 +2745,11 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "legible_unique_name"), &Node::add_child, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
-	ClassDB::bind_method(D_METHOD("detach"), &Node::detach);		
-	ClassDB::bind_method(D_METHOD("reattach", "node"), &Node::reattach);	
-	ClassDB::bind_method(D_METHOD("attach_to", "node"), &Node::attach_to);		
+	ClassDB::bind_method(D_METHOD("detach"), &Node::remove); // obsolete
+	ClassDB::bind_method(D_METHOD("remove"), &Node::remove); 
+	ClassDB::bind_method(D_METHOD("reattach", "node"), &Node::set_parent);	// obsolete
+	ClassDB::bind_method(D_METHOD("attach_to", "node"), &Node::set_parent); // obsolete
+	ClassDB::bind_method(D_METHOD("set_parent", "parent"), &Node::set_parent);
 	ClassDB::bind_method(D_METHOD("get_child_count"), &Node::get_child_count);
 	ClassDB::bind_method(D_METHOD("get_children"), &Node::_get_children);
 	ClassDB::bind_method(D_METHOD("get_child", "idx"), &Node::get_child);
@@ -2975,7 +2965,6 @@ Node::Node() {
 	data.use_placeholder = false;
 	data.display_folded = false;
 	data.ready_first = true;
-	data.exit_tree_event_blocked = false;
 }
 
 Node::~Node() {
