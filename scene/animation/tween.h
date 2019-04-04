@@ -133,7 +133,7 @@ private:
 	bool _apply_tween_value(InterpolateData &p_data, Variant &value);
 
 	void _tween_process(float p_delta);
-	void _remove_by_uid(int uid);
+	void _clear_by_uid(int uid);
 	void _push_interpolate_data(InterpolateData &p_data);
 
 protected:
@@ -164,8 +164,8 @@ public:
 	bool stop_all();
 	bool resume(Object *p_object, StringName p_key);
 	bool resume_all();
-	bool remove(Object *p_object, StringName p_key);
-	bool remove_all();
+	bool clear(Object *p_object, StringName p_key);
+	bool clear_all();
 
 	bool seek(real_t p_time);
 	real_t tell() const;
