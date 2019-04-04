@@ -1238,10 +1238,9 @@ void Node::_propagate_validate_owner() {
 
 void Node::remove(){
 	Node * par = get_parent();
-	if (!par)
-		return;
-
-	par->remove_child(this);
+	if (par)
+		par->remove_child(this);
+	queue_delete();
 }
 
 void Node::set_parent(Node * p_parent){
