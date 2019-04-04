@@ -133,7 +133,7 @@ private:
 	bool _apply_tween_value(InterpolateData &p_data, Variant &value);
 
 	void _tween_process(float p_delta);
-	void _remove_by_uid(int uid);
+	void _clear_by_uid(int uid);
 	void _push_interpolate_data(InterpolateData &p_data);
 	bool _build_interpolation(InterpolateType p_interpolation_type, Object *p_object, NodePath *p_property, StringName *p_method, Variant p_initial_val, Variant p_final_val, real_t p_duration, TransitionType p_trans_type, EaseType p_ease_type, real_t p_delay);
 
@@ -165,8 +165,8 @@ public:
 	bool stop_all();
 	bool resume(Object *p_object, StringName p_key);
 	bool resume_all();
-	bool remove(Object *p_object, StringName p_key);
-	bool remove_all();
+	bool clear(Object *p_object, StringName p_key);
+	bool clear_all();
 
 	bool seek(real_t p_time);
 	real_t tell() const;

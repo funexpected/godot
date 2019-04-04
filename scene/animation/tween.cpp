@@ -229,9 +229,9 @@ void Tween::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("stop_all"), &Tween::stop_all);
 	ClassDB::bind_method(D_METHOD("resume", "object", "key"), &Tween::resume, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("resume_all"), &Tween::resume_all);
-	ClassDB::bind_method(D_METHOD("remove", "object", "key"), &Tween::remove, DEFVAL(""));
-	ClassDB::bind_method(D_METHOD("_remove_by_uid", "uid"), &Tween::_remove_by_uid);
-	ClassDB::bind_method(D_METHOD("remove_all"), &Tween::remove_all);
+	ClassDB::bind_method(D_METHOD("clear", "object", "key"), &Tween::clear, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("_clear_by_uid", "uid"), &Tween::_clear_by_uid);
+	ClassDB::bind_method(D_METHOD("clear_all"), &Tween::clear_all);
 	ClassDB::bind_method(D_METHOD("seek", "time"), &Tween::seek);
 	ClassDB::bind_method(D_METHOD("tell"), &Tween::tell);
 	ClassDB::bind_method(D_METHOD("get_runtime"), &Tween::get_runtime);
@@ -726,9 +726,8 @@ void Tween::_tween_process(float p_delta) {
 
 			// If we are not repeating the tween, remove it
 			if (!repeat)
-				call_deferred("_remove_by_uid", data.uid);
-		} else if (!repeat) {
-			// Check whether all tweens are finished
+				call_deferred("_clear_by_uid", data.uid);
+		} else if (!repeat)
 			all_finished = all_finished && data.finish;
 		}
 	}
@@ -912,10 +911,11 @@ bool Tween::resume_all() {
 	return true;
 }
 
-bool Tween::remove(Object *p_object, StringName p_key) {
+
+bool Tween::clear(Object *p_object, StringName p_key) {
 	// If we are still updating, call this function again later
 	if (pending_update != 0) {
-		call_deferred("remove", p_object, p_key);
+		call_deferred("clear", p_object, p_key);
 		return true;
 	}
 
@@ -942,10 +942,10 @@ bool Tween::remove(Object *p_object, StringName p_key) {
 	return true;
 }
 
-void Tween::_remove_by_uid(int uid) {
+void Tween::_clear_by_uid(int uid) {
 	// If we are still updating, call this function again later
 	if (pending_update != 0) {
-		call_deferred("_remove_by_uid", uid);
+		call_deferred("_clear_by_uid", uid);
 		return;
 	}
 
@@ -969,10 +969,11 @@ void Tween::_push_interpolate_data(InterpolateData &p_data) {
 	pending_update--;
 }
 
-bool Tween::remove_all() {
+bool Tween::clear_all() {
 	// If we are still updating, call this function again later
+
 	if (pending_update != 0) {
-		call_deferred("remove_all");
+		call_deferred("clear_all");
 		return true;
 	}
 	// We no longer need to be active
