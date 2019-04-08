@@ -1574,7 +1574,11 @@ Variant::operator String() const {
 					};
 				};
 #endif
-				return "[" + _get_obj().obj->get_class() + ":" + itos(_get_obj().obj->get_instance_id()) + "]";
+				if (_get_obj().obj->get_script_instance() && _get_obj().obj->get_script_instance()->has_method("_as_string")){
+					return _get_obj().obj->get_script_instance()->call("_as_string");
+				} else {
+					return "[" + _get_obj().obj->get_class() + ":" + itos(_get_obj().obj->get_instance_id()) + "]";
+				}
 			} else
 				return "[Object:null]";
 
