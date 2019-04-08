@@ -1589,7 +1589,11 @@ String Variant::stringify(List<const void *> &stack) const {
 					};
 				};
 #endif
-				return _get_obj().obj->to_string();
+				if (_get_obj().obj->get_script_instance() && _get_obj().obj->get_script_instance()->has_method("_as_string")){
+					return _get_obj().obj->get_script_instance()->call("_as_string");
+				} else {
+					return _get_obj().obj->to_string();
+				}
 			} else
 				return "[Object:null]";
 
