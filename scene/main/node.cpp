@@ -1249,7 +1249,7 @@ void Node::remove(){
 	Node * par = get_parent();
 	if (par)
 		par->remove_child(this);
-	queue_delete();
+	//queue_delete();
 }
 
 void Node::set_parent(Node * p_parent){
