@@ -198,6 +198,7 @@ Error InAppStore::request_product_info(Variant p_params) {
 	Dictionary ret;
 	ret["type"] = "receipt_restored";
 	ret["result"] = "error";
+	ret["error"] = String::utf8([error.localizedDescription UTF8String]);
 	InAppStore::get_singleton()->_post_event(ret);
 };
 
