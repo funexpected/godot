@@ -321,6 +321,40 @@ bool GDNative::initialize() {
 			return true;
 		}
 	}
+	for (int i=0; i<library->current_dependencies.size(); i++){
+		String dep_lib_path = library->current_dependencies[i];
+		if (dep_lib_path.empty()) {
+			ERR_PRINT("No library set for this platform");
+			return false;
+		}
+#ifdef IPHONE_ENABLED
+		// on iOS we use static linking
+		String dep_path = "";
+#elif defined(ANDROID_ENABLED)
+		// On Android dynamic libraries are located separately from resource assets,
+		// we should pass library name to dlopen(). The library name is flattened
+		// during export.
+		String dep_path = dep_lib_path.get_file();
+#elif defined(UWP_ENABLED)
+		// On UWP we use a relative path from the app
+		String dep_path = dep_lib_path.replace("res://", "");
+#elif defined(OSX_ENABLED)
+		// On OSX the exported libraries are located under the Frameworks directory.
+		// So we need to replace the library path.
+		String dep_path = ProjectSettings::get_singleton()->globalize_path(dep_lib_path);
+		if (!FileAccess::exists(dep_path)) {
+			dep_path = OS::get_singleton()->get_executable_path().get_base_dir().plus_file("../Frameworks").plus_file(dep_lib_path.get_file());
+		}
+#else
+		String dep_path = ProjectSettings::get_singleton()->globalize_path(dep_lib_path);
+#endif
+		void *dep_native_handle = NULL;
+		Error err = OS::get_singleton()->open_dynamic_library(dep_path, dep_native_handle, true);
+		dep_native_handles.push_back(dep_native_handle);
+		if (err != OK) {
+			return false;
+		}
+	}
 
 	Error err = OS::get_singleton()->open_dynamic_library(path, native_handle, true);
 	if (err != OK) {
@@ -338,6 +372,10 @@ bool GDNative::initialize() {
 
 	if (err || !library_init) {
 		OS::get_singleton()->close_dynamic_library(native_handle);
+		for (int i=0; i<dep_native_handles.size(); i++){
+			OS::get_singleton()->close_dynamic_library(dep_native_handles[i]);
+		}
+		dep_native_handles.clear();
 		native_handle = NULL;
 		ERR_PRINTS("Failed to obtain " + library->get_symbol_prefix() + "gdnative_init symbol");
 		return false;
@@ -408,6 +446,10 @@ bool GDNative::terminate() {
 	Error error = get_symbol(library->get_symbol_prefix() + terminate_symbol, library_terminate);
 	if (error || !library_terminate) {
 		OS::get_singleton()->close_dynamic_library(native_handle);
+		for (int i=0; i<dep_native_handles.size(); i++){
+			OS::get_singleton()->close_dynamic_library(dep_native_handles[i]);
+		}
+		dep_native_handles.clear();
 		native_handle = NULL;
 		initialized = false;
 		return true;
@@ -426,6 +468,10 @@ bool GDNative::terminate() {
 	// GDNativeScriptLanguage::get_singleton()->initialized_libraries.erase(p_native_lib->path);
 
 	OS::get_singleton()->close_dynamic_library(native_handle);
+	for (int i=0; i<dep_native_handles.size(); i++){
+		OS::get_singleton()->close_dynamic_library(dep_native_handles[i]);
+	}
+	dep_native_handles.clear();
 	native_handle = NULL;
 
 	return true;
