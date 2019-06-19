@@ -32,6 +32,9 @@
 #define IOS_H
 
 #include "core/object.h"
+#include <wchar.h>
+#import "app_delegate.h"
+
 
 
 class iOS : public Object {
