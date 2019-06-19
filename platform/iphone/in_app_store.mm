@@ -122,6 +122,7 @@ void InAppStore::_bind_methods() {
 		ids.push_back(String::utf8([product.productIdentifier UTF8String]));
 		localized_prices.push_back(String::utf8([product.localizedPrice UTF8String]));
 		currency_codes.push_back(String::utf8([[[product priceLocale] objectForKey:NSLocaleCurrencyCode] UTF8String]));
+		/*
 		subscription_periods.push_back(product.subscriptionPeriod.numberOfUnits);
 		switch(product.subscriptionPeriod.unit){
 			case SKProductPeriodUnitDay: subscription_units.push_back("day"); break;
@@ -129,6 +130,7 @@ void InAppStore::_bind_methods() {
 			case SKProductPeriodUnitMonth: subscription_units.push_back("month"); break;
 			case SKProductPeriodUnitYear: subscription_units.push_back("year"); break;
 		}
+		*/
 	};
 	ret["titles"] = titles;
 	ret["descriptions"] = descriptions;
@@ -136,8 +138,10 @@ void InAppStore::_bind_methods() {
 	ret["ids"] = ids;
 	ret["localized_prices"] = localized_prices;
 	ret["currency_codes"] = currency_codes;
+	/*
 	ret["subscription_periods"] = subscription_periods;
 	ret["subscription_units"] = subscription_units;
+	*/
 
 	PoolStringArray invalid_ids;
 
