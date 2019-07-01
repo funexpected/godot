@@ -46,6 +46,7 @@
 #ifdef _MSC_VER
 #define S_ISREG(m) ((m)&_S_IFREG)
 #endif
+#define fopen_s(pFile,filename,mode) ((*(pFile))=fopen(((const char*)filename),  ((const char*)mode)))==NULL
 
 void FileAccessWindows::check_errors() const {
 
@@ -114,7 +115,7 @@ Error FileAccessWindows::_open(const String &p_path, int p_mode_flags) {
 		path = path + ".tmp";
 	}
 
-	_wfopen_s(&f, path.c_str(), mode_string);
+	fopen_s(&f, path.c_str(), mode_string);
 
 	if (f == NULL) {
 		last_error = ERR_FILE_CANT_OPEN;
@@ -310,7 +311,7 @@ bool FileAccessWindows::file_exists(const String &p_name) {
 	FILE *g;
 	//printf("opening file %s\n", p_fname.c_str());
 	String filename = fix_path(p_name);
-	_wfopen_s(&g, filename.c_str(), L"rb");
+	fopen_s(&g, filename.c_str(), L"rb");
 	if (g == NULL) {
 
 		return false;

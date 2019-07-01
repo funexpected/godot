@@ -3012,7 +3012,7 @@ void OS_Windows::process_and_drop_events() {
 Error OS_Windows::move_to_trash(const String &p_path) {
 	SHFILEOPSTRUCTW sf;
 	WCHAR *from = new WCHAR[p_path.length() + 2];
-	wcscpy_s(from, p_path.length() + 1, p_path.c_str());
+	wcscpy(from, p_path.c_str());
 	from[p_path.length() + 1] = 0;
 
 	sf.hwnd = hWnd;
