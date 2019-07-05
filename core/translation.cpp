@@ -406,6 +406,8 @@ static const char *locale_list[] = {
 	"zh_HK", //  Chinese (Hong Kong)
 	"zh_SG", //  Chinese (Singapore)
 	"zh_TW", //  Chinese (Taiwan)
+	"zh_Hant", // Chinese (Traditional)
+	"zh_Hans", // Chinese (Simplified)
 	"zu_ZA", //  Zulu (South Africa)
 	0
 };
@@ -774,6 +776,8 @@ static const char *locale_names[] = {
 	"Chinese (Hong Kong)",
 	"Chinese (Singapore)",
 	"Chinese (Taiwan)",
+	"Chinese (Traditional)",
+	"Chinese (Simplified)",
 	"Zulu (South Africa)",
 	0
 };
