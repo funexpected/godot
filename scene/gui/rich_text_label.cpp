@@ -1615,6 +1615,7 @@ void RichTextLabel::add_text(const String &p_text) {
 
 		pos = end + 1;
 	}
+	minimum_size_changed();
 }
 
 void RichTextLabel::_add_item(Item *p_item, bool p_enter, bool p_ensure_newline) {
@@ -2000,6 +2001,17 @@ bool RichTextLabel::is_overriding_selected_font_color() const {
 void RichTextLabel::set_offset(int p_pixel) {
 
 	vscroll->set_value(p_pixel);
+}
+
+void RichTextLabel::set_height_expand(bool p_expand) {
+
+	height_expand = p_expand;
+	minimum_size_changed();
+}
+
+bool RichTextLabel::is_height_expanding() const {
+
+	return height_expand;
 }
 
 void RichTextLabel::set_scroll_active(bool p_active) {
@@ -2721,6 +2733,9 @@ void RichTextLabel::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("clear"), &RichTextLabel::clear);
 
+	ClassDB::bind_method(D_METHOD("set_height_expand", "enable"), &RichTextLabel::set_height_expand);
+	ClassDB::bind_method(D_METHOD("is_height_expanding"), &RichTextLabel::is_height_expanding);
+
 	ClassDB::bind_method(D_METHOD("set_meta_underline", "enable"), &RichTextLabel::set_meta_underline);
 	ClassDB::bind_method(D_METHOD("is_meta_underlined"), &RichTextLabel::is_meta_underlined);
 
@@ -2778,6 +2793,7 @@ void RichTextLabel::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "visible_characters", PROPERTY_HINT_RANGE, "-1,128000,1"), "set_visible_characters", "get_visible_characters");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "percent_visible", PROPERTY_HINT_RANGE, "0,1,0.001"), "set_percent_visible", "get_percent_visible");
 
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "height_expand"), "set_height_expand", "is_height_expanding");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "meta_underlined"), "set_meta_underline", "is_meta_underlined");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "tab_size", PROPERTY_HINT_RANGE, "0,24,1"), "set_tab_size", "get_tab_size");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text", PROPERTY_HINT_MULTILINE_TEXT), "set_text", "get_text");
@@ -2847,13 +2863,11 @@ void RichTextLabel::set_fixed_size_to_width(int p_width) {
 }
 
 Size2 RichTextLabel::get_minimum_size() const {
-
-	if (fixed_width != -1) {
-		const_cast<RichTextLabel *>(this)->_validate_line_caches(main);
-		return Size2(fixed_width, const_cast<RichTextLabel *>(this)->get_content_height());
+	if (fixed_width == -1 && !height_expand) {
+		return Size2();
 	}
-
-	return Size2();
+	const_cast<RichTextLabel *>(this)->_validate_line_caches(main);
+	return Size2(fixed_width == -1 ? 0 : fixed_width, const_cast<RichTextLabel *>(this)->get_content_height());
 }
 
 Ref<RichTextEffect> RichTextLabel::_get_custom_effect_by_code(String p_bbcode_identifier) {
@@ -2941,6 +2955,7 @@ RichTextLabel::RichTextLabel() {
 	meta_hovering = NULL;
 	override_selected_font_color = false;
 
+	height_expand = false;
 	scroll_visible = false;
 	scroll_follow = false;
 	scroll_following = false;
