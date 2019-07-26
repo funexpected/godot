@@ -64,6 +64,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		String architectures;
 		String linker_flags;
 		String cpp_code;
+		String ios_entitlements;
 	};
 	
 
@@ -91,6 +92,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	String _get_additional_plist_content();
 	String _get_linker_flags();
 	String _get_cpp_code();
+	String _get_ios_entitlements();
 	void _fix_config_file(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &pfile, const IOSConfigData &p_config, bool p_debug);
 	Error _export_loading_screens(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir);
 	Error _export_icons(const Ref<EditorExportPreset> &p_preset, const String &p_iconset_dir);
@@ -365,6 +367,8 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 		} else if (lines[i].find("$push_notifications") != -1) {
 			bool is_on = p_preset->get("capabilities/push_notifications");
 			strnew += lines[i].replace("$push_notifications", is_on ? "1" : "0") + "\n";
+		} else if (lines[i].find("$entitlements") != -1) {
+			strnew += lines[i].replace("$entitlements", p_config.ios_entitlements) + "\n";
 		} else if (lines[i].find("$required_device_capabilities") != -1) {
 			String capabilities;
 
@@ -449,6 +453,14 @@ String EditorExportPlatformIOS::_get_cpp_code() {
 	String result;
 	for (int i = 0; i < export_plugins.size(); ++i) {
 		result += export_plugins[i]->get_ios_cpp_code();
+	}
+	return result;
+}
+String EditorExportPlatformIOS::_get_ios_entitlements() {
+	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	String result;
+	for (int i = 0; i < export_plugins.size(); ++i) {
+		result += export_plugins[i]->get_ios_entitlements();
 	}
 	return result;
 }
@@ -960,6 +972,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	files_to_parse.insert(project_file);
 	files_to_parse.insert("godot_ios/export_options.plist");
 	files_to_parse.insert("godot_ios/dummy.cpp");
+	files_to_parse.insert("godot_ios/godot_ios.entitlements");
 	files_to_parse.insert("godot_ios.xcodeproj/project.xcworkspace/contents.xcworkspacedata");
 	files_to_parse.insert("godot_ios.xcodeproj/xcshareddata/xcschemes/godot_ios.xcscheme");
 
@@ -969,7 +982,8 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		_get_additional_plist_content(),
 		String(" ").join(_get_preset_architectures(p_preset)),
 		_get_linker_flags(),
-		_get_cpp_code()
+		_get_cpp_code(),
+		_get_ios_entitlements()
 	};
 
 	DirAccess *tmp_app_path = DirAccess::create_for_path(dest_dir);
