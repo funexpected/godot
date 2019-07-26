@@ -294,6 +294,7 @@ class EditorExportPlugin : public Reference {
 	String ios_linker_flags;
 	Vector<String> ios_bundle_files;
 	String ios_cpp_code;
+	String ios_entitlements;
 
 	_FORCE_INLINE_ void _clear() {
 		shared_objects.clear();
@@ -307,6 +308,7 @@ class EditorExportPlugin : public Reference {
 		ios_plist_content = "";
 		ios_linker_flags = "";
 		ios_cpp_code = "";
+		ios_entitlements = "";
 	}
 
 	void _export_file_script(const String &p_path, const String &p_type, const PoolVector<String> &p_features);
@@ -325,6 +327,7 @@ protected:
 	void add_ios_linker_flags(const String &p_flags);
 	void add_ios_bundle_file(const String &p_path);
 	void add_ios_cpp_code(const String &p_code);
+	void add_ios_entitlements(const String &p_code);
 
 	void skip();
 
@@ -339,6 +342,7 @@ public:
 	String get_ios_linker_flags() const;
 	Vector<String> get_ios_bundle_files() const;
 	String get_ios_cpp_code() const;
+	String get_ios_entitlements() const;
 
 	EditorExportPlugin();
 };

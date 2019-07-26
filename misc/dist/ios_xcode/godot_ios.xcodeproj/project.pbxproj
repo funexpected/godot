@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F1575721F582BE20003B889 /* $binary.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = 1FF4C1881F584E6300A41E41 /* dylibs */; };
 		1F1575721F582BE20003B888 /* dylibs in Resources */ = {isa = PBXBuildFile; fileRef = 1F1575711F582BE20003B888 /* dylibs */; };
 		1FE926991FBBF85400F53A6F /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FE926961FBBF7D400F53A6F /* SystemConfiguration.framework */; };
 		1FE9269A1FBBF85F00F53A6F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FE926951FBBF7C400F53A6F /* Security.framework */; };
@@ -349,6 +350,7 @@
 				D07CD44E1C5D589C00B7FB28 /* Images.xcassets in Resources */,
 				D0BCFE7818AEBFEB004A7AAE /* $binary.pck in Resources */,
 				D0BCFE4618AEBDA2004A7AAE /* InfoPlist.strings in Resources */,
+				1F1575721F582BE20003B889 /* $binary.entitlements in Resources */,
 				$additional_pbx_resources_build
 			);
 			runOnlyForDeploymentPostprocessing = 0;
