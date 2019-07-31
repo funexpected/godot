@@ -130,7 +130,7 @@ private:
 	Type type;
 
 	struct ObjData {
-
+		uint64_t obj_id;
 		Object *obj;
 		RefPtr ref;
 	};
