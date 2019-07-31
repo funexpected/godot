@@ -130,9 +130,9 @@ private:
 	Type type;
 
 	struct ObjData {
-
 		Object *obj;
 		RefPtr ref;
+		uint64_t obj_id;
 	};
 
 	_FORCE_INLINE_ ObjData &_get_obj();
