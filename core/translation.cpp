@@ -1080,6 +1080,12 @@ StringName TranslationServer::translate(const StringName &p_message) const {
 		const Ref<Translation> &t = E->get();
 		ERR_FAIL_COND_V(t.is_null(), p_message);
 		String l = t->get_locale();
+		if (l == locale) {
+			res = t->get_message(p_message);
+		}
+		/*
+		if (lptr[0] != l[0] || lptr[1] != l[1])
+			continue; // locale not match
 
 		bool exact_match = (l == locale);
 		if (!exact_match) {
@@ -1102,6 +1108,7 @@ StringName TranslationServer::translate(const StringName &p_message) const {
 		} else {
 			near_match = true;
 		}
+		*/
 	}
 
 	if (!res && fallback.length() >= 2) {
