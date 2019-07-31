@@ -790,7 +790,7 @@ bool Variant::is_zero() const {
 		} break;
 		case OBJECT: {
 
-			return _get_obj().obj == NULL;
+			return _get_obj().obj == NULL || _get_obj().obj_id != 0 && _get_obj().obj->get_instance_id() != _get_obj().obj_id;
 		} break;
 		case NODE_PATH: {
 
@@ -1114,6 +1114,7 @@ void Variant::clear() {
 		} break;
 		case OBJECT: {
 
+			_get_obj().obj_id = 0;
 			_get_obj().obj = NULL;
 			_get_obj().ref.unref();
 		} break;
@@ -2286,7 +2287,9 @@ Variant::Variant(const RefPtr &p_resource) {
 	memnew_placement(_data._mem, ObjData);
 	REF *ref = reinterpret_cast<REF *>(p_resource.get_data());
 	_get_obj().obj = ref->ptr();
+	_get_obj().obj_id = 0;
 	_get_obj().ref = p_resource;
+
 }
 
 Variant::Variant(const RID &p_rid) {
@@ -2301,6 +2304,9 @@ Variant::Variant(const Object *p_object) {
 
 	memnew_placement(_data._mem, ObjData);
 	_get_obj().obj = const_cast<Object *>(p_object);
+	if (_get_obj().obj) {
+		_get_obj().obj_id = _get_obj().obj->get_instance_id();
+	}
 }
 
 Variant::Variant(const Dictionary &p_dictionary) {

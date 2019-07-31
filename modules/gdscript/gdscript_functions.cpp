@@ -1448,8 +1448,12 @@ void GDScriptFunctions::call(Function p_func, const Variant **p_args, int p_arg_
 			if (p_args[0]->get_type() != Variant::OBJECT) {
 				r_ret = false;
 			} else {
-				Object *obj = *p_args[0];
-				r_ret = ObjectDB::instance_validate(obj);
+				if (p_args[0]->is_zero()) {
+					r_ret = false;
+				} else {
+					Object *obj = *p_args[0];
+					r_ret = ObjectDB::instance_validate(obj);
+				}
 			}
 
 		} break;
