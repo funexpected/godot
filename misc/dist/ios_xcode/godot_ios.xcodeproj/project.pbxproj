@@ -299,7 +299,7 @@
 								enabled = $push_notifications;
 							};
 							com.apple.SafariKeychain = {
-								enabled = 0;
+								enabled = 1;
 							};
 							com.apple.Siri = {
 								enabled = 0;
