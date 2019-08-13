@@ -76,6 +76,8 @@ void InAppStore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("pop_pending_event"), &InAppStore::pop_pending_event);
 	ClassDB::bind_method(D_METHOD("finish_transaction"), &InAppStore::finish_transaction);
 	ClassDB::bind_method(D_METHOD("set_auto_finish_transaction"), &InAppStore::set_auto_finish_transaction);
+	ClassDB::bind_method(D_METHOD("request_review"), &InAppStore::request_review);
+	ClassDB::bind_method(D_METHOD("get_payload"), &InAppStore::get_payload);
 };
 
 @interface ProductsDelegate : NSObject <SKProductsRequestDelegate> {
@@ -689,6 +691,12 @@ void InAppStore::finish_transaction(String product_id) {
 
 void InAppStore::set_auto_finish_transaction(bool b) {
 	auto_finish_transactions = b;
+}
+
+void InAppStore::request_review() {
+	 if([SKStoreReviewController class]) {
+       [SKStoreReviewController requestReview];
+    }
 }
 
 InAppStore::~InAppStore(){};

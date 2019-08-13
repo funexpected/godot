@@ -56,6 +56,8 @@ public:
 	Dictionary get_payload();
 
 
+	void request_review();
+
 	void _post_event(Variant p_event);
 	void _record_purchase(String product_id);
 
