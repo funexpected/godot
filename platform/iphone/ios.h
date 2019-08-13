@@ -32,6 +32,9 @@
 #define IOS_H
 
 #include "core/object.h"
+#include <wchar.h>
+#import "app_delegate.h"
+
 
 class iOS : public Object {
 
@@ -46,7 +49,7 @@ public:
 	String get_rate_url(int p_app_id) const;
 	Variant get_launch_options() const;
 	void set_launch_options(const Variant &p_options);
-
+	void share_data(const String &title, const String &subject, const String &text);
 	iOS();
 };
 
