@@ -806,8 +806,57 @@ static int frame_count = 0;
 
 	// prevent to stop music in another background app
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"didFinishLaunchingWithOptions_finish" object:nil userInfo:launchOptions];
 	return TRUE;
 };
+
+
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
+	NSDictionary *data = @{ @"app" : app, @"url": url, @"options":options};
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appOpenUrlWithOptions_finish" object:nil userInfo:data];
+	return YES;
+}
+
+- (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray * _Nullable))restorationHandler {
+	// handler for Universal Links
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appContinueUserActivity_finish" object:nil userInfo: @{@"userActivity" :userActivity}];
+	return YES;
+}
+
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+  // handler for Push Notifications
+  NSLog(@"appDidReceiveRemoteNotification_finish");
+  [[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appDidReceiveRemoteNotification_finish" object:nil userInfo: @{@"userInfo" :userInfo}];
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+    fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+	NSLog(@"appDidReceiveRemoteNotification_finish with completion");
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appDidReceiveRemoteNotification_finish" object:nil userInfo: @{@"userInfo" :userInfo}];
+
+
+
+	completionHandler(UIBackgroundFetchResultNewData);
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken; {
+  NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken_finish");
+  // handler for Push Notifications
+  [[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"didRegisterForRemoteNotificationsWithDeviceToken_finish" object:nil userInfo: @{@"deviceToken":deviceToken}];
+}
+
+
+
+
+
+
 
 - (void)onAudioInterruption:(NSNotification *)notification {
 	if ([notification.name isEqualToString:AVAudioSessionInterruptionNotification]) {
