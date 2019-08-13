@@ -697,7 +697,7 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 
 	const String build_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; };\n"); 
 	const String copy_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy,  RemoveHeadersOnCopy, ); }; };\n"); 
-	const String ref_format = String("$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = $name; path = \"$file_path\"; sourceTree = \"$source_tree\"; };\n");
+	const String ref_format = String("$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = \"$name\"; path = \"$file_path\"; sourceTree = \"$source_tree\"; };\n");
 
 	for (int i = 0; i < p_additional_assets.size(); ++i) {
 		const IOSExportAsset &asset = p_additional_assets[i];
