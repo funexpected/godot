@@ -36,6 +36,7 @@
 void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
+	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -80,5 +81,30 @@ String iOS::get_rate_url(int p_app_id) const {
 	printf("returning rate url %ls\n", ret.c_str());
 	return ret;
 };
+
+void iOS::share_data(const String &title, const String &subject, const String &text)
+{
+    
+    UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIApplication sharedApplication] delegate]).window.rootViewController;
+    
+    NSString * message = [NSString stringWithCString:text.utf8().get_data() encoding:NSUTF8StringEncoding];
+    
+    NSArray * shareItems = @[message];
+    
+    UIActivityViewController * avc = [[UIActivityViewController alloc] initWithActivityItems:shareItems applicationActivities:nil];
+    
+    [root_controller presentViewController:avc animated:YES completion:nil];
+	//if iPhone
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+  	  [avc presentViewController:avc animated:YES completion:nil];
+	}
+	//if iPad
+	else {
+    // Change Rect to position Popover
+    UIPopoverController *popup = [[UIPopoverController alloc] initWithContentViewController:avc];
+    [popup presentPopoverFromRect:CGRectMake(root_controller.view.frame.size.width * 0.5, root_controller.view.frame.size.height*0.84, 0, 0)inView:root_controller.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+}
+
+}
 
 iOS::iOS(){};
