@@ -35,6 +35,7 @@
 
 #import <UIKit/UIKit.h>
 #include <sys/sysctl.h>
+#import "app_delegate.h"
 
 void iOS::_bind_methods() {
 
