@@ -124,7 +124,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		D0BCFE4918AEBDA2004A7AAE /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
@@ -132,8 +132,8 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = "";
-			shellScript = "#!/bin/sh\necho \"Executing custom scripts!\"\n$additional_pbx_scripts\necho \"Done executing custom scripts\"";
+			shellPath = /bin/sh;
+			shellScript = "chmod 555 ${PROJECT_DIR}/${PROJECT}/Fabric.framework/run\nchmod 555 ${PROJECT_DIR}/${PROJECT}/Fabric.framework/upload-symbols\n${PROJECT_DIR}/${PROJECT}/Fabric.framework/run\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
