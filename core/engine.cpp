@@ -218,9 +218,11 @@ String Engine::get_stack() const {
 	for (int i = 0; i < ScriptServer::get_language_count(); i++){
 		ScriptLanguage *script = ScriptServer::get_language(i);
 		if (script->get_name() != "GDScript") continue;
-		stack += script->get_name() + " stack ( " + itos(script->debug_get_stack_level_count()) + " frames )\n";
+		// stack += script->get_name() + " stack ( " + itos(script->debug_get_stack_level_count()) + " frames )\n";
+		// for (int j = 0; j < script->debug_get_stack_level_count(); j++) {
+		// 	stack += "  [" + itos(j) + "] " + script->debug_get_stack_level_source(j) + ":" + itos(script->debug_get_stack_level_line(j)) + " in function '" + script->debug_get_stack_level_function(j) + "'\n";
 		for (int j = 0; j < script->debug_get_stack_level_count(); j++) {
-			stack += "  [" + itos(j) + "] " + script->debug_get_stack_level_source(j) + ":" + itos(script->debug_get_stack_level_line(j)) + " in function '" + script->debug_get_stack_level_function(j) + "'\n";
+			stack +=   script->debug_get_stack_level_source(j) + "\t - Line " + itos(script->debug_get_stack_level_line(j)) + "\t - " + script->debug_get_stack_level_function(j) + "|";
 		}
 	}
 	return stack;
