@@ -505,26 +505,25 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						OPCODE_BREAK;
 					}
 #endif // DEBUG_ENABLED
-
-					GDScript *scr_B = Object::cast_to<GDScript>(obj_B);
+					Script *scr_B = Object::cast_to<Script>(obj_B);
 
 					if (scr_B) {
 						//if B is a script, the only valid condition is that A has an instance which inherits from the script
 						//in other situation, this shoul return false.
 
-						if (obj_A->get_script_instance() && obj_A->get_script_instance()->get_language() == GDScriptLanguage::get_singleton()) {
+						if (obj_A->get_script_instance()) {
 
-							GDScript *cmp = static_cast<GDScript *>(obj_A->get_script_instance()->get_script().ptr());
+							Ref<Script> cmp = obj_A->get_script_instance()->get_script();
 							//bool found=false;
-							while (cmp) {
-
-								if (cmp == scr_B) {
+							while (!cmp.is_null()) {
+								
+								if (cmp->is_equals(scr_B)) {
 									//inherits from script, all ok
 									extends_ok = true;
 									break;
 								}
 
-								cmp = cmp->_base;
+								cmp = cmp->get_base_script();
 							}
 						}
 

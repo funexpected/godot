@@ -118,6 +118,7 @@ protected:
 public:
 	virtual bool can_instance() const = 0;
 
+	virtual bool is_equals(const Script *p_other);
 	virtual Ref<Script> get_base_script() const = 0; //for script inheritance
 
 	virtual StringName get_instance_base_type() const = 0; // this may not work in all scripts, will return empty if so
