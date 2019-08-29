@@ -121,6 +121,10 @@ void Script::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "source_code", PROPERTY_HINT_NONE, "", 0), "set_source_code", "get_source_code");
 }
 
+bool Script::is_equals(const Script *p_other) {
+	return p_other == this;
+}
+
 void ScriptServer::set_scripting_enabled(bool p_enabled) {
 
 	scripting_enabled = p_enabled;
