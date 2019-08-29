@@ -145,6 +145,7 @@ public:
 
 	virtual bool can_instance() const;
 
+	virtual bool is_equals(const Script *p_other);
 	virtual Ref<Script> get_base_script() const; //for script inheritance
 
 	virtual StringName get_instance_base_type() const; // this may not work in all scripts, will return empty if so
