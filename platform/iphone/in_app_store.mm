@@ -499,6 +499,13 @@ Dictionary InAppStore::_validate_payload(char* buff, int buff_size){
 
 @implementation TransObserver
 
+- (BOOL)paymentQueue:(SKPaymentQueue *)queue 
+shouldAddStorePayment:(SKPayment *)payment 
+          forProduct:(SKProduct *)product {
+			  return (true);
+		  };
+
+
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions {
 
 	printf("transactions updated!\n");
