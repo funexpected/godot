@@ -337,6 +337,11 @@ static void clear_touches() {
 // the same size as our display area.
 
 - (void)layoutSubviews {
+	UIApplicationState state = [[UIApplication sharedApplication] applicationState];
+	if (state == UIApplicationStateBackground || state == UIApplicationStateInactive)
+	{
+		return;
+	}
 	[EAGLContext setCurrentContext:context];
 	[self destroyFramebuffer];
 	[self createFramebuffer];
