@@ -86,6 +86,7 @@ private:
 	Vector<uint8_t> _fontdata;
 
 	String font_path;
+	String font_name;
 	Map<CacheID, DynamicFontAtSize *> size_cache;
 
 	friend class DynamicFontAtSize;
@@ -213,8 +214,14 @@ public:
 		SPACING_SPACE
 	};
 
+	enum Kind {
+		KIND_CUSTOM,
+		KIND_SYSTEM
+	};
+
 private:
 	Ref<DynamicFontData> data;
+	Ref<DynamicFontData> system_data;
 	Ref<DynamicFontAtSize> data_at_size;
 	Ref<DynamicFontAtSize> outline_data_at_size;
 
@@ -232,6 +239,8 @@ private:
 	int spacing_space;
 
 	Color outline_color;
+	Kind kind;
+	Dictionary font_system_names;
 
 protected:
 	void _reload_cache();
@@ -243,6 +252,9 @@ protected:
 	static void _bind_methods();
 
 public:
+	void set_kind(Kind p_kind);
+	Kind get_kind() const;
+	
 	void set_font_data(const Ref<DynamicFontData> &p_data);
 	Ref<DynamicFontData> get_font_data() const;
 
@@ -298,6 +310,7 @@ public:
 };
 
 VARIANT_ENUM_CAST(DynamicFont::SpacingType);
+VARIANT_ENUM_CAST(DynamicFont::Kind);
 
 /////////////
 
