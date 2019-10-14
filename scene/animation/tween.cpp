@@ -727,7 +727,7 @@ void Tween::_tween_process(float p_delta) {
 			// If we are not repeating the tween, remove it
 			if (!repeat)
 				call_deferred("_clear_by_uid", data.uid);
-		} else if (!repeat)
+		} else if (!repeat) {
 			all_finished = all_finished && data.finish;
 		}
 	}

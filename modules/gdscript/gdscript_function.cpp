@@ -1603,9 +1603,6 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				stack[i].~Variant();
 		}
 
-#ifdef DEBUG_ENABLED
-	}
-#endif
 
 	return retvalue;
 }

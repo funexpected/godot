@@ -2993,6 +2993,7 @@ Node::Node() {
 	data.display_folded = false;
 	data.ready_first = true;
 	orphan_node_count++;
+}
 
 Node::~Node() {
 
