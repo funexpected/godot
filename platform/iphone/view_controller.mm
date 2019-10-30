@@ -172,25 +172,11 @@
 }
 
 - (BOOL)shouldAutorotate {
-	if (!OSIPhone::get_singleton()) {
-		return NO;
-	}
-
-	switch (OS::get_singleton()->get_screen_orientation()) {
-		case OS::SCREEN_SENSOR:
-		case OS::SCREEN_SENSOR_LANDSCAPE:
-		case OS::SCREEN_SENSOR_PORTRAIT:
-			return YES;
-		default:
-			return NO;
-	}
+	return YES;
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-	if (!OSIPhone::get_singleton()) {
-		return UIInterfaceOrientationMaskAll;
-	}
-
+	NSLog(@"supportedInterfaceOrientations: %d", OS::get_singleton()->get_screen_orientation());
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_PORTRAIT:
 			return UIInterfaceOrientationMaskPortrait;
