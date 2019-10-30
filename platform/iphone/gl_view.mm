@@ -32,9 +32,11 @@
 #import "gl_view_gesture_recognizer.h"
 
 #include "core/os/keyboard.h"
+#include "core/os/os.h"
 #include "core/project_settings.h"
 #include "os_iphone.h"
 #include "servers/audio_server.h"
+#include "app_delegate.h"
 
 #import <OpenGLES/EAGLDrawable.h>
 #import <QuartzCore/QuartzCore.h>
@@ -49,7 +51,7 @@
 */
 
 bool gles3_available = true;
-int gl_view_base_fb;
+int gl_view_base_fb = 0;
 static String keyboard_text;
 static GLView *_instance = NULL;
 
@@ -65,6 +67,7 @@ void _pause_video();
 void _focus_out_video();
 void _unpause_video();
 void _stop_video();
+void _change_orientation(OS::ScreenOrientation p_orientation);
 CGFloat _points_to_pixels(CGFloat);
 
 void _show_keyboard(String p_existing) {
@@ -188,6 +191,24 @@ void _stop_video() {
 	[_instance.avPlayerLayer removeFromSuperlayer];
 	_instance.avPlayer = nil;
 	video_playing = false;
+}
+
+void _change_orientation(OS::ScreenOrientation p_orienation) {
+	NSNumber *value;
+	switch (p_orienation) {
+		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
+			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+			break;
+		case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
+			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+			break;
+		default:
+			value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
+	}
+	NSLog(@"_change_orientation()");
+	[[UIDevice currentDevice] setValue:value forKey:@"orientation"]; 
+	[UIViewController attemptRotationToDeviceOrientation];
 }
 
 CGFloat _points_to_pixels(CGFloat points) {
@@ -351,7 +372,7 @@ static void clear_touches() {
 	{
 		return;
 	}
-	//printf("HERE\n");
+	printf("layoutSubviews\n");
 	[EAGLContext setCurrentContext:context];
 	[self destroyFramebuffer];
 	[self createFramebuffer];
