@@ -30,6 +30,7 @@
 
 #include "ios.h"
 #include <sys/sysctl.h>
+#include "core/os/os.h"
 
 #import <UIKit/UIKit.h>
 #import "app_delegate.h"
@@ -37,7 +38,9 @@
 void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
+	ClassDB::bind_method(D_METHOD("get_interface_orientation"), &iOS::get_interface_orientation);
 	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
+	
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -82,6 +85,21 @@ String iOS::get_rate_url(int p_app_id) const {
 	printf("returning rate url %ls\n", ret.c_str());
 	return ret;
 };
+
+int iOS::get_interface_orientation() const {
+	UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+	if (orientation == UIInterfaceOrientationPortrait) {
+		return OS::SCREEN_PORTRAIT;
+	} else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
+		return OS::SCREEN_REVERSE_PORTRAIT;
+	} else if (orientation == UIInterfaceOrientationLandscapeLeft) {
+		return OS::SCREEN_LANDSCAPE;
+	} else if (orientation == UIInterfaceOrientationLandscapeRight) {
+		return OS::SCREEN_REVERSE_LANDSCAPE;
+	} else {
+		return OS::SCREEN_SENSOR;
+	}
+}
 
 void iOS::share_data(const String &title, const String &subject, const String &text)
 {

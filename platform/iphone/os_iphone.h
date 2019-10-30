@@ -76,6 +76,7 @@ private:
 
 	VideoMode video_mode;
 
+	virtual void set_screen_orientation(ScreenOrientation p_orientation);
 	virtual int get_video_driver_count() const;
 	virtual const char *get_video_driver_name(int p_driver) const;
 
