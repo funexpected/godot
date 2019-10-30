@@ -172,10 +172,10 @@
 }
 
 - (BOOL)shouldAutorotate {
+	return YES;
 	if (!OSIPhone::get_singleton()) {
 		return NO;
 	}
-
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_SENSOR:
 		case OS::SCREEN_SENSOR_LANDSCAPE:
@@ -190,7 +190,6 @@
 	if (!OSIPhone::get_singleton()) {
 		return UIInterfaceOrientationMaskAll;
 	}
-
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_PORTRAIT:
 			return UIInterfaceOrientationMaskPortrait;

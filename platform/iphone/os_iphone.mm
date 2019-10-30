@@ -462,6 +462,24 @@ void OSIPhone::set_keep_screen_on(bool p_enabled) {
 	[UIApplication sharedApplication].idleTimerDisabled = p_enabled;
 };
 
+void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
+	OS::set_screen_orientation(p_orientation);
+	NSNumber *value;
+	switch (p_orienation) {
+		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
+			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+			break;
+		case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
+			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+			break;
+		default:
+			value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
+	}
+	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+	UIViewController attemptRotationToDeviceOrientation];
+}
+
 String OSIPhone::get_user_data_dir() const {
 	return data_dir;
 }
