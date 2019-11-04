@@ -137,16 +137,18 @@ void InAppStore::_bind_methods() {
 			}
 			if (product.introductoryPrice){
 				Dictionary discont_offers; 
-				discont_offers["identifier"] = String::utf8([product.introductoryPrice.identifier UTF8String]);
+				//discont_offers["identifier"] = String::utf8([product.introductoryPrice.identifier UTF8String]);
 				switch(product.introductoryPrice.paymentMode){
 					case SKProductDiscountPaymentModePayAsYouGo: discont_offers["paymentMode"] = Variant("payAsYouGo"); break;
 					case SKProductDiscountPaymentModePayUpFront: discont_offers["paymentMode"] = Variant("payUpFront"); break;
 					case SKProductDiscountPaymentModeFreeTrial: discont_offers["paymentMode"] = Variant("freeTrial"); break;
 				}
+				/*
 				switch(product.introductoryPrice.type){
 					case SKProductDiscountTypeIntroductory: discont_offers["type"] = Variant("introductory"); break;
 					case SKProductDiscountTypeSubscription: discont_offers["type"] = Variant("subscription"); break;
 				}
+				*/
 				discont_offers["price"] = Variant([product.introductoryPrice.price doubleValue]);
 				discont_offers["priceLocale"] = String::utf8([[[product priceLocale] objectForKey:NSLocaleCurrencyCode] UTF8String]);
 				discont_offers["number_of_period"] = Variant(product.introductoryPrice.numberOfPeriods);
