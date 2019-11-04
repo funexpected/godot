@@ -101,6 +101,7 @@ void InAppStore::_bind_methods() {
 	Dictionary ret;
 	ret["type"] = "product_info";
 	ret["result"] = "ok";
+	Array offers;
 	PoolStringArray titles;
 	PoolStringArray descriptions;
 	PoolRealArray prices;
@@ -123,15 +124,41 @@ void InAppStore::_bind_methods() {
 		ids.push_back(String::utf8([product.productIdentifier UTF8String]));
 		localized_prices.push_back(String::utf8([product.localizedPrice UTF8String]));
 		currency_codes.push_back(String::utf8([[[product priceLocale] objectForKey:NSLocaleCurrencyCode] UTF8String]));
-		/*
-		subscription_periods.push_back(product.subscriptionPeriod.numberOfUnits);
-		switch(product.subscriptionPeriod.unit){
-			case SKProductPeriodUnitDay: subscription_units.push_back("day"); break;
-			case SKProductPeriodUnitWeek: subscription_units.push_back("week"); break;
-			case SKProductPeriodUnitMonth: subscription_units.push_back("month"); break;
-			case SKProductPeriodUnitYear: subscription_units.push_back("year"); break;
+		NSString *ver = [[UIDevice currentDevice] systemVersion];
+		float ver_float = [ver floatValue];
+		if (ver_float >= 11.2)
+		{	
+			subscription_periods.push_back(product.subscriptionPeriod.numberOfUnits);
+			switch(product.subscriptionPeriod.unit){
+				case SKProductPeriodUnitDay: subscription_units.push_back("day"); break;
+				case SKProductPeriodUnitWeek: subscription_units.push_back("week"); break;
+				case SKProductPeriodUnitMonth: subscription_units.push_back("month"); break;
+				case SKProductPeriodUnitYear: subscription_units.push_back("year"); break;
+			}
+			if (product.introductoryPrice){
+				Dictionary discont_offers; 
+				discont_offers["identifier"] = String::utf8([product.introductoryPrice.identifier UTF8String]);
+				switch(product.introductoryPrice.paymentMode){
+					case SKProductDiscountPaymentModePayAsYouGo: discont_offers["paymentMode"] = Variant("payAsYouGo"); break;
+					case SKProductDiscountPaymentModePayUpFront: discont_offers["paymentMode"] = Variant("payUpFront"); break;
+					case SKProductDiscountPaymentModeFreeTrial: discont_offers["paymentMode"] = Variant("freeTrial"); break;
+				}
+				switch(product.introductoryPrice.type){
+					case SKProductDiscountTypeIntroductory: discont_offers["type"] = Variant("introductory"); break;
+					case SKProductDiscountTypeSubscription: discont_offers["type"] = Variant("subscription"); break;
+				}
+				discont_offers["price"] = Variant([product.introductoryPrice.price doubleValue]);
+				discont_offers["priceLocale"] = String::utf8([[[product priceLocale] objectForKey:NSLocaleCurrencyCode] UTF8String]);
+				discont_offers["number_of_period"] = Variant(product.introductoryPrice.numberOfPeriods);
+				offers.push_back(discont_offers);
+			} else
+				offers.push_back(String::utf8([@"no introductoryPrice" UTF8String]));
 		}
-		*/
+		else
+		{
+			subscription_periods.push_back(Variant());
+			offers.push_back(Variant());
+		}
 	};
 	ret["titles"] = titles;
 	ret["descriptions"] = descriptions;
@@ -139,10 +166,9 @@ void InAppStore::_bind_methods() {
 	ret["ids"] = ids;
 	ret["localized_prices"] = localized_prices;
 	ret["currency_codes"] = currency_codes;
-	/*
 	ret["subscription_periods"] = subscription_periods;
 	ret["subscription_units"] = subscription_units;
-	*/
+	ret["offers"] = offers;
 
 	PoolStringArray invalid_ids;
 
