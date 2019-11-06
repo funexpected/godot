@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "ios.h"
+#include "core/os/os.h"
 
 #import <UIKit/UIKit.h>
 #import "app_delegate.h"
@@ -37,8 +38,10 @@ void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
 	ClassDB::bind_method(D_METHOD("get_launch_options"), &iOS::get_launch_options);
+	ClassDB::bind_method(D_METHOD("get_device_orientation"), &iOS::get_device_orientation);
 	ClassDB::bind_method(D_METHOD("set_launch_options", "options"), &iOS::set_launch_options);
 	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
+	
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -75,6 +78,21 @@ void iOS::set_launch_options(const Variant &p_options){
 
 Variant iOS::get_launch_options() const {
 	return launch_options;
+}
+
+int iOS::get_device_orientation() const {
+	UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+	if (orientation == UIDeviceOrientationPortrait) {
+		return OS::SCREEN_PORTRAIT;
+	} else if (orientation == UIDeviceOrientationPortraitUpsideDown) {
+		return OS::SCREEN_REVERSE_PORTRAIT;
+	} else if (orientation == UIDeviceOrientationLandscapeLeft) {
+		return OS::SCREEN_LANDSCAPE;
+	} else if (orientation == UIDeviceOrientationLandscapeRight) {
+		return OS::SCREEN_REVERSE_LANDSCAPE;
+	} else {
+		return OS::SCREEN_SENSOR;
+	}
 }
 
 void iOS::share_data(const String &title, const String &subject, const String &text)

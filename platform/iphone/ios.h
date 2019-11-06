@@ -48,6 +48,7 @@ public:
 	Variant get_launch_options() const;
 	void set_launch_options(const Variant &p_options);
 	void share_data(const String &title, const String &subject, const String &text);
+	int get_device_orientation() const;
 	iOS();
 };
 
