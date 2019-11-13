@@ -38,7 +38,7 @@ void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
 	ClassDB::bind_method(D_METHOD("get_launch_options"), &iOS::get_launch_options);
-	ClassDB::bind_method(D_METHOD("get_device_orientation"), &iOS::get_device_orientation);
+	ClassDB::bind_method(D_METHOD("get_interface_orientation"), &iOS::get_interface_orientation);
 	ClassDB::bind_method(D_METHOD("set_launch_options", "options"), &iOS::set_launch_options);
 	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
 	
@@ -80,15 +80,15 @@ Variant iOS::get_launch_options() const {
 	return launch_options;
 }
 
-int iOS::get_device_orientation() const {
-	UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
-	if (orientation == UIDeviceOrientationPortrait) {
+int iOS::get_interface_orientation() const {
+	UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+	if (orientation == UIInterfaceOrientationPortrait) {
 		return OS::SCREEN_PORTRAIT;
-	} else if (orientation == UIDeviceOrientationPortraitUpsideDown) {
+	} else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
 		return OS::SCREEN_REVERSE_PORTRAIT;
-	} else if (orientation == UIDeviceOrientationLandscapeLeft) {
+	} else if (orientation == UIInterfaceOrientationLandscapeLeft) {
 		return OS::SCREEN_LANDSCAPE;
-	} else if (orientation == UIDeviceOrientationLandscapeRight) {
+	} else if (orientation == UIInterfaceOrientationLandscapeRight) {
 		return OS::SCREEN_REVERSE_LANDSCAPE;
 	} else {
 		return OS::SCREEN_SENSOR;

@@ -50,7 +50,7 @@
 */
 
 bool gles3_available = true;
-int gl_view_base_fb;
+int gl_view_base_fb = 0;
 static String keyboard_text;
 static GLView *_instance = NULL;
 
@@ -355,7 +355,7 @@ static void clear_touches() {
 	{
 		return;
 	}
-	//printf("HERE\n");
+	printf("layoutSubviews\n");
 	[EAGLContext setCurrentContext:context];
 	[self destroyFramebuffer];
 	[self createFramebuffer];
