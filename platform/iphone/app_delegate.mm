@@ -800,7 +800,7 @@ static int frame_count = 0;
 	// prevent to stop music in another background app
 	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
 	//print_line(String("Setting ios_launch_options = ") + nsobject_to_variant(launchOptions));
-	ProjectSettings::get_singleton()->set_meta("ios_launch_options", nsobject_to_variant(launchOptions));
+	//ProjectSettings::get_singleton()->set_meta("ios_launch_options", nsobject_to_variant(launchOptions));
 	//print_line(String("didFinishLaunchingWithOptions end");
 	[[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"didFinishLaunchingWithOptions_finish" object:nil userInfo:launchOptions];
