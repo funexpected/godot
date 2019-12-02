@@ -46,6 +46,7 @@ public:
 
 	String get_rate_url(int p_app_id) const;
 	Variant get_launch_options() const;
+	String get_app_version();
 	void set_launch_options(const Variant &p_options);
 	void share_data(const String &title, const String &subject, const String &text);
 	int get_interface_orientation() const;
