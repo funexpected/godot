@@ -112,8 +112,7 @@ String iOS::get_app_version()
 
 void iOS::share_data(const String &title, const String &subject, const String &text)
 {
-    
-    UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIApplication sharedApplication] delegate]).window.rootViewController;
+UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIApplication sharedApplication] delegate]).window.rootViewController;
     
     NSString * message = [NSString stringWithCString:text.utf8().get_data() encoding:NSUTF8StringEncoding];
     
@@ -121,17 +120,11 @@ void iOS::share_data(const String &title, const String &subject, const String &t
     
     UIActivityViewController * avc = [[UIActivityViewController alloc] initWithActivityItems:shareItems applicationActivities:nil];
     
-    [root_controller presentViewController:avc animated:YES completion:nil];
-	//if iPhone
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-  	  [avc presentViewController:avc animated:YES completion:nil];
-	}
-	//if iPad
-	else {
-    // Change Rect to position Popover
-    UIPopoverController *popup = [[UIPopoverController alloc] initWithContentViewController:avc];
-    [popup presentPopoverFromRect:CGRectMake(root_controller.view.frame.size.width * 0.5, root_controller.view.frame.size.height*0.84, 0, 0)inView:root_controller.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-}
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        avc.popoverPresentationController.sourceView = root_controller.view;
+        avc.popoverPresentationController.sourceRect = CGRectMake(root_controller.view.bounds.size.width/2, root_controller.view.bounds.size.height/4, 0, 0); 
+    }
+    [root_controller presentViewController:avc animated:true completion:nil];
 
 }
 
