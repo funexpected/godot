@@ -716,7 +716,7 @@ Variant Object::_call_multilevel_bind(const Variant **p_args, int p_argcount, Va
 		return Variant();
 	}
 	r_error.error = Variant::CallError::CALL_OK;
-	
+
 	StringName method = *p_args[0];
 	call_multilevel(method, &p_args[1], p_argcount - 1);
 	return Variant();
@@ -991,7 +991,7 @@ void Object::notification(int p_notification, bool p_reversed) {
 
 	_notificationv(p_notification, p_reversed);
 
-	if (script_instance && p_notification != NOTIFICATION_PREDELETE) {
+	if (script_instance) {
 		script_instance->notification(p_notification);
 	}
 }
