@@ -843,8 +843,17 @@ static int frame_count = 0;
                        @"appDidReceiveRemoteNotification_finish" object:nil userInfo: @{@"userInfo" :userInfo}];
 }
 
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+    fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+		[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appDidReceiveRemoteNotificationWirhCompletion_finish" object:nil userInfo: @{@"userInfo" :userInfo, @"completionHandler": completionHandler}];
+}
 
-
+- (void)application:(UIApplication *)application
+    didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+		[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"didRegisterForRemoteNotificationsWithDeviceToken_finish" object:nil userInfo: @{@"application" :application, @"deviceToken": deviceToken}];
+}
 
 
 
