@@ -1,0 +1,3 @@
+[submodule "modules/spine"]
+	path = modules/spine
+	url = git@github.com:funexpected/godot-spine-module.git
