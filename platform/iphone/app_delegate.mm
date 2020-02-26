@@ -93,7 +93,7 @@ static ViewController *mainViewController = nil;
 	mainViewController = viewController;
 
 	// prevent to stop music in another background app
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 
 	bool keep_screen_on = bool(GLOBAL_DEF("display/window/energy_saving/keep_screen_on", true));
 	OSIPhone::get_singleton()->set_keep_screen_on(keep_screen_on);
