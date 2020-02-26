@@ -804,7 +804,7 @@ static int frame_count = 0;
 	mainViewController = view_controller;
 
 	// prevent to stop music in another background app
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 	[[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"didFinishLaunchingWithOptions_finish" object:nil userInfo:launchOptions];
 	return TRUE;
