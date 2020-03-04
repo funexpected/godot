@@ -37,7 +37,9 @@
 
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
+#ifdef __APPLE__
 #include "apple_fonts.h"
+#endif
 
 const char* _font_systems[] = { "OSX", "iOS", NULL };
 
@@ -133,7 +135,6 @@ Error DynamicFontAtSize::_load() {
 			font->set_font_ptr(_fontdata[font->font_path].ptr(), _fontdata[font->font_path].size());
 
 		} else {
-
 			FileAccess *f = FileAccess::open(font->font_path, FileAccess::READ);
 			if (!f) {
 				FT_Done_FreeType(library);
@@ -154,6 +155,7 @@ Error DynamicFontAtSize::_load() {
 		if (_fontdata.has(font->font_name)) {
 			font->set_font_ptr(_fontdata[font->font_name].ptr(), _fontdata[font->font_name].size());
 		} else {
+#ifdef __APPLE__
 			int font_data_size = 0;
 			unsigned char* font_data = apple_get_font_data_for_font(font->font_name.utf8().ptr(), &font_data_size);
 			_fontdata[font->font_name] = Vector<uint8_t>();
@@ -161,6 +163,10 @@ Error DynamicFontAtSize::_load() {
 			copymem(_fontdata[font->font_name].ptrw(), font_data, font_data_size);
 			free(font_data);
 			font->set_font_ptr(_fontdata[font->font_name].ptr(), _fontdata[font->font_name].size());
+#else
+			FT_Done_FreeType(library);
+			ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "System font supported only for iOS/OSX");
+#endif
 		}
 
 		memset(&stream, 0, sizeof(FT_StreamRec));
