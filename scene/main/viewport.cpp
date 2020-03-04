@@ -1716,6 +1716,7 @@ void Viewport::_gui_call_notification(Control *p_control, int p_what) {
 
 	//_unblock();
 }
+
 Control *Viewport::_gui_find_control(const Point2 &p_global) {
 
 	_gui_prepare_subwindows();
@@ -3113,6 +3114,7 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_world", "world"), &Viewport::set_world);
 	ClassDB::bind_method(D_METHOD("get_world"), &Viewport::get_world);
 	ClassDB::bind_method(D_METHOD("find_world"), &Viewport::find_world);
+	ClassDB::bind_method(D_METHOD("find_control", "pos"), &Viewport::_gui_find_control); 
 
 	ClassDB::bind_method(D_METHOD("set_canvas_transform", "xform"), &Viewport::set_canvas_transform);
 	ClassDB::bind_method(D_METHOD("get_canvas_transform"), &Viewport::get_canvas_transform);

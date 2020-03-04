@@ -33,6 +33,7 @@
 #include "core/authors.gen.h"
 #include "core/donors.gen.h"
 #include "core/license.gen.h"
+#include "core/script_language.h"
 #include "core/version.h"
 #include "core/version_hash.gen.h"
 
@@ -206,6 +207,22 @@ void Engine::get_singletons(List<Singleton> *p_singletons) {
 
 	for (List<Singleton>::Element *E = singletons.front(); E; E = E->next())
 		p_singletons->push_back(E->get());
+}
+
+String Engine::get_stack() const {
+	String stack = "";
+	for (int i = 0; i < ScriptServer::get_language_count(); i++){
+		ScriptLanguage *script = ScriptServer::get_language(i);
+		if (script->get_name() != "GDScript") continue;
+		// stack += script->get_name() + " stack ( " + itos(script->debug_get_stack_level_count()) + " frames )\n";
+		// for (int j = 0; j < script->debug_get_stack_level_count(); j++) {
+		// 	stack += "  [" + itos(j) + "] " + script->debug_get_stack_level_source(j) + ":" + itos(script->debug_get_stack_level_line(j)) + " in function '" + script->debug_get_stack_level_function(j) + "'\n";
+		for (int j = 0; j < script->debug_get_stack_level_count(); j++) {
+			stack +=   script->debug_get_stack_level_source(j) + "\t - Line " + itos(script->debug_get_stack_level_line(j)) + "\t - " + script->debug_get_stack_level_function(j) + "|";
+		}
+	}
+	return stack;
+
 }
 
 Engine *Engine::singleton = NULL;

@@ -406,6 +406,8 @@ static const char *locale_list[] = {
 	"zh_HK", //  Chinese (Hong Kong)
 	"zh_SG", //  Chinese (Singapore)
 	"zh_TW", //  Chinese (Taiwan)
+	"zh_Hant", // Chinese (Traditional)
+	"zh_Hans", // Chinese (Simplified)
 	"zu_ZA", //  Zulu (South Africa)
 	0
 };
@@ -774,6 +776,8 @@ static const char *locale_names[] = {
 	"Chinese (Hong Kong)",
 	"Chinese (Singapore)",
 	"Chinese (Taiwan)",
+	"Chinese (Traditional)",
+	"Chinese (Simplified)",
 	"Zulu (South Africa)",
 	0
 };
@@ -1076,6 +1080,12 @@ StringName TranslationServer::translate(const StringName &p_message) const {
 		const Ref<Translation> &t = E->get();
 		ERR_FAIL_COND_V(t.is_null(), p_message);
 		String l = t->get_locale();
+		if (l == locale) {
+			res = t->get_message(p_message);
+		}
+		/*
+		if (lptr[0] != l[0] || lptr[1] != l[1])
+			continue; // locale not match
 
 		bool exact_match = (l == locale);
 		if (!exact_match) {
@@ -1098,6 +1108,7 @@ StringName TranslationServer::translate(const StringName &p_message) const {
 		} else {
 			near_match = true;
 		}
+		*/
 	}
 
 	if (!res && fallback.length() >= 2) {

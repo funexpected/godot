@@ -704,7 +704,7 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 		if (export_format == "dmg") {
 			String pack_path = tmp_app_path_name + "/Contents/Resources/" + pkg_name + ".pck";
 			Vector<SharedObject> shared_objects;
-			err = save_pack(p_preset, pack_path, &shared_objects);
+			err = save_pack(p_preset, pack_path, p_debug, &shared_objects);
 
 			// see if we can code sign our new package
 			bool sign_enabled = p_preset->get("codesign/enable");
@@ -749,7 +749,7 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 			String pack_path = EditorSettings::get_singleton()->get_cache_dir().plus_file(pkg_name + ".pck");
 
 			Vector<SharedObject> shared_objects;
-			err = save_pack(p_preset, pack_path, &shared_objects);
+			err = save_pack(p_preset, pack_path, p_debug, &shared_objects);
 
 			if (err == OK) {
 				zipOpenNewFileInZip(dst_pkg_zip,

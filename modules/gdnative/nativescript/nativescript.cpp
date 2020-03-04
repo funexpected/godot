@@ -79,7 +79,7 @@ void NativeScript::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "script_class_name"), "set_script_class_name", "get_script_class_name");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "script_class_icon_path", PROPERTY_HINT_FILE), "set_script_class_icon_path", "get_script_class_icon_path");
 
-	ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "new", &NativeScript::_new, MethodInfo("new"));
+	ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "new", &NativeScript::_new, MethodInfo(Variant::OBJECT, "new"));
 }
 
 #define NSL NativeScriptLanguage::get_singleton()
@@ -171,6 +171,11 @@ bool NativeScript::can_instance() const {
 #else
 	return script_data;
 #endif
+}
+
+bool NativeScript::is_equals(const Script *p_other) {
+	const NativeScript* other = Object::cast_to<NativeScript>(p_other);
+	return other != NULL && get_language() == other->get_language() && get_class_name() == other->get_class_name();
 }
 
 Ref<Script> NativeScript::get_base_script() const {

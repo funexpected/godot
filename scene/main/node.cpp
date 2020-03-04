@@ -262,7 +262,6 @@ void Node::_propagate_after_exit_tree() {
 }
 
 void Node::_propagate_exit_tree() {
-
 	//block while removing children
 
 #ifdef DEBUG_ENABLED
@@ -461,14 +460,36 @@ Node::PauseMode Node::get_pause_mode() const {
 	return data.pause_mode;
 }
 
+void Node::set_branch_paused(bool p_paused){
+	if (p_paused == data.branch_paused) {
+		return;
+	}
+	if (data.parent && !p_paused) {
+		_propagate_branch_paused(data.parent->data.branch_paused);
+	} else {
+		_propagate_branch_paused(p_paused);
+	}
+}
+
+bool Node::is_branch_paused() const {
+	return data.branch_paused;
+}
+
+
 void Node::_propagate_pause_owner(Node *p_owner) {
 
 	if (this != p_owner && data.pause_mode != PAUSE_MODE_INHERIT)
 		return;
 	data.pause_owner = p_owner;
 	for (int i = 0; i < data.children.size(); i++) {
-
 		data.children[i]->_propagate_pause_owner(p_owner);
+	}
+}
+
+void Node::_propagate_branch_paused(bool p_paused) {
+	data.branch_paused = p_paused;
+	for (int i = 0; i < data.children.size(); i++) {
+		data.children[i]->_propagate_branch_paused(p_paused);
 	}
 }
 
@@ -754,7 +775,7 @@ bool Node::can_process() const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	if (get_tree()->is_paused()) {
+	if (get_tree()->is_paused() || data.branch_paused) {
 
 		if (data.pause_mode == PAUSE_MODE_STOP)
 			return false;
@@ -1227,6 +1248,28 @@ void Node::_propagate_validate_owner() {
 	}
 }
 
+void Node::kill(){
+	Node * par = get_parent();
+	if (par)
+		par->remove_child(this);
+	queue_delete();
+}
+
+void Node::set_parent(Node * p_parent){
+	Node * par = get_parent();
+	if (par == p_parent) {
+		return;
+	}
+	
+	if (par)
+		par->remove_child(this);
+
+	if (!p_parent)
+		return;
+
+	p_parent->add_child(this);
+}
+
 void Node::remove_child(Node *p_child) {
 
 	ERR_FAIL_NULL(p_child);
@@ -1262,6 +1305,7 @@ void Node::remove_child(Node *p_child) {
 	//}
 
 	remove_child_notify(p_child);
+	
 	p_child->notification(NOTIFICATION_UNPARENTED);
 
 	data.children.remove(idx);
@@ -2728,6 +2772,8 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "legible_unique_name"), &Node::add_child, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
+	ClassDB::bind_method(D_METHOD("kill"), &Node::kill); 
+	ClassDB::bind_method(D_METHOD("set_parent", "parent"), &Node::set_parent);
 	ClassDB::bind_method(D_METHOD("get_child_count"), &Node::get_child_count);
 	ClassDB::bind_method(D_METHOD("get_children"), &Node::_get_children);
 	ClassDB::bind_method(D_METHOD("get_child", "idx"), &Node::get_child);
@@ -2777,6 +2823,8 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_processing_unhandled_key_input"), &Node::is_processing_unhandled_key_input);
 	ClassDB::bind_method(D_METHOD("set_pause_mode", "mode"), &Node::set_pause_mode);
 	ClassDB::bind_method(D_METHOD("get_pause_mode"), &Node::get_pause_mode);
+	ClassDB::bind_method(D_METHOD("set_branch_paused", "paused"), &Node::set_branch_paused);
+	ClassDB::bind_method(D_METHOD("is_branch_paused"), &Node::is_branch_paused);
 	ClassDB::bind_method(D_METHOD("can_process"), &Node::can_process);
 	ClassDB::bind_method(D_METHOD("print_stray_nodes"), &Node::_print_stray_nodes);
 	ClassDB::bind_method(D_METHOD("get_position_in_parent"), &Node::get_position_in_parent);
@@ -2953,6 +3001,7 @@ Node::Node() {
 	data.unhandled_key_input = false;
 	data.pause_mode = PAUSE_MODE_INHERIT;
 	data.pause_owner = NULL;
+	data.branch_paused = false;
 	data.network_master = 1; //server by default
 	data.path_cache = NULL;
 	data.parent_owned = false;

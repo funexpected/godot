@@ -189,6 +189,8 @@ public:
 	static void load_translation_remaps();
 	static void clear_translation_remaps();
 
+	static PoolStringArray get_cached_resource_pathes();
+
 	static void set_load_callback(ResourceLoadedCallback p_callback);
 	static ResourceLoaderImport import;
 

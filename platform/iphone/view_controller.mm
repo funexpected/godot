@@ -98,6 +98,7 @@ int add_cmdline(int p_argc, char **p_args) {
 }
 
 - (BOOL)shouldAutorotate {
+	return YES;
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_SENSOR:
 		case OS::SCREEN_SENSOR_LANDSCAPE:
@@ -109,6 +110,7 @@ int add_cmdline(int p_argc, char **p_args) {
 };
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+	NSLog(@"supportedInterfaceOrientations: %d", OS::get_singleton()->get_screen_orientation());
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_PORTRAIT:
 			return UIInterfaceOrientationMaskPortrait;

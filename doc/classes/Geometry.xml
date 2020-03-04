@@ -337,6 +337,17 @@
 				Returns if [code]point[/code] is inside the triangle specified by [code]a[/code], [code]b[/code] and [code]c[/code].
 			</description>
 		</method>
+			<method name="point_is_inside_polygon" qualifiers="const">
+			<return type="bool">
+			</return>
+			<argument index="0" name="point" type="Vector2">
+			</argument>
+			<argument index="1" name="polygon" type="PoolVector2Array">
+			</argument>
+			<description>
+				Returns if [code]point[/code] is inside the polygon specified by [code]a[/code], [code]b[/code] and [code]c[/code].
+			</description>
+		</method>
 		<method name="ray_intersects_triangle">
 			<return type="Variant">
 			</return>

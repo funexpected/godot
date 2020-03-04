@@ -387,10 +387,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 	String err_text;
 
-#ifdef DEBUG_ENABLED
 
-	if (ScriptDebugger::get_singleton())
-		GDScriptLanguage::get_singleton()->enter_function(p_instance, this, stack, &ip, &line);
+	GDScriptLanguage::get_singleton()->enter_function(p_instance, this, stack, &ip, &line);
+#ifdef DEBUG_ENABLED
 
 #define GD_ERR_BREAK(m_cond)                                                                                           \
 	{                                                                                                                  \
@@ -506,26 +505,25 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						OPCODE_BREAK;
 					}
 #endif // DEBUG_ENABLED
-
-					GDScript *scr_B = Object::cast_to<GDScript>(obj_B);
+					Script *scr_B = Object::cast_to<Script>(obj_B);
 
 					if (scr_B) {
 						//if B is a script, the only valid condition is that A has an instance which inherits from the script
 						//in other situation, this shoul return false.
 
-						if (obj_A->get_script_instance() && obj_A->get_script_instance()->get_language() == GDScriptLanguage::get_singleton()) {
+						if (obj_A->get_script_instance()) {
 
-							GDScript *cmp = static_cast<GDScript *>(obj_A->get_script_instance()->get_script().ptr());
+							Ref<Script> cmp = obj_A->get_script_instance()->get_script();
 							//bool found=false;
-							while (cmp) {
-
-								if (cmp == scr_B) {
+							while (!cmp.is_null()) {
+								
+								if (cmp->is_equals(scr_B)) {
 									//inherits from script, all ok
 									extends_ok = true;
 									break;
 								}
 
-								cmp = cmp->_base;
+								cmp = cmp->get_base_script();
 							}
 						}
 
@@ -1599,7 +1597,6 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		profile.frame_self_time += time_taken - function_call_time;
 		GDScriptLanguage::get_singleton()->script_frame_time += time_taken - function_call_time;
 	}
-
 	// Check if this is the last time the function is resuming from yield
 	// Will be true if never yielded as well
 	// When it's the last resume it will postpone the exit from stack,
@@ -1608,7 +1605,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		if (ScriptDebugger::get_singleton())
 			GDScriptLanguage::get_singleton()->exit_function();
 #endif
-
+#ifndef DEBUG_ENABLED
+	GDScriptLanguage::get_singleton()->exit_function();
+#endif
 		if (_stack_size) {
 			//free stack
 			for (int i = 0; i < _stack_size; i++)
@@ -1840,11 +1839,11 @@ Variant GDScriptFunctionState::resume(const Variant &p_arg) {
 
 	ERR_FAIL_COND_V(!function, Variant());
 	if (state.instance_id && !ObjectDB::get_instance(state.instance_id)) {
-#ifdef DEBUG_ENABLED
-		ERR_FAIL_V_MSG(Variant(), "Resumed function '" + String(function->get_name()) + "()' after yield, but class instance is gone. At script: " + state.script->get_path() + ":" + itos(state.line));
-#else
+// #ifdef DEBUG_ENABLED
+// 		ERR_FAIL_V_MSG(Variant(), "Resumed function '" + String(function->get_name()) + "()' after yield, but class instance is gone. At script: " + state.script->get_path() + ":" + itos(state.line));
+// #else
 		return Variant();
-#endif
+// #endif
 	}
 
 	state.result = p_arg;

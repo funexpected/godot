@@ -37,6 +37,11 @@
 
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
+#ifdef __APPLE__
+#include "apple_fonts.h"
+#endif
+
+const char* _font_systems[] = { "OSX", "iOS", NULL };
 
 bool DynamicFontData::CacheID::operator<(CacheID right) const {
 	return key < right.key;
@@ -62,7 +67,6 @@ Ref<DynamicFontAtSize> DynamicFontData::_get_dynamic_font_at_size(CacheID p_cach
 }
 
 void DynamicFontData::set_font_ptr(const uint8_t *p_font_mem, int p_font_mem_size) {
-
 	font_mem = p_font_mem;
 	font_mem_size = p_font_mem_size;
 }
@@ -81,6 +85,8 @@ void DynamicFontData::set_force_autohinter(bool p_force) {
 	force_autohinter = p_force;
 }
 
+
+
 void DynamicFontData::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_antialiased", "antialiased"), &DynamicFontData::set_antialiased);
 	ClassDB::bind_method(D_METHOD("is_antialiased"), &DynamicFontData::is_antialiased);
@@ -96,7 +102,8 @@ void DynamicFontData::_bind_methods() {
 	BIND_ENUM_CONSTANT(HINTING_LIGHT);
 	BIND_ENUM_CONSTANT(HINTING_NORMAL);
 
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "font_path", PROPERTY_HINT_FILE, "*.ttf,*.otf"), "set_font_path", "get_font_path");
+
+	//ADD_PROPERTY(PropertyInfo(Variant::STRING, "font_path", PROPERTY_HINT_FILE, "*.ttf,*.otf"), "set_font_path", "get_font_path");
 }
 
 DynamicFontData::DynamicFontData() {
@@ -128,7 +135,6 @@ Error DynamicFontAtSize::_load() {
 			font->set_font_ptr(_fontdata[font->font_path].ptr(), _fontdata[font->font_path].size());
 
 		} else {
-
 			FileAccess *f = FileAccess::open(font->font_path, FileAccess::READ);
 			if (!f) {
 				FT_Done_FreeType(library);
@@ -145,8 +151,37 @@ Error DynamicFontAtSize::_load() {
 		}
 	}
 
-	if (font->font_mem == NULL && font->font_path != String()) {
+	if (font->font_mem == NULL && font->font_name != String()){
+		if (_fontdata.has(font->font_name)) {
+			font->set_font_ptr(_fontdata[font->font_name].ptr(), _fontdata[font->font_name].size());
+		} else {
+#ifdef __APPLE__
+			int font_data_size = 0;
+			unsigned char* font_data = apple_get_font_data_for_font(font->font_name.utf8().ptr(), &font_data_size);
+			_fontdata[font->font_name] = Vector<uint8_t>();
+			_fontdata[font->font_name].resize(font_data_size);
+			copymem(_fontdata[font->font_name].ptrw(), font_data, font_data_size);
+			free(font_data);
+			font->set_font_ptr(_fontdata[font->font_name].ptr(), _fontdata[font->font_name].size());
+#else
+			FT_Done_FreeType(library);
+			ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "System font supported only for iOS/OSX");
+#endif
+		}
 
+		memset(&stream, 0, sizeof(FT_StreamRec));
+		stream.base = (unsigned char *)font->font_mem;
+		stream.size = font->font_mem_size;
+		stream.pos = 0;
+
+		FT_Open_Args fargs;
+		memset(&fargs, 0, sizeof(FT_Open_Args));
+		fargs.memory_base = (unsigned char *)font->font_mem;
+		fargs.memory_size = font->font_mem_size;
+		fargs.flags = FT_OPEN_MEMORY;
+		fargs.stream = &stream;
+		error = FT_Open_Face(library, &fargs, 0, &face);
+	} else if (font->font_mem == NULL && font->font_path != String()) {
 		FileAccess *f = FileAccess::open(font->font_path, FileAccess::READ);
 		if (!f) {
 			FT_Done_FreeType(library);
@@ -675,7 +710,9 @@ DynamicFontAtSize::~DynamicFontAtSize() {
 void DynamicFont::_reload_cache() {
 
 	ERR_FAIL_COND(cache_id.size < 1);
-	if (!data.is_valid()) {
+	Ref<DynamicFontData> dt = kind == KIND_SYSTEM ? system_data : data;
+
+	if (!dt.is_valid()) {
 		data_at_size.unref();
 		outline_data_at_size.unref();
 		fallbacks.resize(0);
@@ -684,9 +721,9 @@ void DynamicFont::_reload_cache() {
 		return;
 	}
 
-	data_at_size = data->_get_dynamic_font_at_size(cache_id);
+	data_at_size = dt->_get_dynamic_font_at_size(cache_id);
 	if (outline_cache_id.outline_size > 0) {
-		outline_data_at_size = data->_get_dynamic_font_at_size(outline_cache_id);
+		outline_data_at_size = dt->_get_dynamic_font_at_size(outline_cache_id);
 		fallback_outline_data_at_size.resize(fallback_data_at_size.size());
 	} else {
 		outline_data_at_size.unref();
@@ -701,6 +738,17 @@ void DynamicFont::_reload_cache() {
 
 	emit_changed();
 	_change_notify();
+}
+
+void DynamicFont::set_kind(Kind p_kind) {
+	kind = p_kind;
+	_reload_cache();
+	emit_changed();
+	_change_notify();
+}
+
+DynamicFont::Kind DynamicFont::get_kind() const {
+	return kind;
 }
 
 void DynamicFont::set_font_data(const Ref<DynamicFontData> &p_data) {
@@ -941,7 +989,21 @@ void DynamicFont::remove_fallback(int p_idx) {
 bool DynamicFont::_set(const StringName &p_name, const Variant &p_value) {
 
 	String str = p_name;
-	if (str.begins_with("fallback/")) {
+	if (str == "font_data") {
+		data = p_value;
+		_reload_cache();
+		return true;
+	} else if (str.begins_with("font_name/")) {
+		String key = str.split("/")[1];
+		font_system_names[key] = p_value;
+		if (OS::get_singleton()->has_feature(key)){
+			if (system_data.is_valid()) system_data.unref();
+			system_data.instance();
+			system_data->font_name = p_value;
+			_reload_cache();
+		}
+		return true;
+	} else if (str.begins_with("fallback/")) {
 		int idx = str.get_slicec('/', 1).to_int();
 		Ref<DynamicFontData> fd = p_value;
 
@@ -967,7 +1029,18 @@ bool DynamicFont::_set(const StringName &p_name, const Variant &p_value) {
 bool DynamicFont::_get(const StringName &p_name, Variant &r_ret) const {
 
 	String str = p_name;
-	if (str.begins_with("fallback/")) {
+	if (str == "font_data") {
+		r_ret = data;
+		return true;
+	} else if (str.begins_with("font_name/")){
+		String key = str.split("/")[1];
+		if (font_system_names.has(key)){
+			r_ret = font_system_names[key];
+		} else {
+			r_ret = "";
+		}
+		return true;
+	} else if (str.begins_with("fallback/")) {
 		int idx = str.get_slicec('/', 1).to_int();
 
 		if (idx == fallbacks.size()) {
@@ -983,6 +1056,14 @@ bool DynamicFont::_get(const StringName &p_name, Variant &r_ret) const {
 }
 void DynamicFont::_get_property_list(List<PropertyInfo> *p_list) const {
 
+	p_list->push_back(PropertyInfo(Variant::OBJECT, "font_data", PROPERTY_HINT_RESOURCE_TYPE, "DynamicFontData", kind == KIND_CUSTOM ? PROPERTY_USAGE_DEFAULT : PROPERTY_USAGE_STORAGE));
+	
+	int idx = 0;
+	while (_font_systems[idx]) {
+		p_list->push_back(PropertyInfo(Variant::STRING, String("font_name/")+_font_systems[idx], PROPERTY_HINT_NONE, "", kind == KIND_SYSTEM ? PROPERTY_USAGE_DEFAULT : PROPERTY_USAGE_STORAGE));
+		idx++;
+	}
+
 	for (int i = 0; i < fallbacks.size(); i++) {
 		p_list->push_back(PropertyInfo(Variant::OBJECT, "fallback/" + itos(i), PROPERTY_HINT_RESOURCE_TYPE, "DynamicFontData"));
 	}
@@ -991,6 +1072,9 @@ void DynamicFont::_get_property_list(List<PropertyInfo> *p_list) const {
 }
 
 void DynamicFont::_bind_methods() {
+
+	ClassDB::bind_method(D_METHOD("set_kind", "p_kind"), &DynamicFont::set_kind);
+	ClassDB::bind_method(D_METHOD("get_kind"), &DynamicFont::get_kind);
 
 	ClassDB::bind_method(D_METHOD("set_font_data", "data"), &DynamicFont::set_font_data);
 	ClassDB::bind_method(D_METHOD("get_font_data"), &DynamicFont::get_font_data);
@@ -1029,12 +1113,16 @@ void DynamicFont::_bind_methods() {
 	ADD_PROPERTYI(PropertyInfo(Variant::INT, "extra_spacing_char"), "set_spacing", "get_spacing", SPACING_CHAR);
 	ADD_PROPERTYI(PropertyInfo(Variant::INT, "extra_spacing_space"), "set_spacing", "get_spacing", SPACING_SPACE);
 	ADD_GROUP("Font", "");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "font_data", PROPERTY_HINT_RESOURCE_TYPE, "DynamicFontData"), "set_font_data", "get_font_data");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "kind", PROPERTY_HINT_ENUM, "Custom,System"), "set_kind", "get_kind");
+	//ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "font_data", PROPERTY_HINT_RESOURCE_TYPE, "DynamicFontData"), "set_font_data", "get_font_data");
 
 	BIND_ENUM_CONSTANT(SPACING_TOP);
 	BIND_ENUM_CONSTANT(SPACING_BOTTOM);
 	BIND_ENUM_CONSTANT(SPACING_CHAR);
 	BIND_ENUM_CONSTANT(SPACING_SPACE);
+
+	BIND_ENUM_CONSTANT(KIND_CUSTOM);
+	BIND_ENUM_CONSTANT(KIND_SYSTEM);
 }
 
 Mutex *DynamicFont::dynamic_font_mutex = NULL;
@@ -1044,6 +1132,7 @@ SelfList<DynamicFont>::List *DynamicFont::dynamic_fonts = NULL;
 DynamicFont::DynamicFont() :
 		font_list(this) {
 
+	kind = KIND_CUSTOM;
 	cache_id.size = 16;
 	outline_cache_id.size = 16;
 	spacing_top = 0;

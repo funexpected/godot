@@ -311,6 +311,7 @@ private:
 
 	VScrollBar *vscroll;
 
+	bool height_expand;
 	bool scroll_visible;
 	bool scroll_follow;
 	bool scroll_following;
@@ -438,6 +439,9 @@ public:
 	void clear();
 
 	void set_offset(int p_pixel);
+
+	void set_height_expand(bool p_expand);
+	bool is_height_expanding() const;
 
 	void set_meta_underline(bool p_underline);
 	bool is_meta_underlined() const;

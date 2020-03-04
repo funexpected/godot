@@ -49,6 +49,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	GDCLASS(EditorExportPlatformIOS, EditorExportPlatform);
 
 	int version_code;
+	String framework_search_path;
 
 	Ref<ImageTexture> logo;
 
@@ -67,7 +68,9 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		String modules_fileref;
 		String modules_buildphase;
 		String modules_buildgrp;
+		String ios_entitlements;
 	};
+	
 
 	struct ExportArchitecture {
 		String name;
@@ -87,11 +90,13 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	struct IOSExportAsset {
 		String exported_path;
 		bool is_framework; // framework is anything linked to the binary, otherwise it's a resource
+		String type; // asset may be  put in different sections based on type
 	};
 
 	String _get_additional_plist_content();
 	String _get_linker_flags();
 	String _get_cpp_code();
+	String _get_ios_entitlements();
 	void _fix_config_file(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &pfile, const IOSConfigData &p_config, bool p_debug);
 	Error _export_loading_screens(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir);
 	Error _export_icons(const Ref<EditorExportPreset> &p_preset, const String &p_iconset_dir);
@@ -187,22 +192,24 @@ Vector<EditorExportPlatformIOS::ExportArchitecture> EditorExportPlatformIOS::_ge
 struct LoadingScreenInfo {
 	const char *preset_key;
 	const char *export_name;
+	const Vector2 size;
 };
 
 static const LoadingScreenInfo loading_screen_infos[] = {
-	{ "landscape_launch_screens/iphone_2436x1125", "Default-Landscape-X.png" },
-	{ "landscape_launch_screens/iphone_2208x1242", "Default-Landscape-736h@3x.png" },
-	{ "landscape_launch_screens/ipad_1024x768", "Default-Landscape.png" },
-	{ "landscape_launch_screens/ipad_2048x1536", "Default-Landscape@2x.png" },
+	{ "landscape_launch_screens/iphone_2436x1125", "Default-Landscape-X.png", Vector2(2436,1125) },
+	{ "landscape_launch_screens/iphone_2208x1242", "Default-Landscape-736h@3x.png", Vector2(2208,1242) },
+	{ "landscape_launch_screens/ipad_1024x768", "Default-Landscape.png", Vector2(1024, 768) },
+	{ "landscape_launch_screens/ipad_2048x1536", "Default-Landscape@2x.png", Vector2(2048, 1536) },
 
-	{ "portrait_launch_screens/iphone_640x960", "Default-480h@2x.png" },
-	{ "portrait_launch_screens/iphone_640x1136", "Default-568h@2x.png" },
-	{ "portrait_launch_screens/iphone_750x1334", "Default-667h@2x.png" },
-	{ "portrait_launch_screens/iphone_1125x2436", "Default-Portrait-X.png" },
-	{ "portrait_launch_screens/ipad_768x1024", "Default-Portrait.png" },
-	{ "portrait_launch_screens/ipad_1536x2048", "Default-Portrait@2x.png" },
-	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png" }
+	{ "portrait_launch_screens/iphone_640x960", "Default-480h@2x.png", Vector2(640, 960) },
+	{ "portrait_launch_screens/iphone_640x1136", "Default-568h@2x.png", Vector2(640, 1136) },
+	{ "portrait_launch_screens/iphone_750x1334", "Default-667h@2x.png", Vector2(750,1334) },
+	{ "portrait_launch_screens/iphone_1125x2436", "Default-Portrait-X.png", Vector2(1125,2436) },
+	{ "portrait_launch_screens/ipad_768x1024", "Default-Portrait.png", Vector2(768,1024) },
+	{ "portrait_launch_screens/ipad_1536x2048", "Default-Portrait@2x.png", Vector2(1536,2048) },
+	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png", Vector2(1242,2208) }
 };
+
 
 void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) {
 
@@ -343,6 +350,8 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 		} else if (lines[i].find("$push_notifications") != -1) {
 			bool is_on = p_preset->get("capabilities/push_notifications");
 			strnew += lines[i].replace("$push_notifications", is_on ? "1" : "0") + "\n";
+		} else if (lines[i].find("$entitlements") != -1) {
+			strnew += lines[i].replace("$entitlements", p_config.ios_entitlements) + "\n";
 		} else if (lines[i].find("$required_device_capabilities") != -1) {
 			String capabilities;
 
@@ -433,6 +442,14 @@ String EditorExportPlatformIOS::_get_cpp_code() {
 	}
 	return result;
 }
+String EditorExportPlatformIOS::_get_ios_entitlements() {
+	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	String result;
+	for (int i = 0; i < export_plugins.size(); ++i) {
+		result += export_plugins[i]->get_ios_entitlements();
+	}
+	return result;
+}
 
 struct IconInfo {
 	const char *preset_key;
@@ -475,18 +492,19 @@ Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_pr
 		IconInfo info = icon_infos[i];
 		String icon_path = p_preset->get(info.preset_key);
 		if (icon_path.length() == 0) {
-			if (info.is_required) {
-				ERR_PRINT("Required icon is not specified in the preset");
-				return ERR_UNCONFIGURED;
+			Ref<Image> img = memnew(Image());
+			img->load(GLOBAL_DEF("application/config/icon", "res://icon.png"));
+			int size = String(info.actual_size_side).to_int();
+			img->resize(size, size, Image::INTERPOLATE_CUBIC);
+			img->save_png(p_iconset_dir + info.export_name);
+		} else {
+			Error err = da->copy(icon_path, p_iconset_dir + info.export_name);
+			if (err) {
+				memdelete(da);
+				String err_str = String("Failed to export icon: ") + icon_path;
+				ERR_PRINT(err_str.utf8().get_data());
+				return err;
 			}
-			continue;
-		}
-		Error err = da->copy(icon_path, p_iconset_dir + info.export_name);
-		if (err) {
-			memdelete(da);
-			String err_str = String("Failed to export icon: ") + icon_path;
-			ERR_PRINT(err_str.utf8().get_data());
-			return err;
 		}
 		sizes += String(info.actual_size_side) + "\n";
 		if (i > 0) {
@@ -532,6 +550,12 @@ Error EditorExportPlatformIOS::_export_loading_screens(const Ref<EditorExportPre
 				ERR_PRINT(err_str.utf8().get_data());
 				return err;
 			}
+		} else {
+			Ref<Image> img = memnew(Image(info.size.x, info.size.y, false, Image::Format::FORMAT_RGBA8));
+			img->lock();
+			img->fill(GLOBAL_DEF("application/boot_splash/bg_color", Color(1,1,1)));
+			img->unlock();
+			img->save_png(p_dest_dir + info.export_name);
 		}
 	}
 	memdelete(da);
@@ -660,13 +684,32 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 	String pbx_frameworks_refs;
 	String pbx_resources_build;
 	String pbx_resources_refs;
+	String pbx_embed_frameworks;
+	String pbx_embed_plugins;
+	String pbx_embed_empty;
+	String pbx_script_phase;
 
+	const String build_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; };\n"); 
+	const String copy_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; settings = {ATTRIBUTES = (CodeSignOnCopy,  RemoveHeadersOnCopy, ); }; };\n"); 
+	const String ref_format = String("$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = \"$name\"; path = \"$file_path\"; sourceTree = \"$source_tree\"; };\n");
 	const String file_info_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; };\n") +
 									"$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = $name; path = \"$file_path\"; sourceTree = \"<group>\"; };\n";
+
 	for (int i = 0; i < p_additional_assets.size(); ++i) {
+		const IOSExportAsset &asset = p_additional_assets[i];
+		
+		if (asset.type == "script"){
+			FileAccess *f = FileAccess::open(asset.exported_path, FileAccess::READ);
+			if (f){
+				pbx_script_phase += f->get_pascal_string().replace("\\", "\\\\").replace("\"","\\\"").replace("\n", "\\n") + "\\n";
+				f->close();
+			}
+			continue;
+		}
+
 		String build_id = (++current_id).str();
 		String ref_id = (++current_id).str();
-		const IOSExportAsset &asset = p_additional_assets[i];
+		String copy_id = asset.is_framework && asset.type.begins_with("embed_") ? (++current_id).str() : "";
 
 		String type;
 		if (asset.exported_path.ends_with(".framework")) {
@@ -679,23 +722,44 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 			type = "file";
 		}
 
+		String &pbx_refs = asset.is_framework && !asset.type.begins_with("embed_") ? pbx_frameworks_refs : pbx_resources_refs;
 		String &pbx_build = asset.is_framework ? pbx_frameworks_build : pbx_resources_build;
-		String &pbx_refs = asset.is_framework ? pbx_frameworks_refs : pbx_resources_refs;
+		String &pbx_copy = asset.is_framework && asset.type == "embed_framework" ? pbx_embed_frameworks :
+							 asset.is_framework && asset.type == "embed_plugin" ? pbx_embed_plugins :
+							 pbx_embed_empty; 
+			
+			
 
-		if (pbx_build.length() > 0) {
-			pbx_build += ",\n";
-			pbx_refs += ",\n";
-		}
+		if (pbx_build.length() > 0) pbx_build += ",\n";
+		if (pbx_refs.length() > 0) pbx_refs += ",\n";
+		if (pbx_copy.length() > 0) pbx_copy += ",\n";
+		//if (pbx_extra.length() > 0) {
+		//	pbx_extra += ",\n";
+		//}
 		pbx_build += build_id;
 		pbx_refs += ref_id;
+		pbx_copy += copy_id;
+		//pbx_extra += build_id;
 
-		Dictionary format_dict;
-		format_dict["build_id"] = build_id;
-		format_dict["ref_id"] = ref_id;
-		format_dict["name"] = asset.exported_path.get_file();
-		format_dict["file_path"] = asset.exported_path;
-		format_dict["file_type"] = type;
-		pbx_files += file_info_format.format(format_dict, "$_");
+		Dictionary build_dict;
+		build_dict["build_id"] = build_id;
+		build_dict["ref_id"] = ref_id;
+		pbx_files += build_format.format(build_dict, "$_");
+		
+		if (asset.type.begins_with("embed_")){
+			Dictionary copy_dict;
+			copy_dict["build_id"] = copy_id;
+			copy_dict["ref_id"] = ref_id;
+			pbx_files += copy_format.format(copy_dict, "$_");
+		}
+
+		Dictionary ref_dict;
+		ref_dict["ref_id"] = ref_id;
+		ref_dict["name"] = asset.exported_path.get_file();
+		ref_dict["file_path"] = asset.exported_path;
+		ref_dict["file_type"] = type;
+		ref_dict["source_tree"] = asset.type.begins_with("embed_") ? "<absolute>":"<group>";
+		pbx_files += ref_format.format(ref_dict, "$_");
 	}
 
 	// Note, frameworks like gamekit are always included in our project.pbxprof file
@@ -727,8 +791,12 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 	str = str.replace("$additional_pbx_files", pbx_files);
 	str = str.replace("$additional_pbx_frameworks_build", pbx_frameworks_build);
 	str = str.replace("$additional_pbx_frameworks_refs", pbx_frameworks_refs);
+	str = str.replace("$additional_pbx_embed_frameworks_build", pbx_embed_frameworks);
+	str = str.replace("$additionl_pbx_embed_plugins_build", pbx_embed_plugins);
 	str = str.replace("$additional_pbx_resources_build", pbx_resources_build);
 	str = str.replace("$additional_pbx_resources_refs", pbx_resources_refs);
+	str = str.replace("$additional_pbx_scripts", pbx_script_phase);
+	str = str.replace("$framework_search_path", framework_search_path);
 
 	CharString cs = str.utf8();
 	p_project_data.resize(cs.size() - 1);
@@ -741,10 +809,18 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 	DirAccess *filesystem_da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	ERR_FAIL_COND_V_MSG(!filesystem_da, ERR_CANT_CREATE, "Cannot create DirAccess for path '" + p_out_dir + "'.");
 	for (int f_idx = 0; f_idx < p_assets.size(); ++f_idx) {
-		String asset = p_assets[f_idx];
+		Vector<String> typed_asset = p_assets[f_idx].split("::");
+		String asset = typed_asset[0];
+		String type = typed_asset.size() == 1 ? "default" : typed_asset[1];
+		if (type.begins_with("embed_")){
+			
+			asset = ProjectSettings::get_singleton()->globalize_path(asset);
+			String framework_dir = asset.get_base_dir();
+			if (framework_search_path.find(framework_dir) == -1) framework_search_path += " " + framework_dir + ",\n";
+		}
 		if (!asset.begins_with("res://")) {
 			// either SDK-builtin or already a part of the export template
-			IOSExportAsset exported_asset = { asset, p_is_framework };
+			IOSExportAsset exported_asset = { asset, p_is_framework, type };
 			r_exported_assets.push_back(exported_asset);
 		} else {
 			DirAccess *da = DirAccess::create_for_path(asset);
@@ -760,7 +836,7 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 				return ERR_FILE_NOT_FOUND;
 			}
 			String additional_dir = p_is_framework && asset.ends_with(".dylib") ? "/dylibs/" : "/";
-			String destination_dir = p_out_dir + additional_dir + asset.get_base_dir().replace("res://", "");
+			String destination_dir = p_out_dir + additional_dir;// + asset.get_file();
 			if (!filesystem_da->dir_exists(destination_dir)) {
 				Error make_dir_err = filesystem_da->make_dir_recursive(destination_dir);
 				if (make_dir_err) {
@@ -777,7 +853,7 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 				memdelete(filesystem_da);
 				return err;
 			}
-			IOSExportAsset exported_asset = { destination, p_is_framework };
+			IOSExportAsset exported_asset = { destination, p_is_framework, type };
 			r_exported_assets.push_back(exported_asset);
 		}
 	}
@@ -841,6 +917,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	String src_pkg_name;
 	String dest_dir = p_path.get_base_dir() + "/";
 	String binary_name = p_path.get_file().get_basename();
+	framework_search_path = binary_name + ",\n";
 
 	EditorProgress ep("export", "Exporting for iOS", 5, true);
 
@@ -895,7 +972,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	}
 	String pack_path = dest_dir + binary_name + ".pck";
 	Vector<SharedObject> libraries;
-	Error err = save_pack(p_preset, pack_path, &libraries);
+	Error err = save_pack(p_preset, pack_path, p_debug, &libraries);
 	if (err)
 		return err;
 
@@ -923,6 +1000,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	files_to_parse.insert(project_file);
 	files_to_parse.insert("godot_ios/export_options.plist");
 	files_to_parse.insert("godot_ios/dummy.cpp");
+	files_to_parse.insert("godot_ios/godot_ios.entitlements");
 	files_to_parse.insert("godot_ios.xcodeproj/project.xcworkspace/contents.xcworkspacedata");
 	files_to_parse.insert("godot_ios.xcodeproj/xcshareddata/xcschemes/godot_ios.xcscheme");
 
@@ -936,7 +1014,8 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		"",
 		"",
 		"",
-		""
+		"",
+		_get_ios_entitlements()
 	};
 
 	DirAccess *tmp_app_path = DirAccess::create_for_path(dest_dir);

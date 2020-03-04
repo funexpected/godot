@@ -85,7 +85,7 @@ Thread *ThreadPosix::create_func_posix(ThreadCreateCallback p_callback, void *p_
 	tr->user = p_user;
 	pthread_attr_init(&tr->pthread_attr);
 	pthread_attr_setdetachstate(&tr->pthread_attr, PTHREAD_CREATE_JOINABLE);
-	pthread_attr_setstacksize(&tr->pthread_attr, 256 * 1024);
+	pthread_attr_setstacksize(&tr->pthread_attr, 512 * 1024);
 
 	pthread_create(&tr->pthread, &tr->pthread_attr, thread_callback, tr);
 

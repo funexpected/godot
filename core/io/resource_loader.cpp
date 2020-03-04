@@ -919,6 +919,16 @@ void ResourceLoader::clear_path_remaps() {
 	path_remaps.clear();
 }
 
+PoolStringArray ResourceLoader::get_cached_resource_pathes() {
+	PoolStringArray result;
+	List<String> keys;
+	ResourceCache::resources.get_key_list(&keys);
+	for (List<String>::Element *E = keys.front(); E; E = E->next()) {
+		result.push_back(E->get());
+	}
+	return result;
+}
+
 void ResourceLoader::set_load_callback(ResourceLoadedCallback p_callback) {
 	_loaded_callback = p_callback;
 }

@@ -1377,7 +1377,7 @@ public:
 		EditorNode::progress_add_task("project_files", "Project Files", 100);
 		packager.set_progress_task("project_files");
 
-		err = export_project_files(p_preset, save_appx_file, &packager);
+		err = export_project_files(p_preset, save_appx_file, &packager, p_debug);
 
 		EditorNode::progress_end_task("project_files");
 

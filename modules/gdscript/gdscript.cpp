@@ -710,7 +710,7 @@ void GDScript::_get_property_list(List<PropertyInfo> *p_properties) const {
 
 void GDScript::_bind_methods() {
 
-	ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "new", &GDScript::_new, MethodInfo("new"));
+	ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "new", &GDScript::_new, MethodInfo(Variant::OBJECT, "new"));
 
 	ClassDB::bind_method(D_METHOD("get_as_byte_code"), &GDScript::get_as_byte_code);
 }
@@ -2167,9 +2167,10 @@ GDScriptLanguage::GDScriptLanguage() {
 
 	_debug_call_stack_pos = 0;
 	int dmcs = GLOBAL_DEF("debug/settings/gdscript/max_call_stack", 1024);
+	bool dks = GLOBAL_DEF("debug/settings/gdscript/keep_stack", true);
 	ProjectSettings::get_singleton()->set_custom_property_info("debug/settings/gdscript/max_call_stack", PropertyInfo(Variant::INT, "debug/settings/gdscript/max_call_stack", PROPERTY_HINT_RANGE, "1024,4096,1,or_greater")); //minimum is 1024
 
-	if (ScriptDebugger::get_singleton()) {
+	if (dks || ScriptDebugger::get_singleton()) {
 		//debugging enabled!
 
 		_debug_max_call_stack = dmcs;
