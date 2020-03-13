@@ -705,6 +705,30 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 	} else {
 		bool scenes_only = p_preset->get_export_filter() == EditorExportPreset::EXPORT_SELECTED_SCENES;
 
+		// add active singletons
+		List<PropertyInfo> props;
+		ProjectSettings::get_singleton()->get_property_list(&props);
+		for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
+			String s = E->get().name;
+			if (!s.begins_with("autoload/")) {
+				continue;
+			}
+			String autoload_path = ProjectSettings::get_singleton()->get_setting(s);
+			if (autoload_path.begins_with("*")){
+				autoload_path = autoload_path.substr(1, autoload_path.length());
+			} else {
+				continue;
+			}
+			_export_find_dependencies(autoload_path, paths);
+		}
+
+		// add global classes
+		List<StringName> globals;
+		ScriptServer::get_global_class_list(&globals);
+		for (List<StringName>::Element *E = globals.front(); E; E = E->next()) {
+			_export_find_dependencies(ScriptServer::get_global_class_path(E->get()), paths);
+		}
+
 		Vector<String> files = p_preset->get_files_to_export();
 		for (int i = 0; i < files.size(); i++) {
 			if (scenes_only && ResourceLoader::get_resource_type(files[i]) != "PackedScene")
