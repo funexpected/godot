@@ -275,6 +275,8 @@ RES ResourceLoader::_load(const String &p_path, const String &p_original_path, c
 		return res;
 	}
 
+	// ERR_FAIL_COND_V_MSG do not print to log
+	print_line(String("Failed to load resource from '") + p_path + "'.");
 	ERR_FAIL_COND_V_MSG(found, RES(), "Failed loading resource: " + p_path + ".");
 
 #ifdef TOOLS_ENABLED
