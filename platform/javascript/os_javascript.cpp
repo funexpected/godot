@@ -397,7 +397,8 @@ EM_BOOL OS_JavaScript::mousemove_callback(int p_event_type, const EmscriptenMous
 	ev->set_position(pos);
 	ev->set_global_position(ev->get_position());
 
-	ev->set_relative(Vector2(p_event->movementX, p_event->movementY));
+	Point2 prev = os->input->get_mouse_position();
+	ev->set_relative(ev->get_position() - prev);
 	os->input->set_mouse_position(ev->get_position());
 	ev->set_speed(os->input->get_last_mouse_speed());
 
@@ -695,6 +696,9 @@ EM_BOOL OS_JavaScript::wheel_callback(int p_event_type, const EmscriptenWheelEve
 // Touch
 
 bool OS_JavaScript::has_touchscreen_ui_hint() const {
+	if (Input::get_singleton() && Input::get_singleton()->is_emulating_touch_from_mouse()) {
+		return true;
+	}
 
 	/* clang-format off */
 	return EM_ASM_INT_V(
