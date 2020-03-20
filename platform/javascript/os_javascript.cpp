@@ -397,7 +397,7 @@ EM_BOOL OS_JavaScript::mousemove_callback(int p_event_type, const EmscriptenMous
 	ev->set_position(pos);
 	ev->set_global_position(ev->get_position());
 
-	ev->set_relative(Vector2(p_event->movementX, p_event->movementY));
+	ev->set_relative(Vector2(p_event->movementX, p_event->movementY) * 2);
 	os->input->set_mouse_position(ev->get_position());
 	ev->set_speed(os->input->get_last_mouse_speed());
 
