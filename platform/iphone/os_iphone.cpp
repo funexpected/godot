@@ -499,6 +499,11 @@ int OSIPhone::get_virtual_keyboard_height() const {
 	return virtual_keyboard_height;
 }
 
+void OSIPhone::keyboard_hidden() {
+	set_virtual_keyboard_height(0);
+	input->keyboard_hidden();
+}
+
 Error OSIPhone::shell_open(String p_uri) {
 	return _shell_open(p_uri);
 };
