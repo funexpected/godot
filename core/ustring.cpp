@@ -2886,8 +2886,15 @@ static bool _wildcard_match(const CharType *p_pattern, const CharType *p_string,
 	switch (*p_pattern) {
 		case '\0':
 			return !*p_string;
-		case '*':
-			return _wildcard_match(p_pattern + 1, p_string, p_case_sensitive) || (*p_string && _wildcard_match(p_pattern, p_string + 1, p_case_sensitive));
+		case '*': {
+			int offset = 0;
+			while (*(p_string + offset))
+			{
+				if (_wildcard_match(p_pattern + 1, p_string + offset, p_case_sensitive))
+					return true;
+				offset++;
+			}
+			return _wildcard_match(p_pattern + 1, p_string + offset, p_case_sensitive); } // p_string + offset = '\0'
 		case '?':
 			return *p_string && (*p_string != '.') && _wildcard_match(p_pattern + 1, p_string + 1, p_case_sensitive);
 		default:
