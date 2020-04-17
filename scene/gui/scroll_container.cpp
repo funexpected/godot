@@ -157,12 +157,12 @@ void ScrollContainer::_gui_input(const Ref<InputEvent> &p_gui_input) {
 		} else {
 			if (drag_touching) {
 
-				if (drag_speed == Vector2()) {
+				// if (drag_speed == Vector2()) {
 					_cancel_drag();
-				} else {
+				// } else {
 
-					drag_touching_deaccel = true;
-				}
+					// drag_touching_deaccel = true;
+				// }
 			}
 		}
 	}
@@ -171,7 +171,7 @@ void ScrollContainer::_gui_input(const Ref<InputEvent> &p_gui_input) {
 
 	if (mm.is_valid()) {
 
-		if (drag_touching && !drag_touching_deaccel) {
+		if (drag_touching && !drag_touching_deaccel && !disabled) {
 
 			Vector2 motion = Vector2(mm->get_relative().x, mm->get_relative().y);
 			drag_accum -= motion;
@@ -425,6 +425,7 @@ void ScrollContainer::update_scrollbars() {
 
 		v_scroll->hide();
 		scroll.y = 0;
+		v_scroll->set_max(0);
 	} else {
 
 		v_scroll->show();
@@ -442,6 +443,7 @@ void ScrollContainer::update_scrollbars() {
 
 		h_scroll->hide();
 		scroll.x = 0;
+		h_scroll->set_max(0);
 	} else {
 
 		h_scroll->show();
@@ -499,6 +501,10 @@ bool ScrollContainer::is_v_scroll_enabled() const {
 	return scroll_v;
 }
 
+bool ScrollContainer::is_h_bottom() const {
+	return (h_scroll->get_max() < 0.2 + h_scroll->get_value() + h_scroll->get_page());
+}
+
 int ScrollContainer::get_v_scroll() const {
 
 	return v_scroll->get_value();
@@ -517,6 +523,15 @@ void ScrollContainer::set_h_scroll(int p_pos) {
 
 	h_scroll->set_value(p_pos);
 	_cancel_drag();
+}
+
+bool ScrollContainer::get_disabled() const {
+	return disabled;
+}
+
+void ScrollContainer::set_disabled(bool p_disabled) {
+
+	disabled = p_disabled;
 }
 
 int ScrollContainer::get_deadzone() const {
@@ -584,11 +599,15 @@ void ScrollContainer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_v_scroll"), &ScrollContainer::get_v_scroll);
 	ClassDB::bind_method(D_METHOD("set_deadzone", "deadzone"), &ScrollContainer::set_deadzone);
 	ClassDB::bind_method(D_METHOD("get_deadzone"), &ScrollContainer::get_deadzone);
+	ClassDB::bind_method(D_METHOD("set_disabled", "disabled"), &ScrollContainer::set_disabled);
+	ClassDB::bind_method(D_METHOD("get_disabled"), &ScrollContainer::get_disabled);
 	ClassDB::bind_method(D_METHOD("set_follow_focus", "enabled"), &ScrollContainer::set_follow_focus);
 	ClassDB::bind_method(D_METHOD("is_following_focus"), &ScrollContainer::is_following_focus);
 
 	ClassDB::bind_method(D_METHOD("get_h_scrollbar"), &ScrollContainer::get_h_scrollbar);
 	ClassDB::bind_method(D_METHOD("get_v_scrollbar"), &ScrollContainer::get_v_scrollbar);
+
+	ClassDB::bind_method(D_METHOD("is_h_bottom"), &ScrollContainer::is_h_bottom);
 
 	ADD_SIGNAL(MethodInfo("scroll_started"));
 	ADD_SIGNAL(MethodInfo("scroll_ended"));
@@ -601,6 +620,7 @@ void ScrollContainer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "scroll_vertical_enabled"), "set_enable_v_scroll", "is_v_scroll_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "scroll_vertical"), "set_v_scroll", "get_v_scroll");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "scroll_deadzone"), "set_deadzone", "get_deadzone");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disabled"), "set_disabled", "get_disabled");
 
 	GLOBAL_DEF("gui/common/default_scroll_deadzone", 0);
 };
@@ -625,6 +645,7 @@ ScrollContainer::ScrollContainer() {
 	scroll_v = true;
 
 	deadzone = GLOBAL_GET("gui/common/default_scroll_deadzone");
+	disabled = false;
 	follow_focus = false;
 
 	set_clip_contents(true);
