@@ -129,6 +129,7 @@ public:
 	void touches_cancelled();
 	void key(uint32_t p_key, bool p_pressed);
 	void set_virtual_keyboard_height(int p_height);
+	void keyboard_hidden();
 
 	int set_base_framebuffer(int p_fb);
 
