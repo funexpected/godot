@@ -203,6 +203,7 @@ public:
 	virtual uint64_t get_joy_vibration_timestamp(int p_device);
 	void joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid = "");
 	void parse_joypad_mapping(String p_mapping, bool p_update_existing);
+	void keyboard_hidden();
 
 	virtual Vector3 get_gravity() const;
 	virtual Vector3 get_accelerometer() const;

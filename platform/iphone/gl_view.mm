@@ -608,7 +608,7 @@ static void clear_touches() {
 }
 
 - (void)keyboardHidden:(NSNotification *)notification {
-	OSIPhone::get_singleton()->set_virtual_keyboard_height(0);
+	OSIPhone::get_singleton()->keyboard_hidden();
 }
 
 - (void)deleteBackward {
