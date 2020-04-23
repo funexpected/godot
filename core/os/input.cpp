@@ -123,6 +123,7 @@ void Input::_bind_methods() {
 	BIND_ENUM_CONSTANT(CURSOR_HELP);
 
 	ADD_SIGNAL(MethodInfo("joy_connection_changed", PropertyInfo(Variant::INT, "device"), PropertyInfo(Variant::BOOL, "connected")));
+	ADD_SIGNAL(MethodInfo("keyboard_height_changed", PropertyInfo(Variant::INT, "height")));
 	ADD_SIGNAL(MethodInfo("keyboard_hidden"));
 }
 
