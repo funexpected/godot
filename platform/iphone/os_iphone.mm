@@ -437,8 +437,11 @@ void OSIPhone::hide_virtual_keyboard() {
 void OSIPhone::set_virtual_keyboard_height(int p_height) {
 	int previous_height = virtual_keyboard_height;
 	virtual_keyboard_height = p_height * [UIScreen mainScreen].nativeScale;
-	if (previous_height != virtual_keyboard_height && virtual_keyboard_height == 0) {
-		input->keyboard_hidden();
+	if (previous_height != virtual_keyboard_height)
+		input->virtual_keyboard_height_changed(p_height);
+		if (virtual_keyboard_height == 0) {
+			input->keyboard_hidden();
+		}
 	}
 }
 
