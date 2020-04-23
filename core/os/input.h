@@ -118,6 +118,7 @@ public:
 	virtual void action_release(const StringName &p_action) = 0;
 
 	virtual void keyboard_hidden() = 0;
+	virtual void virtual_keyboard_height_changed(int p_height) = 0;
 	
 	void get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const;
 
