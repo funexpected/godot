@@ -493,7 +493,8 @@ void OSIPhone::hide_virtual_keyboard() {
 
 void OSIPhone::set_virtual_keyboard_height(int p_height) {
 	virtual_keyboard_height = p_height;
-	input->virtual_keyboard_height_changed(p_height);
+	if (input)
+		input->virtual_keyboard_height_changed(p_height);
 }
 
 int OSIPhone::get_virtual_keyboard_height() const {
