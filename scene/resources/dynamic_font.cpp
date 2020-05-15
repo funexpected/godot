@@ -710,7 +710,7 @@ DynamicFontAtSize::~DynamicFontAtSize() {
 void DynamicFont::_reload_cache() {
 
 	ERR_FAIL_COND(cache_id.size < 1);
-	Ref<DynamicFontData> dt = kind == KIND_SYSTEM ? system_data : data;
+	Ref<DynamicFontData> dt = kind == KIND_SYSTEM  && system_data.is_valid() ? system_data : data;
 
 	if (!dt.is_valid()) {
 		data_at_size.unref();
