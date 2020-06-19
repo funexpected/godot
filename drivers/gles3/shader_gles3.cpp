@@ -161,6 +161,8 @@ static void _display_error_with_code(const String &p_error, const Vector<const c
 		line++;
 	}
 
+	print_line(p_error);
+
 	ERR_PRINTS(p_error);
 }
 
