@@ -66,6 +66,8 @@ class ScrollContainer : public Container {
 	int deadzone;
 	bool follow_focus;
 
+	bool soft_border = true;
+
 	void _cancel_drag();
 
 protected:

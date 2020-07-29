@@ -186,6 +186,17 @@ void ScrollContainer::_gui_input(const Ref<InputEvent> &p_gui_input) {
 					drag_accum = -motion;
 				}
 				Vector2 diff = drag_from + drag_accum;
+				if (soft_border && diff.x > h_scroll->get_max() - h_scroll->get_page() && drag_accum.x > 0) {
+					// if (drag_from.x <= h_scroll->get_max())
+					// 	diff.x = h_scroll->get_max() + (diff.x - h_scroll->get_max()) * max(0, 1 - (diff.x - max) / ());
+					// else
+						diff.x = drag_from.x + sqrt(drag_accum.x);
+				} else if(soft_border && diff.x < 0 && drag_accum.x < 0) {
+					// if (drag_from.x <= h_scroll->get_max())
+					// 	diff.x = h_scroll->get_max() + (diff.x - h_scroll->get_max()) * max(0, 1 - (diff.x - max) / ());
+					// else
+						diff.x = drag_from.x - sqrt(-drag_accum.x);
+				}
 				if (scroll_h)
 					h_scroll->set_value(diff.x);
 				else
@@ -341,13 +352,25 @@ void ScrollContainer::_notification(int p_what) {
 				bool turnoff_h = false;
 				bool turnoff_v = false;
 
-				if (pos.x < 0) {
+				if (!soft_border && pos.x < 0) {
 					pos.x = 0;
 					turnoff_h = true;
+				} else if (soft_border && pos.x < 0) {
+					pos.x += 10;
+					if (pos.x > 0){
+						pos.x = 0;
+						turnoff_h = true;
+					}
 				}
-				if (pos.x > (h_scroll->get_max() - h_scroll->get_page())) {
+				if (!soft_border && pos.x > (h_scroll->get_max() - h_scroll->get_page())) {
 					pos.x = h_scroll->get_max() - h_scroll->get_page();
 					turnoff_h = true;
+				} else if (soft_border && pos.x > (h_scroll->get_max() - h_scroll->get_page())) {
+					pos.x = pos.x - 10;
+					if (pos.x < h_scroll->get_max() - h_scroll->get_page()){
+						pos.x = h_scroll->get_max() - h_scroll->get_page();
+						turnoff_h = true;
+					}
 				}
 
 				if (pos.y < 0) {
@@ -631,6 +654,8 @@ ScrollContainer::ScrollContainer() {
 	h_scroll->set_name("_h_scroll");
 	add_child(h_scroll);
 	h_scroll->connect("value_changed", this, "_scroll_moved");
+	h_scroll->set_allow_greater(true);
+	h_scroll->set_allow_lesser(true);
 
 	v_scroll = memnew(VScrollBar);
 	v_scroll->set_name("_v_scroll");
