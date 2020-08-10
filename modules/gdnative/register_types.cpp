@@ -74,6 +74,7 @@ void GDNativeExportPlugin::_export_file(const String &p_path, const String &p_ty
 		return;
 	}
 
+	bool is_ios_lib_available = false;
 	Ref<ConfigFile> config = lib->get_config_file();
 
 	{
@@ -107,6 +108,7 @@ void GDNativeExportPlugin::_export_file(const String &p_path, const String &p_ty
 			}
 
 			add_shared_object(entry_lib_path, tags);
+			is_ios_lib_available = is_ios_lib_available || p_features.has("iOS");
 		}
 	}
 
@@ -144,7 +146,7 @@ void GDNativeExportPlugin::_export_file(const String &p_path, const String &p_ty
 		}
 	}
 
-	if (p_features.has("iOS")) {
+	if (p_features.has("iOS") && is_ios_lib_available) {
 		// Register symbols in the "fake" dynamic lookup table, because dlsym does not work well on iOS.
 		LibrarySymbol expected_symbols[] = {
 			{ "gdnative_init", true },
