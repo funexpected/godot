@@ -56,6 +56,7 @@ public:
 	int get_pending_event_count();
 	Variant pop_pending_event();
 	void finish_transaction(String product_id);
+	void finish_all_transactions();
 	void set_auto_finish_transaction(bool b);
 	Dictionary get_payload();
 
