@@ -842,9 +842,29 @@ static int frame_count = 0;
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
   // handler for Push Notifications
+  NSLog(@"appDidReceiveRemoteNotification_finish");
   [[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"appDidReceiveRemoteNotification_finish" object:nil userInfo: @{@"userInfo" :userInfo}];
 }
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+    fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+	NSLog(@"appDidReceiveRemoteNotification_finish with completion");
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appDidReceiveRemoteNotification_finish" object:nil userInfo: @{@"userInfo" :userInfo}];
+
+
+
+	completionHandler(UIBackgroundFetchResultNewData);
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken; {
+  NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken_finish");
+  // handler for Push Notifications
+  [[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"didRegisterForRemoteNotificationsWithDeviceToken_finish" object:nil userInfo: @{@"deviceToken":deviceToken}];
+}
+
 
 
 
