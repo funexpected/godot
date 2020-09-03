@@ -6,7 +6,9 @@ if [ ! -d "$TEMPLATE" ]; then
 fi
 
 # Clean existing templates
-./platform/android/java/gradlew cleanGodotTemplates
+cd platform/android/java/
+./gradlew cleanGodotTemplates
+cd ../../..
 
 
 # Build export template(s) for platforms(s):
@@ -29,7 +31,9 @@ scons platform=android -j 4 target=debug android_arch=arm64v8 tools=no module_fi
 
 
 # Pack template(s) into APK(s)
-./platform/android/java/gradlew generateGodotTemplates
+cd platform/android/java/
+./gradlew generateGodotTemplates
+cd ../../..
 
 
 # Copy APKs to a standard template location
