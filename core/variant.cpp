@@ -790,7 +790,11 @@ bool Variant::is_zero() const {
 		} break;
 		case OBJECT: {
 
-			return _get_obj().obj == NULL || _get_obj().obj_id != 0 && _get_obj().obj->get_instance_id() != _get_obj().obj_id;
+			return _get_obj().obj == NULL 
+				|| _get_obj().ref.is_null() && !ObjectDB::instance_validate(_get_obj().obj)
+				|| _get_obj().ref.is_null() && !ObjectDB::has_instance(_get_obj().obj_id)
+				|| _get_obj().obj_id == 0 && _get_obj().ref.is_null()
+				|| _get_obj().ref.is_null() && !_get_obj().obj_id != 0 && _get_obj().obj->get_instance_id() != _get_obj().obj_id;
 		} break;
 		case NODE_PATH: {
 
