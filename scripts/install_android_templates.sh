@@ -37,8 +37,9 @@ cd platform/android/java/
 cd ../../..
 
 
-# Copy APKs to a standard template location
+# Copy files to standard template location
 cp bin/android_debug.apk "$TEMPLATES"
 cp bin/android_release.apk "$TEMPLATES"
+cp bin/android_source.zip "$TEMPLATES"
 
 echo "$VERSION" > "$TEMPLATES/version.txt"
