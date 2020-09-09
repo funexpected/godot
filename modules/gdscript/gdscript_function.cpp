@@ -1085,9 +1085,6 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 					base->call_ptr(*methodname, (const Variant **)argptrs, argc, NULL, err);
 				}
-				if (err.error != Variant::CallError::CALL_OK) {
-					OPCODE_BREAK;
-				}
 #ifdef DEBUG_ENABLED
 				if (GDScriptLanguage::get_singleton()->profiling) {
 					function_call_time += OS::get_singleton()->get_ticks_usec() - call_time;

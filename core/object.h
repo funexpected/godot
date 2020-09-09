@@ -795,13 +795,6 @@ public:
 	static void debug_objects(DebugFunc p_func);
 	static int get_object_count();
 
-	_FORCE_INLINE_ static bool has_instance(ObjectID id) {
-		rw_lock->read_lock();
-		bool exists = instances.has(id);
-		rw_lock->read_unlock();
-		return exists;
-	}
-
 	_FORCE_INLINE_ static bool instance_validate(Object *p_ptr) {
 		rw_lock->read_lock();
 

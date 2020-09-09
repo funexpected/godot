@@ -1093,12 +1093,6 @@ void Variant::call_ptr(const StringName &p_method, const Variant **p_args, int p
 	Variant ret;
 
 	if (type == Variant::OBJECT) {
-		if (_get_obj().obj_id > 0 && !ObjectDB::has_instance(_get_obj().obj_id)) {
-			print_line("instance is null");
-			r_error.error = CallError::CALL_ERROR_INSTANCE_IS_NULL;
-			print_line("return instance is null");
-			return;
-		}
 		//call object
 		Object *obj = _get_obj().obj;
 		if (!obj) {
@@ -1115,7 +1109,7 @@ void Variant::call_ptr(const StringName &p_method, const Variant **p_args, int p
 		}
 
 #endif
-		ret = obj->call(p_method, p_args, p_argcount, r_error);
+		ret = _get_obj().obj->call(p_method, p_args, p_argcount, r_error);
 
 		//else if (type==Variant::METHOD) {
 
