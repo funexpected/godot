@@ -183,7 +183,7 @@ Error OS_Android::initialize(const VideoMode &p_desired, int p_video_driver, int
 	// Set params for suppressing extra movements at touch start
 	small_movement_threshold = GLOBAL_GET("input_devices/pointing/android_touch_micromovement_threshold");
 	small_movement_threshold_squared = small_movement_threshold * small_movement_threshold;
-	print_line("Set micromovent threshold for Android: " + itos(small_movement_threshold));
+	print_verbose("Set micromovent threshold for Android: " + itos(small_movement_threshold));
 
 	return OK;
 }
@@ -437,7 +437,7 @@ void OS_Android::process_touch(int p_what, int p_pointer, const Vector<TouchPos>
 
 				if (ignore_small_movements[id]){
 					if (touch_start[id].distance_squared_to(next.pos) < small_movement_threshold_squared) {
-						print_line("Ignoring small movement for " + itos(id) + ". Distance^2 = " + rtos(touch_start[id].distance_squared_to(next.pos)) + " < " + itos(small_movement_threshold_squared));
+						print_verbose("Ignoring small movement for " + itos(id) + ". Distance^2 = " + rtos(touch_start[id].distance_squared_to(next.pos)) + " < " + itos(small_movement_threshold_squared));
 						continue; // ignore small movement
 					} else {
 						ignore_small_movements[id] = false; // stop suppressing small movements once the pointer left the area around its starting position
