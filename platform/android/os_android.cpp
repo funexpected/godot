@@ -175,6 +175,11 @@ Error OS_Android::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	//power_manager = memnew(PowerAndroid);
 
+	// Set params for suppressing extra movements at touch start
+	small_movement_threshold = GLOBAL_GET("input_devices/pointing/android_touch_micromovement_threshold");
+	small_movement_threshold_squared = small_movement_threshold * small_movement_threshold;
+	print_verbose("Set micromovent threshold for Android: " + itos(small_movement_threshold));
+
 	return OK;
 }
 
@@ -433,6 +438,13 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 			for (int i = 0; i < p_points.size(); i++) {
 				touch.write[i].id = p_points[i].id;
 				touch.write[i].pos = p_points[i].pos;
+
+				// remember where the touch started
+				int id = p_points[i].id;
+				if (!touch_start.has(id)) { // find the pointer that has just added
+					touch_start[id] = p_points[i].pos;
+					ignore_small_movements[id] = true; // ignore small movements around its initial position
+				}
 			}
 
 			//send touch
@@ -450,6 +462,13 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 			ERR_FAIL_COND(touch.size() != p_points.size());
 
 			for (int i = 0; i < touch.size(); i++) {
+<<<<<<< HEAD
+=======
+
+				const OS_Android::TouchPos& current = touch[i];
+				int id = current.id;
+
+>>>>>>> 133acff470 ([funexpected] Ignore small movements when new touch happens)
 				int idx = -1;
 				for (int j = 0; j < p_points.size(); j++) {
 					if (touch[i].id == p_points[j].id) {
@@ -457,19 +476,29 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 						break;
 					}
 				}
-
+				
 				ERR_CONTINUE(idx == -1);
+				const OS_Android::TouchPos& next = p_points[idx];
 
-				if (touch[i].pos == p_points[idx].pos)
-					continue; //no move unncesearily
+				if (current.pos == next.pos)
+					continue; //no movement, ignoring
+
+				if (ignore_small_movements[id]){
+					if (touch_start[id].distance_squared_to(next.pos) < small_movement_threshold_squared) {
+						print_verbose("Ignoring small movement for " + itos(id) + ". Distance^2 = " + rtos(touch_start[id].distance_squared_to(next.pos)) + " < " + itos(small_movement_threshold_squared));
+						continue; // ignore small movement
+					} else {
+						ignore_small_movements[id] = false; // stop suppressing small movements once the pointer left the area around its starting position
+					}
+				}
 
 				Ref<InputEventScreenDrag> ev;
 				ev.instance();
-				ev->set_index(touch[i].id);
-				ev->set_position(p_points[idx].pos);
-				ev->set_relative(p_points[idx].pos - touch[i].pos);
+				ev->set_index(id);
+				ev->set_position(next.pos);
+				ev->set_relative(next.pos - current.pos);
 				input->parse_input_event(ev);
-				touch.write[i].pos = p_points[idx].pos;
+				touch.write[i].pos = next.pos;
 			}
 
 		} break;
@@ -486,6 +515,8 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 					input->parse_input_event(ev);
 				}
 				touch.clear();
+				touch_start.clear();
+				ignore_small_movements.clear();
 			}
 		} break;
 		case AMOTION_EVENT_ACTION_POINTER_DOWN: { // add touch
@@ -493,6 +524,9 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 				if (p_points[i].id == p_pointer) {
 					TouchPos tp = p_points[i];
 					touch.push_back(tp);
+
+					touch_start[p_pointer] = tp.pos; // remember where the finger landed initially
+					ignore_small_movements[p_pointer] = true; // ignore small movements
 
 					Ref<InputEventScreenTouch> ev;
 					ev.instance();
@@ -509,13 +543,20 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 		case AMOTION_EVENT_ACTION_POINTER_UP: { // remove touch
 			for (int i = 0; i < touch.size(); i++) {
 				if (touch[i].id == p_pointer) {
+<<<<<<< HEAD
+=======
+
+					touch_start.erase(p_pointer);
+					ignore_small_movements.erase(p_pointer);
+
+>>>>>>> 133acff470 ([funexpected] Ignore small movements when new touch happens)
 					Ref<InputEventScreenTouch> ev;
 					ev.instance();
 					ev->set_index(touch[i].id);
 					ev->set_pressed(false);
 					ev->set_position(touch[i].pos);
-					input->parse_input_event(ev);
 					touch.remove(i);
+					input->parse_input_event(ev);
 
 					break;
 				}

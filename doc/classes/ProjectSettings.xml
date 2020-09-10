@@ -607,6 +607,9 @@
 		<member name="input_devices/pointing/ios/touch_delay" type="float" setter="" getter="" default="0.15">
 			Default delay for touch events. This only affects iOS devices.
 		</member>
+		<member name="input_devices/pointing/android_touch_micromovement_threshold" type="int" setter="" getter="" default="10">
+			Some touch screens on Android are too sensitive, generating a stream of movement events even if the finger touching the screen is actually still. This can lead to inintended reactions from UI controls. This setting introduces a (small) zone around the initial touch point, where no movement events are produced. When the finger leaves this zone, its effect is cancelled until the next touch. The number is the radius of this zone ([code]0[/code] = no zone at all).
+		</member>
 		<member name="layer_names/2d_physics/layer_1" type="String" setter="" getter="" default="&quot;&quot;">
 			Optional name for the 2D physics layer 1.
 		</member>
