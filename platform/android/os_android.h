@@ -68,7 +68,13 @@ public:
 	};
 
 private:
-	Vector<TouchPos> touch;
+	Vector<TouchPos> touch;  // current touch information
+
+	Map<int, Point2> touch_start;   // store the position where the touch has started, used for suppressing finger micromovement events
+	Map<int, bool> ignore_small_movements; // true if touch has just started and micro-movements must be suppressed
+	int small_movement_threshold; // a displacement value to distinguish micro-movements from normal ones
+	int small_movement_threshold_squared;
+
 	Point2 hover_prev_pos; // needed to calculate the relative position on hover events
 	Point2 scroll_prev_pos; // needed to calculate the relative position on scroll events
 
