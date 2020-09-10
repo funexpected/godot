@@ -180,6 +180,11 @@ Error OS_Android::initialize(const VideoMode &p_desired, int p_video_driver, int
 
 	//power_manager = memnew(PowerAndroid);
 
+	// Set params for suppressing extra movements at touch start
+	small_movement_threshold = GLOBAL_GET("input_devices/pointing/android_touch_micromovement_threshold");
+	small_movement_threshold_squared = small_movement_threshold * small_movement_threshold;
+	print_line("Set micromovent threshold for Android: " + itos(small_movement_threshold));
+
 	return OK;
 }
 
@@ -817,11 +822,6 @@ OS_Android::OS_Android(GodotJavaWrapper *p_godot_java, GodotIOJavaWrapper *p_god
 	_set_logger(memnew(CompositeLogger(loggers)));
 
 	AudioDriverManager::add_driver(&audio_driver_android);
-
-	// Set params for suppressing extra movements at touch start
-	small_movement_threshold = 10; //GLOBAL_GET("input_devices/pointing/android_touch_micromovement_threshold");
-	small_movement_threshold_squared = small_movement_threshold * small_movement_threshold;
-	print_line("Set micromovent threshold for Android: " + itos(small_movement_threshold));
 }
 
 OS_Android::~OS_Android() {
