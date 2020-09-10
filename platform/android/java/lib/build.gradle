@@ -33,7 +33,7 @@ android {
         exclude 'META-INF/NOTICE'
 
         // Should be uncommented for development purpose within Android Studio
-        // doNotStrip '**/*.so'
+        doNotStrip '**/*.so'
     }
 
     sourceSets {

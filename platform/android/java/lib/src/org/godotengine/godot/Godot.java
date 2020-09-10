@@ -990,6 +990,66 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		}
 	}
 
+	public boolean gotTouchEvent(final MotionEvent event) {
+
+		final int evcount = event.getPointerCount();
+		if (evcount == 0)
+			return true;
+
+		if (mView != null) {
+			final int[] arr = new int[event.getPointerCount() * 3];
+
+			for (int i = 0; i < event.getPointerCount(); i++) {
+
+				arr[i * 3 + 0] = (int)event.getPointerId(i);
+				arr[i * 3 + 1] = (int)event.getX(i);
+				arr[i * 3 + 2] = (int)event.getY(i);
+			}
+			final int pointer_id = event.getPointerId(event.getActionIndex());
+
+			//System.out.printf("gaction: %d\n",event.getAction());
+			final int action = event.getAction() & MotionEvent.ACTION_MASK;
+			mView.queueEvent(new Runnable() {
+				@Override
+				public void run() {
+					switch (action) {
+						case MotionEvent.ACTION_DOWN: {
+							GodotLib.touch(0, 0, evcount, arr);
+							//System.out.printf("action down at: %f,%f\n", event.getX(),event.getY());
+						} break;
+						case MotionEvent.ACTION_MOVE: {
+							GodotLib.touch(1, 0, evcount, arr);
+							/*
+							for(int i=0;i<event.getPointerCount();i++) {
+								System.out.printf("%d - moved to: %f,%f\n",i, event.getX(i),event.getY(i));
+							}*/
+							
+						} break;
+						case MotionEvent.ACTION_POINTER_UP: {
+							GodotLib.touch(4, pointer_id, evcount, arr);
+							//System.out.printf("%d - s.up", pointer_id);
+						} break;
+						case MotionEvent.ACTION_POINTER_DOWN: {
+							GodotLib.touch(3, pointer_id, evcount, arr);
+							//System.out.printf("%d - s.down", pointer_id);
+						} break;
+						case MotionEvent.ACTION_CANCEL:
+						case MotionEvent.ACTION_UP: {
+							GodotLib.touch(2, 0, evcount, arr);
+							/*
+							for(int i=0;i<event.getPointerCount();i++) {
+								System.out.printf("%d - up! %f,%f\n",i, event.getX(i),event.getY(i));
+							}*/
+							
+						} break;
+					}
+				}
+			});
+		}
+		return true;
+	}
+
+	@Override
 	public boolean onKeyMultiple(final int inKeyCode, int repeatCount, KeyEvent event) {
 		String s = event.getCharacters();
 		if (s == null || s.length() == 0)
