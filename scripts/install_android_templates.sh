@@ -18,9 +18,9 @@ cd ../../..
 #scons platform=android target=debug android_arch=armv7
 
 # ARM v8 (64 bit)
-scons platform=android target=release android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes debug_symbols=no
+scons platform=android -j 4 target=release android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
 
-scons platform=android -j 4 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes debug_symbols=yes
+scons platform=android -j 4 target=debug android_arch=arm64v8 verbose=yes tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
 
 # x86 (32 bit)
 #scons platform=android target=release android_arch=x86
