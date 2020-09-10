@@ -205,9 +205,9 @@ def configure(env):
         if env["target"] == "release_debug":
             env.Append(CPPDEFINES=["DEBUG_ENABLED"])
     elif env["target"] == "debug":
-        env.Append(LINKFLAGS=["-O0"])
+        env.Append(LINKFLAGS=["-O0", "-g"])
         env.Append(CCFLAGS=["-O0", "-g", "-fno-limit-debug-info"])
-        env.Append(CPPDEFINES=["_DEBUG", "DEBUG_ENABLED"])
+        env.Append(CPPDEFINES=["_DEBUG", "DEBUG_ENABLED", "DEBUG_MEMORY_ENABLED"])
         env.Append(CPPFLAGS=["-UNDEBUG"])
 
     # Compiler configuration
