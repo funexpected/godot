@@ -108,6 +108,8 @@ public:
 	bool has_singleton(const String &p_name) const;
 	Object *get_singleton_object(const String &p_name) const;
 
+	void add_global_constant(const String &p_name, const Variant &p_value) const;
+
 	_FORCE_INLINE_ bool get_use_pixel_snap() const { return _pixel_snap; }
 	bool get_snap_2d_transforms() const { return _snap_2d_transforms; }
 	bool get_snap_2d_viewports() const { return _snap_2d_viewports; }

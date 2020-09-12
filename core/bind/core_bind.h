@@ -796,6 +796,8 @@ public:
 	bool has_singleton(const String &p_name) const;
 	Object *get_singleton_object(const String &p_name) const;
 
+	void add_global_constant(const String &p_name, const Variant &p_value) const;
+
 	void set_editor_hint(bool p_enabled);
 	bool is_editor_hint() const;
 
