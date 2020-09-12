@@ -210,6 +210,12 @@ void Engine::get_singletons(List<Singleton> *p_singletons) {
 		p_singletons->push_back(E->get());
 }
 
+void Engine::add_global_constant(const String &p_name, const Variant &p_value) const {
+	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
+		ScriptServer::get_language(i)->add_global_constant(p_name, p_value);
+	}
+}
+
 Engine *Engine::singleton = NULL;
 
 Engine *Engine::get_singleton() {
