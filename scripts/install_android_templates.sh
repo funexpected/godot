@@ -14,21 +14,23 @@ cd ../../..
 # Build export template(s) for platforms(s):
 
 # ARM v7 (32 bit)
-#scons platform=android target=release android_arch=armv7
-#scons platform=android target=debug android_arch=armv7
+scons platform=android -j 8 target=release android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+
+scons platform=android -j 8 target=debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
 
 # ARM v8 (64 bit)
-scons platform=android -j 4 target=release android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+scons platform=android -j 8 target=release android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
 
-scons platform=android -j 4 target=debug android_arch=arm64v8 verbose=yes tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
 
 # x86 (32 bit)
 #scons platform=android target=release android_arch=x86
 #scons platform=android target=debug android_arch=x86
 
 # x86_64 (64 bit)
-#scons platform=android target=release android_arch=x86_64
-#scons platform=android target=debug android_arch=x86_64
+scons platform=android -j 8 target=release android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+
+scons platform=android -j 8 target=debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
 
 
 # Pack template(s) into APK(s)
