@@ -57,6 +57,7 @@ def configure(env):
             env.Append(LINKFLAGS=["-Os"])
 
         if env["target"] == "release_debug":
+            env.Append(CPPDEFINES=["RELEASE_DEBUG_ENABLED"])
             env.Append(CPPDEFINES=["DEBUG_ENABLED"])
 
     elif env["target"] == "debug":
