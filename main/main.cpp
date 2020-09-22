@@ -1712,6 +1712,7 @@ bool Main::start() {
 		ResourceSaver::add_custom_savers();
 
 		if (!project_manager && !editor) { // game
+			Engine::get_singleton()->add_custom_error_handlers();
 			if (game_path != "" || script != "") {
 				if (script_debugger && script_debugger->is_remote()) {
 					ScriptDebuggerRemote *remote_debugger = static_cast<ScriptDebuggerRemote *>(script_debugger);
@@ -2205,6 +2206,8 @@ void Main::force_redraw() {
 void Main::cleanup() {
 
 	ERR_FAIL_COND(!_start_success);
+
+	Engine::get_singleton()->remove_custom_error_handlers();
 
 	if (script_debugger) {
 		// Flush any remaining messages
