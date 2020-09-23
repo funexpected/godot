@@ -1430,7 +1430,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 
 	String src_pkg_name;
 	String dest_dir = p_path.get_base_dir() + "/";
-	String binary_name = p_path.get_file().get_basename();
+	String binary_name = p_path.get_file().get_basename();	
 
 	EditorProgress ep("export", "Exporting for iOS", 5, true);
 
