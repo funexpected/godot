@@ -3,5 +3,6 @@
 <plist version="1.0">
 <dict>
 $entitlements_push_notifications
+$entitlements
 </dict>
 </plist>
