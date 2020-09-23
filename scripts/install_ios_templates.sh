@@ -24,7 +24,7 @@ scons p=iphone -j 4 tools=no bits=64 target=debug arch=arm64 module_firebase_ena
 #cp bin/libgodot.iphone.release.fat.a iphone/libgodot.iphone.release.fat.a
 #cp bin/libgodot.iphone.debug.fat.a iphone/libgodot.iphone.debug.fat.a
 
-cp bin/libgodot.iphone.opt.arm64.a iphone/libgodot.iphone.release.fat.a
+cp bin/libgodot.iphone.opt.debug.arm64.a iphone/libgodot.iphone.release.fat.a
 cp bin/libgodot.iphone.debug.arm64.a iphone/libgodot.iphone.debug.fat.a
 
 zip -X -r iphone.zip iphone
