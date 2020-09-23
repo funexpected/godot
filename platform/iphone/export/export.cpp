@@ -916,7 +916,7 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 
 Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir, const Vector<String> &p_assets, bool p_is_framework, bool p_should_embed, Vector<IOSExportAsset> &r_exported_assets) {
 	DirAccess *filesystem_da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-	String binary_name = p_out_dir.get_file().get_basename();
+	String binary_name = p_out_dir.get_file();
 
 	ERR_FAIL_COND_V_MSG(!filesystem_da, ERR_CANT_CREATE, "Cannot create DirAccess for path '" + p_out_dir + "'.");
 	for (int f_idx = 0; f_idx < p_assets.size(); ++f_idx) {
@@ -1115,7 +1115,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 
 	String src_pkg_name;
 	String dest_dir = p_path.get_base_dir() + "/";
-	String binary_name = p_path.get_file().get_basename();
+	String binary_name = p_path.get_file().get_basename();	
 
 	EditorProgress ep("export", "Exporting for iOS", 5, true);
 
