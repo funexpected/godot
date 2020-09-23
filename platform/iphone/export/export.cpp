@@ -77,7 +77,9 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 		String modules_buildphase;
 		String modules_buildgrp;
 		Vector<String> capabilities;
+		String ios_entitlements;
 	};
+
 	struct ExportArchitecture {
 
 		String name;
@@ -103,6 +105,7 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	String _get_additional_plist_content();
 	String _get_linker_flags();
 	String _get_cpp_code();
+	String _get_ios_entitlements();
 	void _fix_config_file(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &pfile, const IOSConfigData &p_config, bool p_debug);
 	Error _export_loading_screen_images(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir);
 	Error _export_loading_screen_file(const Ref<EditorExportPreset> &p_preset, const String &p_dest_dir);
@@ -322,22 +325,24 @@ Vector<EditorExportPlatformIOS::ExportArchitecture> EditorExportPlatformIOS::_ge
 struct LoadingScreenInfo {
 	const char *preset_key;
 	const char *export_name;
+	const Vector2 size;
 };
 
 static const LoadingScreenInfo loading_screen_infos[] = {
-	{ "landscape_launch_screens/iphone_2436x1125", "Default-Landscape-X.png" },
-	{ "landscape_launch_screens/iphone_2208x1242", "Default-Landscape-736h@3x.png" },
-	{ "landscape_launch_screens/ipad_1024x768", "Default-Landscape.png" },
-	{ "landscape_launch_screens/ipad_2048x1536", "Default-Landscape@2x.png" },
+	{ "landscape_launch_screens/iphone_2436x1125", "Default-Landscape-X.png", Vector2(2436,1125) },
+	{ "landscape_launch_screens/iphone_2208x1242", "Default-Landscape-736h@3x.png", Vector2(2208,1242) },
+	{ "landscape_launch_screens/ipad_1024x768", "Default-Landscape.png", Vector2(1024, 768) },
+	{ "landscape_launch_screens/ipad_2048x1536", "Default-Landscape@2x.png", Vector2(2048, 1536) },
 
-	{ "portrait_launch_screens/iphone_640x960", "Default-480h@2x.png" },
-	{ "portrait_launch_screens/iphone_640x1136", "Default-568h@2x.png" },
-	{ "portrait_launch_screens/iphone_750x1334", "Default-667h@2x.png" },
-	{ "portrait_launch_screens/iphone_1125x2436", "Default-Portrait-X.png" },
-	{ "portrait_launch_screens/ipad_768x1024", "Default-Portrait.png" },
-	{ "portrait_launch_screens/ipad_1536x2048", "Default-Portrait@2x.png" },
-	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png" }
+	{ "portrait_launch_screens/iphone_640x960", "Default-480h@2x.png", Vector2(640, 960) },
+	{ "portrait_launch_screens/iphone_640x1136", "Default-568h@2x.png", Vector2(640, 1136) },
+	{ "portrait_launch_screens/iphone_750x1334", "Default-667h@2x.png", Vector2(750,1334) },
+	{ "portrait_launch_screens/iphone_1125x2436", "Default-Portrait-X.png", Vector2(1125,2436) },
+	{ "portrait_launch_screens/ipad_768x1024", "Default-Portrait.png", Vector2(768,1024) },
+	{ "portrait_launch_screens/ipad_1536x2048", "Default-Portrait@2x.png", Vector2(1536,2048) },
+	{ "portrait_launch_screens/iphone_1242x2208", "Default-Portrait-736h@3x.png", Vector2(1242,2208) }
 };
+
 
 void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) {
 
@@ -484,6 +489,8 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 		} else if (lines[i].find("$entitlements_push_notifications") != -1) {
 			bool is_on = p_preset->get("capabilities/push_notifications");
 			strnew += lines[i].replace("$entitlements_push_notifications", is_on ? "<key>aps-environment</key><string>development</string>" : "") + "\n";
+		} else if (lines[i].find("$entitlements") != -1) {
+			strnew += lines[i].replace("$entitlements", p_config.ios_entitlements) + "\n";
 		} else if (lines[i].find("$required_device_capabilities") != -1) {
 			String capabilities;
 
@@ -627,6 +634,14 @@ String EditorExportPlatformIOS::_get_cpp_code() {
 	}
 	return result;
 }
+String EditorExportPlatformIOS::_get_ios_entitlements() {
+	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
+	String result;
+	for (int i = 0; i < export_plugins.size(); ++i) {
+		result += export_plugins[i]->get_ios_entitlements();
+	}
+	return result;
+}
 
 struct IconInfo {
 	const char *preset_key;
@@ -669,18 +684,19 @@ Error EditorExportPlatformIOS::_export_icons(const Ref<EditorExportPreset> &p_pr
 		IconInfo info = icon_infos[i];
 		String icon_path = p_preset->get(info.preset_key);
 		if (icon_path.length() == 0) {
-			if (info.is_required) {
-				ERR_PRINT("Required icon is not specified in the preset");
-				return ERR_UNCONFIGURED;
+			Ref<Image> img = memnew(Image());
+			img->load(GLOBAL_DEF("application/config/icon", "res://icon.png"));
+			int size = String(info.actual_size_side).to_int();
+			img->resize(size, size, Image::INTERPOLATE_CUBIC);
+			img->save_png(p_iconset_dir + info.export_name);
+		} else {
+			Error err = da->copy(icon_path, p_iconset_dir + info.export_name);
+			if (err) {
+				memdelete(da);
+				String err_str = String("Failed to export icon: ") + icon_path;
+				ERR_PRINT(err_str.utf8().get_data());
+				return err;
 			}
-			continue;
-		}
-		Error err = da->copy(icon_path, p_iconset_dir + info.export_name);
-		if (err) {
-			memdelete(da);
-			String err_str = String("Failed to export icon: ") + icon_path;
-			ERR_PRINT(err_str.utf8().get_data());
-			return err;
 		}
 		sizes += String(info.actual_size_side) + "\n";
 		if (i > 0) {
@@ -794,6 +810,12 @@ Error EditorExportPlatformIOS::_export_loading_screen_images(const Ref<EditorExp
 				ERR_PRINT(err_str.utf8().get_data());
 				return err;
 			}
+		} else {
+			Ref<Image> img = memnew(Image(info.size.x, info.size.y, false, Image::Format::FORMAT_RGBA8));
+			img->lock();
+			img->fill(GLOBAL_DEF("application/boot_splash/bg_color", Color(1,1,1)));
+			img->unlock();
+			img->save_png(p_dest_dir + info.export_name);
 		}
 	}
 	memdelete(da);
@@ -1491,6 +1513,7 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 	files_to_parse.insert(project_file);
 	files_to_parse.insert("godot_ios/export_options.plist");
 	files_to_parse.insert("godot_ios/dummy.cpp");
+	files_to_parse.insert("godot_ios/godot_ios.entitlements");
 	files_to_parse.insert("godot_ios.xcodeproj/project.xcworkspace/contents.xcworkspacedata");
 	files_to_parse.insert("godot_ios.xcodeproj/xcshareddata/xcschemes/godot_ios.xcscheme");
 	files_to_parse.insert("godot_ios/godot_ios.entitlements");
@@ -1507,7 +1530,8 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 		"",
 		"",
 		"",
-		Vector<String>()
+		Vector<String>(),
+		_get_ios_entitlements()
 	};
 
 	Vector<IOSExportAsset> assets;
