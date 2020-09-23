@@ -628,6 +628,12 @@ bool OS::has_feature(const String &p_feature) {
 
 	if (p_feature == get_name())
 		return true;
+#ifdef RELEASE_DEBUG_ENABLED
+	if (p_feature == "debug")
+		return false;
+	if (p_feature == "release")
+		return true;
+#endif
 #ifdef DEBUG_ENABLED
 	if (p_feature == "debug")
 		return true;
