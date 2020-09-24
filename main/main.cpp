@@ -715,7 +715,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			// We still pass it to the main arguments since the argument handling itself is not done in this function
 			main_args.push_back(I->get());
 #endif
-		} else if (I->get() == "--export" || I->get() == "--export-debug" || I->get() == "--export-pack") { // Export project
+		} else if (I->get() == "--export" || I->get() == "--export-debug" || I->get() == "--export-pack" || I->get() == "--export-all-pack") { // Export project
 
 			editor = true;
 			main_args.push_back(I->get());
@@ -1501,6 +1501,8 @@ bool Main::start() {
 #ifdef TOOLS_ENABLED
 	bool doc_base = true;
 	String _export_preset;
+	String custom_presets;
+	bool export_all = false;
 	bool export_debug = false;
 	bool export_pack_only = false;
 #endif
@@ -1515,6 +1517,9 @@ bool Main::start() {
 #ifdef TOOLS_ENABLED
 		} else if (args[i] == "--no-docbase") {
 			doc_base = false;
+		} else if (args[i] == "--export-all-pack") {
+			export_all = true;
+			export_pack_only = true;
 		} else if (args[i] == "-e" || args[i] == "--editor") {
 			editor = true;
 		} else if (args[i] == "-p" || args[i] == "--project-manager") {
@@ -1560,6 +1565,8 @@ bool Main::start() {
 				editor = true;
 				_export_preset = args[i + 1];
 				export_pack_only = true;
+			} else if (args[i] == "--custom-presets") {
+				custom_presets = args[i + 1];
 #endif
 			} else {
 				// The parameter does not match anything known, don't skip the next argument
@@ -1815,11 +1822,17 @@ bool Main::start() {
 		EditorNode *editor_node = NULL;
 		if (editor) {
 			editor_node = memnew(EditorNode);
+			if (custom_presets != "")
+				editor_node->set_custom_presets_path(custom_presets);
+				// editor_node->editor_export->export_presets_path = custom_presets;
 			sml->get_root()->add_child(editor_node);
 
 			if (_export_preset != "") {
 				editor_node->export_preset(_export_preset, positional_arg, export_debug, export_pack_only);
 				game_path = ""; // Do not load anything.
+			} else if (export_all) {
+				editor_node->export_all_presets(positional_arg, export_debug, export_pack_only);
+				game_path = "";
 			}
 		}
 #endif
