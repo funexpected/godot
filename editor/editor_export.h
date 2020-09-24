@@ -369,6 +369,7 @@ class EditorExport : public Node {
 
 	Timer *save_timer;
 	bool block_save;
+	String export_presets_path = "res://export_presets.cfg";
 
 	static EditorExport *singleton;
 
@@ -383,6 +384,8 @@ protected:
 
 public:
 	static EditorExport *get_singleton() { return singleton; }
+
+	void set_export_presets_path(const String &p_presets_path);
 
 	void add_export_platform(const Ref<EditorExportPlatform> &p_platform);
 	int get_export_platform_count();
