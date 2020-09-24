@@ -1265,7 +1265,7 @@ void EditorExport::_save() {
 		}
 	}
 
-	config->save("res://export_presets.cfg");
+	config->save(export_presets_path);
 }
 
 void EditorExport::save_presets() {
@@ -1331,6 +1331,10 @@ String EditorExportPlatform::test_etc2() const {
 	return String();
 }
 
+void EditorExport::set_export_presets_path(const String &p_presets_path){
+	export_presets_path = p_presets_path;
+}
+
 int EditorExport::get_export_preset_count() const {
 
 	return export_presets.size();
@@ -1381,7 +1385,7 @@ void EditorExport::load_config() {
 
 	Ref<ConfigFile> config;
 	config.instance();
-	Error err = config->load("res://export_presets.cfg");
+	Error err = config->load(export_presets_path);
 	if (err != OK)
 		return;
 

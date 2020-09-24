@@ -37,6 +37,7 @@
 #include "editor/inspector_dock.h"
 #include "editor/property_editor.h"
 #include "editor/scene_tree_dock.h"
+#include "editor/editor_export.h"
 
 typedef void (*EditorNodeInitCallback)();
 typedef void (*EditorPluginInitializeCallback)();
@@ -556,6 +557,7 @@ private:
 	}
 
 	struct ExportDefer {
+		bool all_presets = false;
 		String preset;
 		String path;
 		bool debug;
@@ -784,6 +786,10 @@ public:
 	void _copy_warning(const String &p_str);
 
 	Error export_preset(const String &p_preset, const String &p_path, bool p_debug, bool p_pack_only);
+	Error export_all_presets(const String &p_path, bool p_debug, bool p_pack_only);
+
+	void set_custom_presets_path(const String &p_presets_path);
+	String export_project(const Ref<EditorExportPreset> &preset, const String &path);
 
 	static void register_editor_types();
 	static void unregister_editor_types();
