@@ -3,7 +3,7 @@
 Import("env")
 
 env.add_source_files(env.scene_sources, "*.cpp")
-if env["platform"] == "iphone" or env["platform"] == "osx":
+if env["platform"] in ["iphone", "osx", "server"]:
     env.add_source_files(env.scene_sources, "*.m")
 
 
