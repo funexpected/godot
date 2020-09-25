@@ -41,6 +41,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef TOOLS_ENABLED
+#include "editor/editor_node.h"
+#endif
+
 int OS_Server::get_video_driver_count() const {
 
 	return 1;
@@ -208,6 +212,20 @@ int OS_Server::get_power_percent_left() {
 }
 
 bool OS_Server::_check_internal_feature_support(const String &p_feature) {
+#ifdef TOOLS_ENABLED
+	if (EditorNode::get_singleton()) {
+		if (p_feature == "bptc")
+			return true;
+		if (p_feature == "s3tc")
+			return true;
+		if (p_feature == "etc")
+			return true;
+		if (p_feature == "etc2")
+			return true;
+		if (p_feature == "pvrtc")
+			return true;
+	}
+#endif
 	return p_feature == "pc";
 }
 
