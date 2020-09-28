@@ -116,6 +116,26 @@ static ViewController *mainViewController = nil;
 	return YES;
 }
 
+
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url sourceApplication:(NSString*)sourceApplication annotation:(id)annotation {
+	NSMutableArray *ansArray = [NSMutableArray arrayWithObjects:[NSNumber numberWithBool:YES], nil];
+	NSDictionary *data = @{ 
+		@"app" : app, 
+		@"url" : url, 
+		@"sourceApplication" : sourceApplication, 
+		@"annotation" : annotation,
+		@"ansArray" : ansArray
+	};
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"appOpenUrlWithOptions_finish" object:nil userInfo:data];
+	for (id tempObject in ansArray) {
+    	if ([tempObject boolValue] == NO)
+			return NO;
+	}
+	return YES;
+
+}
+
 - (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity restorationHandler:
 #if defined(__IPHONE_12_0) && (__IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_12_0)
 (nonnull void (^)(NSArray<id<UIUserActivityRestoring>> *_Nullable))restorationHandler {
@@ -123,8 +143,11 @@ static ViewController *mainViewController = nil;
     (nonnull void (^)(NSArray *_Nullable))restorationHandler {
 #endif  // __IPHONE_12_0
 	NSMutableArray *ansArray = [NSMutableArray arrayWithObjects:[NSNumber numberWithBool:YES], nil];
-	[[NSNotificationCenter defaultCenter] postNotificationName: 
-                       @"appContinueUserActivity_finish" object:nil userInfo: @{@"userActivity" :userActivity, @"ansArray" : ansArray}];
+	[[NSNotificationCenter defaultCenter] postNotificationName: @"appContinueUserActivity_finish" object:nil userInfo: @{
+		@"userActivity" :userActivity,
+		@"restorationHandler": restorationHandler,
+		@"ansArray" : ansArray
+	}];
 	for (id tempObject in ansArray) {
     	if ([tempObject boolValue] == NO)
 			return NO;
@@ -199,10 +222,14 @@ static ViewController *mainViewController = nil;
 
 - (void)applicationWillResignActive:(UIApplication *)application {
 	OSIPhone::get_singleton()->on_focus_out();
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"applicationWillResignActive_finish" object:nil userInfo: @{}];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
 	OSIPhone::get_singleton()->on_focus_in();
+	[[NSNotificationCenter defaultCenter] postNotificationName: 
+                       @"applicationDidBecomeActive_finish" object:nil userInfo: @{}];
 }
 
 - (void)dealloc {
