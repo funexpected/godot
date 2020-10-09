@@ -86,6 +86,13 @@ int EditorImportPlugin::get_import_order() const {
 	return get_script_instance()->call("get_import_order");
 }
 
+String EditorImportPlugin::get_importer_version() const {
+	if (!(get_script_instance() && get_script_instance()->has_method("get_importer_version"))) {
+		return ResourceImporter::get_importer_version();
+	}
+	return get_script_instance()->call("get_importer_version");
+}
+
 void EditorImportPlugin::get_import_options(List<ResourceImporter::ImportOption> *r_options, int p_preset) const {
 
 	ERR_FAIL_COND(!(get_script_instance() && get_script_instance()->has_method("get_import_options")));
