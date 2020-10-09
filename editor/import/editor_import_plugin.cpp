@@ -44,6 +44,13 @@ String EditorImportPlugin::get_visible_name() const {
 	return get_script_instance()->call("get_visible_name");
 }
 
+String EditorImportPlugin::get_importer_version() const {
+	if (!(get_script_instance() && get_script_instance()->has_method("get_importer_version"))) {
+		return ResourceImporter::get_importer_version();
+	}
+	return get_script_instance()->call("get_importer_version");
+}
+
 void EditorImportPlugin::get_recognized_extensions(List<String> *p_extensions) const {
 	ERR_FAIL_COND(!(get_script_instance() && get_script_instance()->has_method("get_recognized_extensions")));
 	Array extensions = get_script_instance()->call("get_recognized_extensions");
