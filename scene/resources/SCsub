@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 
 Import("env")
 
@@ -18,7 +19,7 @@ env.scene_sources += thirdparty_obj
 scene_obj = []
 
 env.add_source_files(scene_obj, "*.cpp")
-if env["platform"] in ["iphone", "osx", "server"]:
+if sys.platform == "darwin":
     env.add_source_files(scene_obj, "*.m")
 env.scene_sources += scene_obj
 
