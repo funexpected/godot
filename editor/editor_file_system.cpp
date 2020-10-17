@@ -382,6 +382,7 @@ bool EditorFileSystem::_test_for_reimport(const String &p_path, bool p_only_impo
 	int importer_current_version = 0;
 	int importer_imported_version = 0;
 
+	bool is_hashing_params = false;
 	while (true) {
 
 		assign = Variant();
@@ -389,6 +390,9 @@ bool EditorFileSystem::_test_for_reimport(const String &p_path, bool p_only_impo
 		next_tag.name = String();
 
 		err = VariantParser::parse_tag_assign_eof(&stream, lines, error_text, next_tag, assign, value, NULL, true);
+		if (next_tag.name == "params") {
+			is_hashing_params = true;
+		}
 		if (err == ERR_FILE_EOF) {
 			break;
 		} else if (err != OK) {
@@ -397,33 +401,31 @@ bool EditorFileSystem::_test_for_reimport(const String &p_path, bool p_only_impo
 			return false; //parse error, try reimport manually (Avoid reimport loop on broken file)
 		}
 
-		if (assign != String()) {
-			if (assign.begins_with("path")) {
-				to_check.push_back(value);
-			} else if (assign == "files") {
-				Array fa = value;
-				for (int i = 0; i < fa.size(); i++) {
-					to_check.push_back(fa[i]);
-				}
-			} else if (assign == "importer") {
-				importer_name = value;
-				Ref<ResourceImporter> importer = ResourceFormatImporter::get_singleton()->get_importer_by_name(importer_name);
-				if (importer.is_valid()) {
-					importer_current_version = importer->get_importer_version();
-				}
-			} else if (!p_only_imported_files) {
-				if (assign == "source_file") {
-					source_file = value;
-				} else if (assign == "dest_files") {
-					dest_files = value;
-				}
+		if (assign == String()) {
+			continue;
+		} else if (is_hashing_params) {
+			String hashed_value;
+			VariantWriter::write_to_string(value, hashed_value);
+			params_hash += "::" + assign + "=" + hashed_value;
+		} else if (assign.begins_with("path")) {
+			to_check.push_back(value);
+		} else if (assign == "files") {
+			Array fa = value;
+			for (int i = 0; i < fa.size(); i++) {
+				to_check.push_back(fa[i]);
 			}
-		} else if (next_tag.name == "params") {
-			if (assign != String()) {
-				params_hash += "::" + assign + "=" + value;
+		} else if (assign == "importer") {
+			importer_name = value;
+			Ref<ResourceImporter> importer = ResourceFormatImporter::get_singleton()->get_importer_by_name(importer_name);
+			if (importer.is_valid()) {
+				importer_current_version = importer->get_importer_version();
 			}
-		} else if (next_tag.name != "remap" && next_tag.name != "deps") {
-			break;
+		} else if (!p_only_imported_files) {
+			if (assign == "source_file") {
+				source_file = value;
+			} else if (assign == "dest_files") {
+				dest_files = value;
+			}
 		}
 	}
 
