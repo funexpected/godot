@@ -596,7 +596,7 @@ void ARKitInterface::process() {
 
 					// copy our current frame transform
 					matrix_float4x4 m44 = camera.transform;
-					if (orientation == UIInterfaceOrientationLandscapeLeft) {
+					if (orientation == UIInterfaceOrientationLandscapeRight) {
 						transform.basis.elements[0].x = m44.columns[0][0];
 						transform.basis.elements[1].x = m44.columns[0][1];
 						transform.basis.elements[2].x = m44.columns[0][2];
@@ -610,7 +610,7 @@ void ARKitInterface::process() {
 						transform.basis.elements[0].y = -m44.columns[0][0];
 						transform.basis.elements[1].y = -m44.columns[0][1];
 						transform.basis.elements[2].y = -m44.columns[0][2];
-					} else if (orientation == UIInterfaceOrientationLandscapeRight) {
+					} else if (orientation == UIInterfaceOrientationLandscapeLeft) {
 						transform.basis.elements[0].x = -m44.columns[0][0];
 						transform.basis.elements[1].x = -m44.columns[0][1];
 						transform.basis.elements[2].x = -m44.columns[0][2];
