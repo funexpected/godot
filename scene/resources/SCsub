@@ -19,7 +19,7 @@ env.scene_sources += thirdparty_obj
 scene_obj = []
 
 env.add_source_files(scene_obj, "*.cpp")
-if sys.platform == "darwin":
+if sys.platform == "darwin" and env["platform"] in ["iphone", "osx", "server"]:
     env.add_source_files(scene_obj, "*.m")
 env.scene_sources += scene_obj
 
