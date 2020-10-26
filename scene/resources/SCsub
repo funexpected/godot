@@ -4,7 +4,7 @@ import sys
 Import("env")
 
 env.add_source_files(env.scene_sources, "*.cpp")
-if sys.platform == "darwin":
+if sys.platform == "darwin" and env["platform"] in ["iphone", "osx", "server"]:
     env.add_source_files(env.scene_sources, "*.m")
 
 
