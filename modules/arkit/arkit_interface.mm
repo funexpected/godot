@@ -88,25 +88,6 @@ void ARKitInterface::stop_session() {
 	}
 }
 
-void ARKitInterface::notification(int p_what) {
-	// TODO, this is not being called, need to find out why, possibly because this is not a node.
-	// in that case we need to find a way to get these notifications!
-	switch (p_what) {
-		case MainLoop::NOTIFICATION_WM_FOCUS_IN: {
-			print_line("Focus in");
-
-			start_session();
-		}; break;
-		case MainLoop::NOTIFICATION_WM_FOCUS_OUT: {
-			print_line("Focus out");
-
-			stop_session();
-		}; break;
-		default:
-			break;
-	}
-}
-
 bool ARKitInterface::get_anchor_detection_is_enabled() const {
 	return plane_detection_is_enabled;
 }
@@ -430,230 +411,249 @@ void ARKitInterface::remove_all_anchors() {
 		num_anchors = 0;
 	}
 }
-
 void ARKitInterface::process() {
+
+}
+void ARKitInterface::notification(int p_what) {
+		// TODO, this is not being called, need to find out why, possibly because this is not a node.
+	// in that case we need to find a way to get these notifications!
+	switch (p_what) {
+		case MainLoop::NOTIFICATION_WM_FOCUS_IN: {
+			print_line("Focus in");
+
+			start_session();
+			return;
+		}; break;
+		case MainLoop::NOTIFICATION_WM_FOCUS_OUT: {
+			print_line("Focus out");
+
+			stop_session();
+			return;
+		}; break;
+		default:
+			return;
+	}
+}
+
+void ARKitInterface::_update_frame(void *p_frame) {
 	_THREAD_SAFE_METHOD_
 
-	if (@available(iOS 11.0, *)) {
-		if (initialized) {
-			// get our next ARFrame
-			ARFrame *current_frame = ar_session.currentFrame;
-			if (last_timestamp != current_frame.timestamp) {
-				// only process if we have a new frame
-				last_timestamp = current_frame.timestamp;
+	if (!@available(iOS 11.0, *) || !initialized) {
+		return;
+	}
+	
+	ARFrame *current_frame = (ARFrame *)p_frame;
+	last_timestamp = current_frame.timestamp;
 
-				// get some info about our screen and orientation
-				Size2 screen_size = OS::get_singleton()->get_window_size();
-				UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+	// get some info about our screen and orientation
+	Size2 screen_size = OS::get_singleton()->get_window_size();
+	UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
 
-				// Grab our camera image for our backbuffer
-				CVPixelBufferRef pixelBuffer = current_frame.capturedImage;
-				if ((CVPixelBufferGetPlaneCount(pixelBuffer) == 2) && (feed != NULL)) {
-					// Plane 0 is our Y and Plane 1 is our CbCr buffer
+	// Grab our camera image for our backbuffer
+	CVPixelBufferRef pixelBuffer = current_frame.capturedImage;
+	if ((CVPixelBufferGetPlaneCount(pixelBuffer) == 2) && (feed != NULL)) {
+		// Plane 0 is our Y and Plane 1 is our CbCr buffer
 
-					// ignored, we check each plane separately
-					// image_width = CVPixelBufferGetWidth(pixelBuffer);
-					// image_height = CVPixelBufferGetHeight(pixelBuffer);
+		// ignored, we check each plane separately
+		// image_width = CVPixelBufferGetWidth(pixelBuffer);
+		// image_height = CVPixelBufferGetHeight(pixelBuffer);
 
-					// printf("Pixel buffer %i - %i\n", image_width, image_height);
+		// printf("Pixel buffer %i - %i\n", image_width, image_height);
 
-					CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+		CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
 
-					// get our buffers
-					unsigned char *dataY = (unsigned char *)CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0);
-					unsigned char *dataCbCr = (unsigned char *)CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 1);
+		// get our buffers
+		unsigned char *dataY = (unsigned char *)CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 0);
+		unsigned char *dataCbCr = (unsigned char *)CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, 1);
 
-					if (dataY == NULL) {
-						print_line("Couldn't access Y pixel buffer data");
-					} else if (dataCbCr == NULL) {
-						print_line("Couldn't access CbCr pixel buffer data");
-					} else {
-						Ref<Image> img[2];
-						size_t extraLeft, extraRight, extraTop, extraBottom;
+		if (dataY == NULL) {
+			print_line("Couldn't access Y pixel buffer data");
+		} else if (dataCbCr == NULL) {
+			print_line("Couldn't access CbCr pixel buffer data");
+		} else {
+			Ref<Image> img[2];
+			size_t extraLeft, extraRight, extraTop, extraBottom;
 
-						CVPixelBufferGetExtendedPixels(pixelBuffer, &extraLeft, &extraRight, &extraTop, &extraBottom);
+			CVPixelBufferGetExtendedPixels(pixelBuffer, &extraLeft, &extraRight, &extraTop, &extraBottom);
 
-						{
-							// do Y
-							int new_width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0);
-							int new_height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0);
-							int bytes_per_row = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
+			{
+				// do Y
+				int new_width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0);
+				int new_height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0);
+				int bytes_per_row = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
 
-							if ((image_width[0] != new_width) || (image_height[0] != new_height)) {
-								printf("- Camera padding l:%lu r:%lu t:%lu b:%lu\n", extraLeft, extraRight, extraTop, extraBottom);
-								printf("- Camera Y plane size: %i, %i - %i\n", new_width, new_height, bytes_per_row);
+				if ((image_width[0] != new_width) || (image_height[0] != new_height)) {
+					printf("- Camera padding l:%lu r:%lu t:%lu b:%lu\n", extraLeft, extraRight, extraTop, extraBottom);
+					printf("- Camera Y plane size: %i, %i - %i\n", new_width, new_height, bytes_per_row);
 
-								image_width[0] = new_width;
-								image_height[0] = new_height;
-								img_data[0].resize(new_width * new_height);
-							}
-
-							PoolVector<uint8_t>::Write w = img_data[0].write();
-							if (new_width == bytes_per_row) {
-								memcpy(w.ptr(), dataY, new_width * new_height);
-							} else {
-								int offset_a = 0;
-								int offset_b = extraLeft + (extraTop * bytes_per_row);
-								for (int r = 0; r < new_height; r++) {
-									memcpy(w.ptr() + offset_a, dataY + offset_b, new_width);
-									offset_a += new_width;
-									offset_b += bytes_per_row;
-								}
-							}
-
-							img[0].instance();
-							img[0]->create(new_width, new_height, 0, Image::FORMAT_R8, img_data[0]);
-						}
-
-						{
-							// do CbCr
-							int new_width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 1);
-							int new_height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 1);
-							int bytes_per_row = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
-
-							if ((image_width[1] != new_width) || (image_height[1] != new_height)) {
-								printf("- Camera CbCr plane size: %i, %i - %i\n", new_width, new_height, bytes_per_row);
-
-								image_width[1] = new_width;
-								image_height[1] = new_height;
-								img_data[1].resize(2 * new_width * new_height);
-							}
-
-							PoolVector<uint8_t>::Write w = img_data[1].write();
-							if ((2 * new_width) == bytes_per_row) {
-								memcpy(w.ptr(), dataCbCr, 2 * new_width * new_height);
-							} else {
-								int offset_a = 0;
-								int offset_b = extraLeft + (extraTop * bytes_per_row);
-								for (int r = 0; r < new_height; r++) {
-									memcpy(w.ptr() + offset_a, dataCbCr + offset_b, 2 * new_width);
-									offset_a += 2 * new_width;
-									offset_b += bytes_per_row;
-								}
-							}
-
-							img[1].instance();
-							img[1]->create(new_width, new_height, 0, Image::FORMAT_RG8, img_data[1]);
-						}
-
-						// set our texture...
-						feed->set_YCbCr_imgs(img[0], img[1]);
-
-						// now build our transform to display this as a background image that matches our camera
-						CGAffineTransform affine_transform = [current_frame displayTransformForOrientation:orientation viewportSize:CGSizeMake(screen_size.width, screen_size.height)];
-
-						// we need to invert this, probably row v.s. column notation
-						affine_transform = CGAffineTransformInvert(affine_transform);
-
-						if (orientation != UIInterfaceOrientationPortrait) {
-							affine_transform.b = -affine_transform.b;
-							affine_transform.d = -affine_transform.d;
-							affine_transform.ty = 1.0 - affine_transform.ty;
-						} else {
-							affine_transform.c = -affine_transform.c;
-							affine_transform.a = -affine_transform.a;
-							affine_transform.tx = 1.0 - affine_transform.tx;
-						}
-
-						Transform2D display_transform = Transform2D(
-								affine_transform.a, affine_transform.b,
-								affine_transform.c, affine_transform.d,
-								affine_transform.tx, affine_transform.ty);
-
-						feed->set_transform(display_transform);
-					}
-
-					// and unlock
-					CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+					image_width[0] = new_width;
+					image_height[0] = new_height;
+					img_data[0].resize(new_width * new_height);
 				}
 
-				// Record light estimation to apply to our scene
-				if (light_estimation_is_enabled) {
-					ambient_intensity = current_frame.lightEstimate.ambientIntensity;
-
-					///@TODO it's there, but not there.. what to do with this...
-					// https://developer.apple.com/documentation/arkit/arlightestimate?language=objc
-					//				ambient_color_temperature = current_frame.lightEstimate.ambientColorTemperature;
-				}
-
-				// Process our camera
-				ARCamera *camera = current_frame.camera;
-
-				// strangely enough we have to states, rolling them up into one
-				if (camera.trackingState == ARTrackingStateNotAvailable) {
-					// no tracking, would be good if we black out the screen or something...
-					tracking_state = ARVRInterface::ARVR_NOT_TRACKING;
+				PoolVector<uint8_t>::Write w = img_data[0].write();
+				if (new_width == bytes_per_row) {
+					memcpy(w.ptr(), dataY, new_width * new_height);
 				} else {
-					if (camera.trackingState == ARTrackingStateNormal) {
-						tracking_state = ARVRInterface::ARVR_NORMAL_TRACKING;
-					} else if (camera.trackingStateReason == ARTrackingStateReasonExcessiveMotion) {
-						tracking_state = ARVRInterface::ARVR_EXCESSIVE_MOTION;
-					} else if (camera.trackingStateReason == ARTrackingStateReasonInsufficientFeatures) {
-						tracking_state = ARVRInterface::ARVR_INSUFFICIENT_FEATURES;
-					} else {
-						tracking_state = ARVRInterface::ARVR_UNKNOWN_TRACKING;
+					int offset_a = 0;
+					int offset_b = extraLeft + (extraTop * bytes_per_row);
+					for (int r = 0; r < new_height; r++) {
+						memcpy(w.ptr() + offset_a, dataY + offset_b, new_width);
+						offset_a += new_width;
+						offset_b += bytes_per_row;
 					}
-
-					// copy our current frame transform
-					matrix_float4x4 m44 = camera.transform;
-					if (orientation == UIInterfaceOrientationLandscapeRight) {
-						transform.basis.elements[0].x = m44.columns[0][0];
-						transform.basis.elements[1].x = m44.columns[0][1];
-						transform.basis.elements[2].x = m44.columns[0][2];
-						transform.basis.elements[0].y = m44.columns[1][0];
-						transform.basis.elements[1].y = m44.columns[1][1];
-						transform.basis.elements[2].y = m44.columns[1][2];
-					} else if (orientation == UIInterfaceOrientationPortrait) {
-						transform.basis.elements[0].x = m44.columns[1][0];
-						transform.basis.elements[1].x = m44.columns[1][1];
-						transform.basis.elements[2].x = m44.columns[1][2];
-						transform.basis.elements[0].y = -m44.columns[0][0];
-						transform.basis.elements[1].y = -m44.columns[0][1];
-						transform.basis.elements[2].y = -m44.columns[0][2];
-					} else if (orientation == UIInterfaceOrientationLandscapeLeft) {
-						transform.basis.elements[0].x = -m44.columns[0][0];
-						transform.basis.elements[1].x = -m44.columns[0][1];
-						transform.basis.elements[2].x = -m44.columns[0][2];
-						transform.basis.elements[0].y = -m44.columns[1][0];
-						transform.basis.elements[1].y = -m44.columns[1][1];
-						transform.basis.elements[2].y = -m44.columns[1][2];
-					} else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
-						// this may not be correct
-						transform.basis.elements[0].x = m44.columns[1][0];
-						transform.basis.elements[1].x = m44.columns[1][1];
-						transform.basis.elements[2].x = m44.columns[1][2];
-						transform.basis.elements[0].y = m44.columns[0][0];
-						transform.basis.elements[1].y = m44.columns[0][1];
-						transform.basis.elements[2].y = m44.columns[0][2];
-					}
-					transform.basis.elements[0].z = m44.columns[2][0];
-					transform.basis.elements[1].z = m44.columns[2][1];
-					transform.basis.elements[2].z = m44.columns[2][2];
-					transform.origin.x = m44.columns[3][0];
-					transform.origin.y = m44.columns[3][1];
-					transform.origin.z = m44.columns[3][2];
-
-					// copy our current frame projection, investigate using projectionMatrixWithViewportSize:orientation:zNear:zFar: so we can set our own near and far
-					m44 = [camera projectionMatrixForOrientation:orientation viewportSize:CGSizeMake(screen_size.width, screen_size.height) zNear:z_near zFar:z_far];
-					projection.matrix[0][0] = m44.columns[0][0];
-					projection.matrix[1][0] = m44.columns[1][0];
-					projection.matrix[2][0] = m44.columns[2][0];
-					projection.matrix[3][0] = m44.columns[3][0];
-					projection.matrix[0][1] = m44.columns[0][1];
-					projection.matrix[1][1] = m44.columns[1][1];
-					projection.matrix[2][1] = m44.columns[2][1];
-					projection.matrix[3][1] = m44.columns[3][1];
-					projection.matrix[0][2] = m44.columns[0][2];
-					projection.matrix[1][2] = m44.columns[1][2];
-					projection.matrix[2][2] = m44.columns[2][2];
-					projection.matrix[3][2] = m44.columns[3][2];
-					projection.matrix[0][3] = m44.columns[0][3];
-					projection.matrix[1][3] = m44.columns[1][3];
-					projection.matrix[2][3] = m44.columns[2][3];
-					projection.matrix[3][3] = m44.columns[3][3];
 				}
+
+				img[0].instance();
+				img[0]->create(new_width, new_height, 0, Image::FORMAT_R8, img_data[0]);
 			}
+
+			{
+				// do CbCr
+				int new_width = CVPixelBufferGetWidthOfPlane(pixelBuffer, 1);
+				int new_height = CVPixelBufferGetHeightOfPlane(pixelBuffer, 1);
+				int bytes_per_row = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, 0);
+
+				if ((image_width[1] != new_width) || (image_height[1] != new_height)) {
+					printf("- Camera CbCr plane size: %i, %i - %i\n", new_width, new_height, bytes_per_row);
+
+					image_width[1] = new_width;
+					image_height[1] = new_height;
+					img_data[1].resize(2 * new_width * new_height);
+				}
+
+				PoolVector<uint8_t>::Write w = img_data[1].write();
+				if ((2 * new_width) == bytes_per_row) {
+					memcpy(w.ptr(), dataCbCr, 2 * new_width * new_height);
+				} else {
+					int offset_a = 0;
+					int offset_b = extraLeft + (extraTop * bytes_per_row);
+					for (int r = 0; r < new_height; r++) {
+						memcpy(w.ptr() + offset_a, dataCbCr + offset_b, 2 * new_width);
+						offset_a += 2 * new_width;
+						offset_b += bytes_per_row;
+					}
+				}
+
+				img[1].instance();
+				img[1]->create(new_width, new_height, 0, Image::FORMAT_RG8, img_data[1]);
+			}
+
+			// set our texture...
+			feed->set_YCbCr_imgs(img[0], img[1]);
+
+			// now build our transform to display this as a background image that matches our camera
+			CGAffineTransform affine_transform = [current_frame displayTransformForOrientation:orientation viewportSize:CGSizeMake(screen_size.width, screen_size.height)];
+
+			// we need to invert this, probably row v.s. column notation
+			affine_transform = CGAffineTransformInvert(affine_transform);
+
+			if (orientation != UIInterfaceOrientationPortrait) {
+				affine_transform.b = -affine_transform.b;
+				affine_transform.d = -affine_transform.d;
+				affine_transform.ty = 1.0 - affine_transform.ty;
+			} else {
+				affine_transform.c = -affine_transform.c;
+				affine_transform.a = -affine_transform.a;
+				affine_transform.tx = 1.0 - affine_transform.tx;
+			}
+
+			Transform2D display_transform = Transform2D(
+					affine_transform.a, affine_transform.b,
+					affine_transform.c, affine_transform.d,
+					affine_transform.tx, affine_transform.ty);
+
+			feed->set_transform(display_transform);
 		}
+
+		// and unlock
+		CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+	}
+
+	// Record light estimation to apply to our scene
+	if (light_estimation_is_enabled) {
+		ambient_intensity = current_frame.lightEstimate.ambientIntensity;
+
+		///@TODO it's there, but not there.. what to do with this...
+		// https://developer.apple.com/documentation/arkit/arlightestimate?language=objc
+		//				ambient_color_temperature = current_frame.lightEstimate.ambientColorTemperature;
+	}
+
+	// Process our camera
+	ARCamera *camera = current_frame.camera;
+
+	// strangely enough we have to states, rolling them up into one
+	if (camera.trackingState == ARTrackingStateNotAvailable) {
+		// no tracking, would be good if we black out the screen or something...
+		tracking_state = ARVRInterface::ARVR_NOT_TRACKING;
+	} else {
+		if (camera.trackingState == ARTrackingStateNormal) {
+			tracking_state = ARVRInterface::ARVR_NORMAL_TRACKING;
+		} else if (camera.trackingStateReason == ARTrackingStateReasonExcessiveMotion) {
+			tracking_state = ARVRInterface::ARVR_EXCESSIVE_MOTION;
+		} else if (camera.trackingStateReason == ARTrackingStateReasonInsufficientFeatures) {
+			tracking_state = ARVRInterface::ARVR_INSUFFICIENT_FEATURES;
+		} else {
+			tracking_state = ARVRInterface::ARVR_UNKNOWN_TRACKING;
+		}
+
+		// copy our current frame transform
+		matrix_float4x4 m44 = camera.transform;
+		if (orientation == UIInterfaceOrientationLandscapeRight) {
+			transform.basis.elements[0].x = m44.columns[0][0];
+			transform.basis.elements[1].x = m44.columns[0][1];
+			transform.basis.elements[2].x = m44.columns[0][2];
+			transform.basis.elements[0].y = m44.columns[1][0];
+			transform.basis.elements[1].y = m44.columns[1][1];
+			transform.basis.elements[2].y = m44.columns[1][2];
+		} else if (orientation == UIInterfaceOrientationPortrait) {
+			transform.basis.elements[0].x = m44.columns[1][0];
+			transform.basis.elements[1].x = m44.columns[1][1];
+			transform.basis.elements[2].x = m44.columns[1][2];
+			transform.basis.elements[0].y = -m44.columns[0][0];
+			transform.basis.elements[1].y = -m44.columns[0][1];
+			transform.basis.elements[2].y = -m44.columns[0][2];
+		} else if (orientation == UIInterfaceOrientationLandscapeLeft) {
+			transform.basis.elements[0].x = -m44.columns[0][0];
+			transform.basis.elements[1].x = -m44.columns[0][1];
+			transform.basis.elements[2].x = -m44.columns[0][2];
+			transform.basis.elements[0].y = -m44.columns[1][0];
+			transform.basis.elements[1].y = -m44.columns[1][1];
+			transform.basis.elements[2].y = -m44.columns[1][2];
+		} else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
+			// this may not be correct
+			transform.basis.elements[0].x = m44.columns[1][0];
+			transform.basis.elements[1].x = m44.columns[1][1];
+			transform.basis.elements[2].x = m44.columns[1][2];
+			transform.basis.elements[0].y = m44.columns[0][0];
+			transform.basis.elements[1].y = m44.columns[0][1];
+			transform.basis.elements[2].y = m44.columns[0][2];
+		}
+		transform.basis.elements[0].z = m44.columns[2][0];
+		transform.basis.elements[1].z = m44.columns[2][1];
+		transform.basis.elements[2].z = m44.columns[2][2];
+		transform.origin.x = m44.columns[3][0];
+		transform.origin.y = m44.columns[3][1];
+		transform.origin.z = m44.columns[3][2];
+
+		// copy our current frame projection, investigate using projectionMatrixWithViewportSize:orientation:zNear:zFar: so we can set our own near and far
+		m44 = [camera projectionMatrixForOrientation:orientation viewportSize:CGSizeMake(screen_size.width, screen_size.height) zNear:z_near zFar:z_far];
+		projection.matrix[0][0] = m44.columns[0][0];
+		projection.matrix[1][0] = m44.columns[1][0];
+		projection.matrix[2][0] = m44.columns[2][0];
+		projection.matrix[3][0] = m44.columns[3][0];
+		projection.matrix[0][1] = m44.columns[0][1];
+		projection.matrix[1][1] = m44.columns[1][1];
+		projection.matrix[2][1] = m44.columns[2][1];
+		projection.matrix[3][1] = m44.columns[3][1];
+		projection.matrix[0][2] = m44.columns[0][2];
+		projection.matrix[1][2] = m44.columns[1][2];
+		projection.matrix[2][2] = m44.columns[2][2];
+		projection.matrix[3][2] = m44.columns[3][2];
+		projection.matrix[0][3] = m44.columns[0][3];
+		projection.matrix[1][3] = m44.columns[1][3];
+		projection.matrix[2][3] = m44.columns[2][3];
+		projection.matrix[3][3] = m44.columns[3][3];
 	}
 }
 
