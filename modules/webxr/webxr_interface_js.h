@@ -93,6 +93,10 @@ public:
 	virtual void notification(int p_what);
 
 	void _on_controller_changed();
+	// called by delegate (void * because C++ and Obj-C don't always mix, should really change all platform/iphone/*.cpp files to .mm)
+	void _add_or_update_anchor(void *p_anchor);
+	void _remove_anchor(void *p_anchor);
+	void _update_frame(void *p_frame);
 
 	WebXRInterfaceJS();
 	~WebXRInterfaceJS();

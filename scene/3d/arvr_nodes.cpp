@@ -601,6 +601,14 @@ void ARVROrigin::_notification(int p_what) {
 	ARVRServer *arvr_server = ARVRServer::get_singleton();
 	ERR_FAIL_NULL(arvr_server);
 
+	// send our notification to all active ARVR interfaces, they may need to react to it also
+	for (int i = 0; i < arvr_server->get_interface_count(); i++) {
+		Ref<ARVRInterface> interface = arvr_server->get_interface(i);
+		if (interface.is_valid() && interface->is_initialized()) {
+			interface->notification(p_what);
+		}
+	}
+
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			set_process_internal(true);
@@ -617,22 +625,28 @@ void ARVROrigin::_notification(int p_what) {
 			if (arvr_interface.is_valid() && tracked_camera != NULL) {
 				// get our positioning transform for our headset
 				Transform t = arvr_interface->get_transform_for_eye(ARVRInterface::EYE_MONO, Transform());
+				for (int i=0; i<7; i++){
+					camera_frames[i] = camera_frames[i+1];
+				}
+				camera_frames[7] = t;
+
+				Transform md0 = camera_frames[0].interpolate_with(camera_frames[1], 0.5);
+				Transform md1 = camera_frames[2].interpolate_with(camera_frames[3], 0.5);
+				Transform md2 = camera_frames[4].interpolate_with(camera_frames[5], 0.5);
+				Transform md3 = camera_frames[6].interpolate_with(camera_frames[7], 0.5);
+				Transform md01 = md0.interpolate_with(md1, 0.5);
+				Transform md23 = md2.interpolate_with(md3, 0.5);
+				Transform md = md01.interpolate_with(md23, 0.5);
 
 				// now apply this to our camera
-				tracked_camera->set_transform(t);
+				//print_line(String("origin: "))
+				//tracked_camera->set_transform(t);
+				tracked_camera->set_transform(md);
 			};
 		}; break;
 		default:
 			break;
 	};
-
-	// send our notification to all active ARVR interfaces, they may need to react to it also
-	for (int i = 0; i < arvr_server->get_interface_count(); i++) {
-		Ref<ARVRInterface> interface = arvr_server->get_interface(i);
-		if (interface.is_valid() && interface->is_initialized()) {
-			interface->notification(p_what);
-		}
-	}
 };
 
 ARVROrigin::ARVROrigin() {
