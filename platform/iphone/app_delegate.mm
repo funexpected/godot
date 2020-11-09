@@ -850,16 +850,11 @@ static int frame_count = 0;
 #else
     (nonnull void (^)(NSArray *_Nullable))restorationHandler {
 #endif  // __IPHONE_12_0
-	NSMutableArray *ansArray = [NSMutableArray arrayWithObjects:[NSNumber numberWithBool:YES], nil];
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"appContinueUserActivity_finish" object:nil userInfo: @{
-		@"userActivity" :userActivity,
-		@"restorationHandler": restorationHandler,
-		@"ansArray" : ansArray
-	}];
-	for (id tempObject in ansArray) {
-    	if ([tempObject boolValue] == NO)
-			return NO;
-	}
+	NSMutableDictionary *mutDic = [[NSMutableDictionary alloc] initWithCapacity:2];
+	[mutDic setValue:userActivity forKey:@"userActivity"];
+	[mutDic setValue:restorationHandler forKey:@"restorationHandler"];
+
+	[[NSNotificationCenter defaultCenter] postNotificationName: @"appContinueUserActivity_finish" object:nil userInfo: mutDic];
 	return YES;
 }
 
