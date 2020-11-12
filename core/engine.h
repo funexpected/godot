@@ -31,6 +31,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "core/custom_error_handler.h"
 #include "core/list.h"
 #include "core/os/main_loop.h"
 #include "core/ustring.h"
@@ -69,6 +70,7 @@ private:
 	bool _in_physics;
 
 	List<Singleton> singletons;
+	List<CustomErrorHandler *> custom_error_handlers;
 	Map<StringName, Object *> singleton_ptrs;
 
 	bool editor_hint;
@@ -108,6 +110,11 @@ public:
 	void get_singletons(List<Singleton> *p_singletons);
 	bool has_singleton(const String &p_name) const;
 	Object *get_singleton_object(const String &p_name) const;
+
+	void add_global_constant(const String &p_name, const Variant &p_value) const;
+	void add_custom_error_handlers();
+	void add_custom_error_handler(const String &p_path);
+	void remove_custom_error_handlers();
 
 	_FORCE_INLINE_ bool get_use_pixel_snap() const { return _pixel_snap; }
 

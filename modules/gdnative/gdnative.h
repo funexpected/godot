@@ -142,6 +142,7 @@ class GDNative : public Reference {
 	Ref<GDNativeLibrary> library;
 
 	void *native_handle;
+	Vector<void *> dep_native_handles;
 
 	bool initialized;
 

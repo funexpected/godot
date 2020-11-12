@@ -155,6 +155,16 @@ class ARVROrigin : public Spatial {
 
 private:
 	ARVRCamera *tracked_camera;
+	Transform camera_frames[8] = { 
+		Transform(),
+		Transform(), 
+		Transform(),
+		Transform(), 
+		Transform(),
+		Transform(), 
+		Transform(),
+		Transform() 
+	};
 
 protected:
 	void _notification(int p_what);

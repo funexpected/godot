@@ -694,60 +694,31 @@ void EditorNode::_fs_changed() {
 
 	// FIXME: Move this to a cleaner location, it's hacky to do this is _fs_changed.
 	String export_error;
-	if (export_defer.preset != "" && !EditorFileSystem::get_singleton()->is_scanning()) {
+	if ((export_defer.preset != "" || export_defer.all_presets) && !EditorFileSystem::get_singleton()->is_scanning()) {
 		String preset_name = export_defer.preset;
+		bool export_all_presets = export_defer.all_presets;
 		// Ensures export_project does not loop infinitely, because notifications may
 		// come during the export.
 		export_defer.preset = "";
+		export_defer.all_presets = false;
+		bool project_exported = false;
 		Ref<EditorExportPreset> preset;
 		for (int i = 0; i < EditorExport::get_singleton()->get_export_preset_count(); ++i) {
 			preset = EditorExport::get_singleton()->get_export_preset(i);
-			if (preset->get_name() == preset_name) {
-				break;
-			}
-			preset.unref();
-		}
-		if (preset.is_null()) {
-			export_error = vformat(
-					"Invalid export preset name: %s. Make sure `export_presets.cfg` is present in the current directory.",
-					preset_name);
-		} else {
-			Ref<EditorExportPlatform> platform = preset->get_platform();
-			if (platform.is_null()) {
-				export_error = vformat("Export preset '%s' doesn't have a matching platform.", preset_name);
-			} else {
-				Error err = OK;
-				if (export_defer.pack_only) { // Only export .pck or .zip data pack.
-					if (export_defer.path.ends_with(".zip")) {
-						err = platform->export_zip(preset, export_defer.debug, export_defer.path);
-					} else if (export_defer.path.ends_with(".pck")) {
-						err = platform->export_pack(preset, export_defer.debug, export_defer.path);
-					}
-				} else { // Normal project export.
-					String config_error;
-					bool missing_templates;
-					if (!platform->can_export(preset, config_error, missing_templates)) {
-						ERR_PRINT(vformat("Cannot export project with preset '%s' due to configuration errors:\n%s", preset_name, config_error));
-						err = missing_templates ? ERR_FILE_NOT_FOUND : ERR_UNCONFIGURED;
-					} else {
-						err = platform->export_project(preset, export_defer.debug, export_defer.path);
-					}
-				}
-				switch (err) {
-					case OK:
-						break;
-					case ERR_FILE_NOT_FOUND:
-						export_error = vformat("Project export failed for preset '%s', the export template appears to be missing.", preset_name);
-						break;
-					case ERR_FILE_BAD_PATH:
-						export_error = vformat("Project export failed for preset '%s', the target path '%s' appears to be invalid.", preset_name, export_defer.path);
-						break;
-					default:
-						export_error = vformat("Project export failed with error code %d for preset '%s'.", (int)err, preset_name);
-						break;
-				}
+			if (preset->get_name() == preset_name || export_all_presets) {
+				String export_path = export_defer.path;
+				if (export_path == "")
+					export_path = preset->get_export_path();
+				export_error = export_project(preset, export_path);
+				project_exported = true;
+				if (!export_error.empty())
+					ERR_PRINT(export_error);
+				if (!export_all_presets)
+					break;
 			}
 		}
+		if (!project_exported)
+			export_error = vformat("Invalid export preset name: %s.", preset_name);
 
 		if (!export_error.empty()) {
 			ERR_PRINT(export_error);
@@ -755,6 +726,51 @@ void EditorNode::_fs_changed() {
 		}
 		_exit_editor();
 	}
+}
+
+String EditorNode::export_project(const Ref<EditorExportPreset> &preset, const String &path){
+	String export_error;
+	String preset_name = export_defer.preset;
+	if (preset.is_null()) {
+		export_error = vformat("Invalid export preset name: %s.", preset_name);
+	} else {
+		Ref<EditorExportPlatform> platform = preset->get_platform();
+		if (platform.is_null()) {
+			export_error = vformat("Export preset '%s' doesn't have a matching platform.", preset_name);
+		} else {
+			Error err = OK;
+			if (export_defer.pack_only) { // Only export .pck or .zip data pack.
+				if (path.ends_with(".zip")) {
+					err = platform->export_zip(preset, export_defer.debug, path);
+				} else if (path.ends_with(".pck")) {
+					err = platform->export_pack(preset, export_defer.debug, path);
+				}
+			} else { // Normal project export.
+				String config_error;
+				bool missing_templates;
+				if (!platform->can_export(preset, config_error, missing_templates)) {
+					ERR_PRINT(vformat("Cannot export project with preset '%s' due to configuration errors:\n%s", preset_name, config_error));
+					err = missing_templates ? ERR_FILE_NOT_FOUND : ERR_UNCONFIGURED;
+				} else {
+					err = platform->export_project(preset, export_defer.debug, path);
+				}
+			}
+			switch (err) {
+				case OK:
+					break;
+				case ERR_FILE_NOT_FOUND:
+					export_error = vformat("Project export failed for preset '%s', the export template appears to be missing.", preset_name);
+					break;
+				case ERR_FILE_BAD_PATH:
+					export_error = vformat("Project export failed for preset '%s', the target path '%s' appears to be invalid.", preset_name, export_defer.path);
+					break;
+				default:
+					export_error = vformat("Project export failed with error code %d for preset '%s'.", (int)err, preset_name);
+					break;
+			}
+		}
+	}
+	return export_error;
 }
 
 void EditorNode::_resources_reimported(const Vector<String> &p_resources) {
@@ -4081,9 +4097,23 @@ void EditorNode::_editor_file_dialog_unregister(EditorFileDialog *p_dialog) {
 
 Vector<EditorNodeInitCallback> EditorNode::_init_callbacks;
 
-Error EditorNode::export_preset(const String &p_preset, const String &p_path, bool p_debug, bool p_pack_only) {
+void EditorNode::set_custom_presets_path(const String &p_presets_path){
+	if (editor_export)
+		editor_export->set_export_presets_path(p_presets_path);
+}
 
+Error EditorNode::export_preset(const String &p_preset, const String &p_path, bool p_debug, bool p_pack_only) {
+	export_defer.all_presets = false;
 	export_defer.preset = p_preset;
+	export_defer.path = p_path;
+	export_defer.debug = p_debug;
+	export_defer.pack_only = p_pack_only;
+	cmdline_export_mode = true;
+	return OK;
+}
+
+Error EditorNode::export_all_presets(const String &p_path, bool p_debug, bool p_pack_only) {
+	export_defer.all_presets = true;
 	export_defer.path = p_path;
 	export_defer.debug = p_debug;
 	export_defer.pack_only = p_pack_only;

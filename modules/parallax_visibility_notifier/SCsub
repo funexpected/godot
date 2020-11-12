@@ -1,0 +1,9 @@
+﻿Import('env')
+Import('env_modules')
+
+env_parallax_visibility_notifier = env_modules.Clone()
+env_parallax_visibility_notifier.add_source_files(env.modules_sources, "*.cpp")
+
+Export('env')
+
+

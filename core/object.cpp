@@ -634,7 +634,7 @@ void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) cons
 #ifdef TOOLS_ENABLED
 		p_list->push_back(PropertyInfo(Variant::NIL, "Script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_GROUP));
 #endif
-		p_list->push_back(PropertyInfo(Variant::OBJECT, "script", PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_DEFAULT));
+		p_list->push_back(PropertyInfo(Variant::OBJECT, "script", PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_ALWAYS_SHARE_ON_DUPLICATE));
 	}
 	if (!metadata.empty()) {
 		p_list->push_back(PropertyInfo(Variant::DICTIONARY, "__meta__", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
@@ -697,6 +697,46 @@ Variant Object::_call_deferred_bind(const Variant **p_args, int p_argcount, Vari
 
 	MessageQueue::get_singleton()->push_call(get_instance_id(), method, &p_args[1], p_argcount - 1, true);
 
+	return Variant();
+}
+
+Variant Object::_call_multilevel_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	if (p_argcount < 1) {
+		r_error.error = Variant::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
+		r_error.argument = 0;
+		return Variant();
+	}
+
+	if (p_args[0]->get_type() != Variant::STRING) {
+		r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
+		r_error.argument = 0;
+		r_error.expected = Variant::STRING;
+		return Variant();
+	}
+	r_error.error = Variant::CallError::CALL_OK;
+	
+	StringName method = *p_args[0];
+	call_multilevel(method, &p_args[1], p_argcount - 1);
+	return Variant();
+}
+
+Variant Object::_call_multilevel_reversed_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error) {
+	if (p_argcount < 1) {
+		r_error.error = Variant::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
+		r_error.argument = 0;
+		return Variant();
+	}
+
+	if (p_args[0]->get_type() != Variant::STRING) {
+		r_error.error = Variant::CallError::CALL_ERROR_INVALID_ARGUMENT;
+		r_error.argument = 0;
+		r_error.expected = Variant::STRING;
+		return Variant();
+	}
+	r_error.error = Variant::CallError::CALL_OK;
+
+	StringName method = *p_args[0];
+	call_multilevel_reversed(method, &p_args[1], p_argcount - 1);
 	return Variant();
 }
 
@@ -1752,9 +1792,26 @@ void Object::_bind_methods() {
 		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "call_deferred", &Object::_call_deferred_bind, mi, varray(), false);
 	}
 
+	{
+		MethodInfo mi;
+		mi.name = "call_multilevel";
+		mi.arguments.push_back(PropertyInfo(Variant::STRING, "method"));
+
+		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "call_multilevel", &Object::_call_multilevel_bind, mi);
+	}
+
+	{
+		MethodInfo mi;
+		mi.name = "call_multilevel_reversed";
+		mi.arguments.push_back(PropertyInfo(Variant::STRING, "method"));
+
+		ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "call_multilevel_reversed", &Object::_call_multilevel_reversed_bind, mi);
+	}
+
 	ClassDB::bind_method(D_METHOD("set_deferred", "property", "value"), &Object::set_deferred);
 
 	ClassDB::bind_method(D_METHOD("callv", "method", "arg_array"), &Object::callv);
+	//ClassDB::bind_method(D_METHOD)
 
 	ClassDB::bind_method(D_METHOD("has_method", "method"), &Object::has_method);
 

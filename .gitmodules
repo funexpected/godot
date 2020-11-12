@@ -1,0 +1,9 @@
+[submodule "modules/spine"]
+	path = modules/spine
+	url = git@github.com:funexpected/godot-spine-module.git
+[submodule "modules/flash"]
+	path = modules/flash
+	url = git@github.com:funexpected/godot-flash-module.git
+[submodule "executables"]
+	path = executables
+	url = git@github.com:funexpected/godot.executables.git

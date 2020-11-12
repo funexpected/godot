@@ -173,6 +173,11 @@ bool NativeScript::can_instance() const {
 #endif
 }
 
+bool NativeScript::is_equals(const Script *p_other) {
+	const NativeScript* other = Object::cast_to<NativeScript>(p_other);
+	return other != NULL && get_language() == other->get_language() && get_class_name() == other->get_class_name();
+}
+
 Ref<Script> NativeScript::get_base_script() const {
 	NativeScriptDesc *script_data = get_script_desc();
 

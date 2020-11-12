@@ -35,6 +35,7 @@
 #include "core/license.gen.h"
 #include "core/version.h"
 #include "core/version_hash.gen.h"
+#include "core/io/resource_loader.h"
 
 void Engine::set_iterations_per_second(int p_ips) {
 
@@ -208,6 +209,59 @@ void Engine::get_singletons(List<Singleton> *p_singletons) {
 
 	for (List<Singleton>::Element *E = singletons.front(); E; E = E->next())
 		p_singletons->push_back(E->get());
+}
+
+void Engine::add_global_constant(const String &p_name, const Variant &p_value) const {
+	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
+		ScriptServer::get_language(i)->add_global_constant(p_name, p_value);
+	}
+}
+
+void Engine::add_custom_error_handlers() {
+	String custom_error_handler_base_class = CustomErrorHandler::get_class_static();
+	List<StringName> global_classes;
+	ScriptServer::get_global_class_list(&global_classes);
+
+	for (List<StringName>::Element *E = global_classes.front(); E; E = E->next()) {
+
+		StringName class_name = E->get();
+		StringName base_class = ScriptServer::get_global_class_native_base(class_name);
+
+		if (base_class == custom_error_handler_base_class) {
+			String path = ScriptServer::get_global_class_path(class_name);
+			add_custom_error_handler(path);
+		}
+	}
+}
+
+void Engine::add_custom_error_handler(const String &p_path) {
+	for (List<CustomErrorHandler *>::Element *E = custom_error_handlers.front(); E; E = E->next()) {
+		if (E->get()->get_script_instance() && E->get()->get_script_instance()->get_script()->get_path() == p_path) {
+			return;
+		}
+	}
+	Ref<Resource> res = ResourceLoader::load(p_path);
+	if (res.is_null()) return;
+	if (!res->is_class("Script")) return;
+
+	Ref<Script> script = res;
+	StringName base_type = script->get_instance_base_type();
+	bool valid_type = ClassDB::is_parent_class(base_type, CustomErrorHandler::get_class_static());
+	ERR_FAIL_COND_MSG(!valid_type, "Script does not inherit a CustomErrorHandler: " + p_path + ".");
+
+	Object *obj = ClassDB::instance(base_type);
+	ERR_FAIL_COND_MSG(obj == NULL, "Cannot instance script as custom error handler, expected 'CustomErrorHandler' inheritance, got: " + String(base_type) + ".");
+
+	CustomErrorHandler *handler = Object::cast_to<CustomErrorHandler>(obj);
+	handler->set_script(script.get_ref_ptr());
+	custom_error_handlers.push_back(handler);
+}
+
+void Engine::remove_custom_error_handlers() {
+	for (List<CustomErrorHandler *>::Element *E = custom_error_handlers.front(); E; E = E->next()) {
+		memdelete(E->get());
+	}
+	custom_error_handlers.clear();
 }
 
 Engine *Engine::singleton = NULL;

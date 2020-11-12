@@ -37,6 +37,7 @@
 #include "core/crypto/crypto.h"
 #include "core/crypto/hashing_context.h"
 #include "core/engine.h"
+#include "core/custom_error_handler.h"
 #include "core/func_ref.h"
 #include "core/input_map.h"
 #include "core/io/config_file.h"
@@ -135,6 +136,7 @@ void register_core_types() {
 	ClassDB::register_class<WeakRef>();
 	ClassDB::register_class<Resource>();
 	ClassDB::register_class<Image>();
+	ClassDB::register_class<CustomErrorHandler>();
 
 	ClassDB::register_virtual_class<InputEvent>();
 	ClassDB::register_virtual_class<InputEventWithModifiers>();
