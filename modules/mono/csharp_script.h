@@ -135,6 +135,7 @@ class CSharpScript : public Script {
 
 	void load_script_signals(GDMonoClass *p_class, GDMonoClass *p_native_class);
 	bool _get_signal(GDMonoClass *p_class, GDMonoClass *p_delegate, Vector<Argument> &params);
+	bool _get_signal(GDMonoClass *p_class, GDMonoField *p_field, Vector<Argument> &params);
 
 	bool _update_exports();
 	bool _get_member_export(IMonoClassMember *p_member, bool p_inspect_export, PropertyInfo &r_prop_info, bool &r_exported);
