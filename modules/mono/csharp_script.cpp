@@ -2529,6 +2529,17 @@ void CSharpScript::load_script_signals(GDMonoClass *p_class, GDMonoClass *p_nati
 				_signals[delegate->get_name()] = parameters;
 			}
 		}
+		
+		const Vector<GDMonoField *> &fields = top->get_all_fields();
+		for (int i = fields.size() - 1; i >= 0; --i) {
+			Vector<Argument> parameters;
+			
+			GDMonoField *field = fields[i];
+			
+			if (_get_signal(top, field, parameters)) {
+				_signals[String(field->get_name()).camelcase_to_underscore()] = parameters;
+			}
+		}
 
 		top = top->get_parent_class();
 	}
@@ -2569,6 +2580,55 @@ bool CSharpScript::_get_signal(GDMonoClass *p_class, GDMonoClass *p_delegate, Ve
 			}
 		}
 	}
+
+	return false;
+}
+
+// fetch signal from field if field extends Godot.Signal, for example
+// Signal<int, string> line_changed;
+bool CSharpScript::_get_signal(GDMonoClass *p_class, GDMonoField *p_field, Vector<Argument> &params) {
+	GD_MONO_ASSERT_THREAD_ATTACHED;
+
+	if (p_field->get_enclosing_class()->has_attribute(CACHED_CLASS(SignalHandlerAttribute))) {
+		return false;
+	}
+
+	if (p_field->get_member_type() != IMonoClassMember::MEMBER_TYPE_FIELD) {
+		return false;
+	}
+	MonoType *raw_type = p_class->get_mono_type();
+
+	if (mono_type_get_type(raw_type) != MONO_TYPE_CLASS) {
+		return false;
+	}
+
+	GDMonoClass *field_type = p_field->get_type().type_class;
+
+	void *iter = NULL;
+	MonoClass *raw_class = NULL;
+	int idx = 0;
+	while ((raw_class = mono_class_get_nested_types(field_type->get_mono_ptr(), &iter)) != NULL) {
+		MonoType* raw_type = mono_class_get_type(raw_class);
+		if (mono_type_is_generic_parameter(raw_type)){
+			ManagedType t = ManagedType::from_type(raw_type);
+			Argument arg;
+			arg.name = "arg" + itos(idx);
+			arg.type = GDMonoMarshal::managed_to_variant_type(t);
+			params.push_back(arg);
+			if (arg.type == Variant::NIL) {
+				ERR_PRINTS("Unknown type of signal parameter: '" + arg.name + "' in '" + p_class->get_full_name() + "'.");
+				return false;
+			}
+			idx += 1;
+		}
+	}
+
+	return true;
+
+
+	//if (p_delegate->has_attribute(CACHED_CLASS(SignalAttribute))) {
+	//	MonoType *raw_type = p_delegate->get_mono_type();
+
 
 	return false;
 }

@@ -18,6 +18,7 @@
     <Compile Include="Core\Attributes\GodotMethodAttribute.cs" />
     <Compile Include="Core\Attributes\RPCAttributes.cs" />
     <Compile Include="Core\Attributes\SignalAttribute.cs" />
+    <Compile Include="Core\Attributes\SignalHandlerAttribute.cs" />
     <Compile Include="Core\Attributes\ToolAttribute.cs" />
     <Compile Include="Core\Basis.cs" />
     <Compile Include="Core\Color.cs" />
@@ -46,6 +47,7 @@
     <Compile Include="Core\Rect2.cs" />
     <Compile Include="Core\RID.cs" />
     <Compile Include="Core\SignalAwaiter.cs" />
+    <Compile Include="Core\Signals.cs" />
     <Compile Include="Core\StringExtensions.cs" />
     <Compile Include="Core\Transform.cs" />
     <Compile Include="Core\Transform2D.cs" />
