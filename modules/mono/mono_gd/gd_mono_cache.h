@@ -95,6 +95,7 @@ struct CachedData {
 	GDMonoClass *class_Dictionary;
 	GDMonoClass *class_MarshalUtils;
 	GDMonoClass *class_ISerializationListener;
+	GDMonoClass *class_SignalProcessor;
 
 #ifdef DEBUG_ENABLED
 	GDMonoClass *class_DebuggingUtils;
@@ -105,7 +106,7 @@ struct CachedData {
 	GDMonoField *field_ExportAttribute_hint;
 	GDMonoField *field_ExportAttribute_hintString;
 	GDMonoClass *class_SignalAttribute;
-	GDMonoClass *class_SignalHandlerAttribute;
+	GDMonoClass *class_ManagedSignalAttribute;
 	GDMonoClass *class_ToolAttribute;
 	GDMonoClass *class_RemoteAttribute;
 	GDMonoClass *class_SyncAttribute;
@@ -129,6 +130,7 @@ struct CachedData {
 	GDMonoMethodThunk<MonoObject *, MonoArray *> methodthunk_SignalAwaiter_SignalCallback;
 	GDMonoMethodThunk<MonoObject *> methodthunk_SignalAwaiter_FailureCallback;
 	GDMonoMethodThunk<MonoObject *> methodthunk_GodotTaskScheduler_Activate;
+	GDMonoMethodThunk<MonoObject *, mono_byte, MonoArray *> methodthunk_SignalProcessor_ProcessSignal;
 
 	// Start of MarshalUtils methods
 

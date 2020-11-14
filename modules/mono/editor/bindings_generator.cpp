@@ -1162,6 +1162,9 @@ Error BindingsGenerator::_generate_cs_type(const TypeInterface &itype, const Str
 
 	output.append("using System;\n"); // IntPtr
 	output.append("using System.Diagnostics;\n"); // DebuggerBrowsable
+	if (itype.signals.size() > 0) {
+		output.append("using System.Reflection;\n");	
+	}
 
 	output.append("\n"
 				  "#pragma warning disable CS1591 // Disable warning: "
@@ -1288,6 +1291,16 @@ Error BindingsGenerator::_generate_cs_type(const TypeInterface &itype, const Str
 			output.append(INDENT2 CLOSE_BLOCK);
 		}
 
+		// Add signals
+
+		for (const List<MethodInterface>::Element *E = itype.signals.front(); E; E = E->next()) {
+			const MethodInterface &isignal = E->get();
+			Error signal_err = _generate_cs_signal(itype, isignal, output);
+			ERR_FAIL_COND_V_MSG(signal_err != OK, signal_err,
+					"Failed to generate signal '" + isignal.cname.operator String() +
+							"' for class '" + itype.name + "'.");
+		}
+
 		// Add properties
 
 		for (const List<PropertyInterface>::Element *E = itype.properties.front(); E; E = E->next()) {
@@ -1384,6 +1397,71 @@ Error BindingsGenerator::_generate_cs_type(const TypeInterface &itype, const Str
 				  "#pragma warning restore CS1573\n");
 
 	return _save_file(p_output_file, output);
+}
+
+Error BindingsGenerator::_generate_cs_signal(const BindingsGenerator::TypeInterface &p_itype, const MethodInterface &p_isignal, StringBuilder &p_output) {
+	String signal_name = p_isignal.name;
+	String prop_name = p_isignal.proxy_name;
+	String field_name = "_" + prop_name;
+	String signal_sig = p_itype.is_singleton ? "static Signal" : "Signal";
+	String signal_doc_sig = "signal " + signal_name;
+	String signal_instance = p_itype.is_singleton ? "singleton	" : "this";
+	
+	const List<ArgumentInterface>::Element *A = p_isignal.arguments.front();
+	if (A) {
+		const TypeInterface *arg_type = _get_type_or_placeholder(A->get().type);
+		signal_sig += "<" + arg_type->cs_type;
+		signal_doc_sig += "(" + A->get().name;
+		A = A->next();
+	}
+	while (A) {
+		const TypeInterface *arg_type = _get_type_or_placeholder(A->get().type);
+		signal_sig += ", " + arg_type->cs_type;
+		signal_doc_sig += ", " + A->get().name;
+		A = A->next();
+	}
+	if (p_isignal.arguments.size() > 0) {
+		signal_sig += ">";
+		signal_doc_sig += ")";
+	}
+
+	p_output.append(MEMBER_BEGIN "[ManagedSignalAttribute]");
+	p_output.append(MEMBER_BEGIN "private " + signal_sig + " " + field_name + ";");
+	
+	if (p_isignal.method_doc && p_isignal.method_doc->description.size()) {
+		String xml_summary = bbcode_to_xml(fix_doc_description(p_isignal.method_doc->description), &p_itype);
+		Vector<String> summary_lines = xml_summary.length() ? xml_summary.split("\n") : Vector<String>();
+
+		if (summary_lines.size()) {
+			p_output.append(MEMBER_BEGIN "/// <summary>\n");
+			p_output.append(INDENT2 "/// <code>" + signal_doc_sig + "</code>\n");
+			p_output.append(INDENT2 "///\n");
+			for (int i = 0; i < summary_lines.size(); i++) {
+				p_output.append(INDENT2 "/// ");
+				p_output.append(summary_lines[i]);
+				p_output.append("\n");
+			}
+
+			p_output.append(INDENT2 "/// </summary>");
+		}
+	}
+
+	String bindings_type = "BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance";
+	p_output.append(MEMBER_BEGIN "public " + signal_sig + " " + prop_name + "\n");
+	p_output.append(INDENT2 "{\n");
+	p_output.append(INDENT3 "get\n");
+	p_output.append(INDENT3 "{\n");
+	p_output.append(INDENT4 "if (!" + field_name + ".IsValid())\n");
+	p_output.append(INDENT4 "{\n");
+	p_output.append(INDENT4 "var processor = new SignalProcessor(" + signal_instance + ", \"" + signal_name + "\", " + signal_instance + ".SignalProcessors.Count);\n");
+	p_output.append(INDENT4 "processor.ProcessCallback = " + field_name + ".ProcessCallback;\n");
+	p_output.append(INDENT4 + signal_instance + ".SignalProcessors.Add(processor);\n");
+	p_output.append(INDENT4 + field_name + "._processor.Set(processor);\n");
+	p_output.append(INDENT4 "}\n");
+	p_output.append(INDENT4 "return " + field_name + ";\n");
+	p_output.append(INDENT3 "}\n");
+	p_output.append(INDENT2 "}\n");
+	return OK;
 }
 
 Error BindingsGenerator::_generate_cs_property(const BindingsGenerator::TypeInterface &p_itype, const PropertyInterface &p_iprop, StringBuilder &p_output) {
@@ -2478,6 +2556,72 @@ bool BindingsGenerator::_populate_object_type_interfaces() {
 			}
 		}
 
+		// Populate signals
+		
+		List<MethodInfo> signal_list;
+		ClassDB::get_signal_list(type_cname, &signal_list, true);
+		signal_list.sort();
+
+		for (List<MethodInfo>::Element *E = signal_list.front(); E; E = E->next()) {
+			const MethodInfo &signal_info = E->get();
+
+			int argc = signal_info.arguments.size();
+
+			if (signal_info.name.empty())
+				continue;
+
+			String cname = signal_info.name;
+
+			MethodInterface isignal;
+			isignal.name = signal_info.name;
+			isignal.cname = cname;
+			
+			for (int i = 0; i < argc; i++) {
+				PropertyInfo arginfo = signal_info.arguments[i];
+
+				String orig_arg_name = arginfo.name;
+
+				ArgumentInterface iarg;
+				iarg.name = orig_arg_name;
+
+				if (arginfo.type == Variant::INT && arginfo.usage & PROPERTY_USAGE_CLASS_IS_ENUM) {
+					iarg.type.cname = arginfo.class_name;
+					iarg.type.is_enum = true;
+				} else if (arginfo.class_name != StringName()) {
+					iarg.type.cname = arginfo.class_name;
+				} else if (arginfo.hint == PROPERTY_HINT_RESOURCE_TYPE) {
+					iarg.type.cname = arginfo.hint_string;
+				} else if (arginfo.type == Variant::NIL) {
+					iarg.type.cname = name_cache.type_Variant;
+				} else {
+					if (arginfo.type == Variant::INT) {
+						iarg.type.cname = _get_int_type_name_from_meta(GodotTypeInfo::METADATA_NONE);
+					} else if (arginfo.type == Variant::REAL) {
+						iarg.type.cname = _get_float_type_name_from_meta(GodotTypeInfo::METADATA_NONE);
+					} else {
+						iarg.type.cname = Variant::get_type_name(arginfo.type);
+					}
+				}
+
+				iarg.name = escape_csharp_keyword(snake_to_camel_case(iarg.name));
+				isignal.add_argument(iarg);
+			}
+
+			// use CamelCase with fist character lower for avoid conflits: enteringTree
+			isignal.proxy_name = escape_csharp_keyword(snake_to_pascal_case("I" + isignal.name)).substr(1);
+			
+			if (itype.class_doc) {
+				for (int i = 0; i < itype.class_doc->signals.size(); i++) {
+					if (itype.class_doc->signals[i].name == isignal.name) {
+						isignal.method_doc = &itype.class_doc->signals[i];
+						break;
+					}
+				}
+			}
+
+			itype.signals.push_back(isignal);
+		}
+		
 		// Populate enums and constants
 
 		List<String> constants;

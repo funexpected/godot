@@ -336,6 +336,7 @@ class BindingsGenerator {
 		List<EnumInterface> enums;
 		List<PropertyInterface> properties;
 		List<MethodInterface> methods;
+		List<MethodInterface> signals;
 
 		const MethodInterface *find_method_by_name(const StringName &p_cname) const {
 			for (const List<MethodInterface>::Element *E = methods.front(); E; E = E->next()) {
@@ -621,6 +622,7 @@ class BindingsGenerator {
 
 	Error _generate_cs_type(const TypeInterface &itype, const String &p_output_file);
 
+	Error _generate_cs_signal(const TypeInterface &p_itype, const MethodInterface &p_isignal, StringBuilder &p_output);
 	Error _generate_cs_property(const TypeInterface &p_itype, const PropertyInterface &p_iprop, StringBuilder &p_output);
 	Error _generate_cs_method(const TypeInterface &p_itype, const MethodInterface &p_imethod, int &p_method_bind_count, StringBuilder &p_output);
 

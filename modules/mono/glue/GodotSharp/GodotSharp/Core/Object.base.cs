@@ -13,7 +13,7 @@ namespace Godot
         internal IntPtr ptr;
         internal bool memoryOwn;
 
-        internal List<SignalBackend> _MonoSignalBackendsHolder = new List<SignalBackend>();
+        internal List<SignalProcessor> SignalProcessors = new List<SignalProcessor>();
 
         public Object() : this(false)
         {
@@ -24,7 +24,7 @@ namespace Godot
         internal Object(bool memoryOwn)
         {
             this.memoryOwn = memoryOwn;
-            SignalBackend.InjectTo(this);
+            SignalProcessor.InjectTo(this);
         }
 
         public IntPtr NativeInstance
@@ -114,31 +114,6 @@ namespace Godot
         /// Gets a new <see cref="Godot.DynamicGodotObject"/> associated with this instance.
         /// </summary>
         public dynamic DynamicObject => new DynamicGodotObject(this);
-
-        public void _MonoHandleSignalInternal(object arg0, int fieldIndex)
-        {
-            _MonoHandleSignalInternal(fieldIndex, new object[] { arg0 });
-        }
-        public void _MonoHandleSignalInternal(object arg0, object arg1, int fieldIndex)
-        {
-            _MonoHandleSignalInternal(fieldIndex, new object[] { arg0, arg1 });
-        }
-        public void _MonoHandleSignalInternal(object arg0, object arg1, object arg2, int fieldIndex)
-        {
-            _MonoHandleSignalInternal(fieldIndex, new object[] { arg0, arg1, arg2 });
-        }
-        public void _MonoHandleSignalInternal(object arg0, object arg1, object arg2, object arg3, int fieldIndex)
-        {
-            _MonoHandleSignalInternal(fieldIndex, new object[] { arg0, arg1, arg2, arg3 });
-        }
-        public void _MonoHandleSignalInternal(object arg0, object arg1, object arg2, object arg3, object arg4, int fieldIndex)
-        {
-            _MonoHandleSignalInternal(fieldIndex, new object[] { arg0, arg1, arg2, arg3, arg4 });
-        }
-        public void _MonoHandleSignalInternal(int fieldIndex, params object[] args)
-        {
-            SignalBackend.HandleSignal(this, fieldIndex, args);
-        }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal extern static IntPtr godot_icall_Object_Ctor(Object obj);
