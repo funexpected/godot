@@ -161,6 +161,7 @@ void CachedData::clear_godot_api_cache() {
 	methodthunk_SignalAwaiter_FailureCallback.nullify();
 	methodthunk_GodotTaskScheduler_Activate.nullify();
 	methodthunk_SignalProcessor_ProcessSignal.nullify();
+	methodthunk_SignalProcessor_ProcessDeferredCall.nullify();
 
 	// Start of MarshalUtils methods
 
@@ -277,6 +278,7 @@ void update_godot_api_cache() {
 	CACHE_METHOD_THUNK_AND_CHECK(SignalAwaiter, FailureCallback, GODOT_API_CLASS(SignalAwaiter)->get_method("FailureCallback", 0));
 	CACHE_METHOD_THUNK_AND_CHECK(GodotTaskScheduler, Activate, GODOT_API_CLASS(GodotTaskScheduler)->get_method("Activate", 0));
 	CACHE_METHOD_THUNK_AND_CHECK(SignalProcessor, ProcessSignal, GODOT_API_CLASS(SignalProcessor)->get_method("ProcessSignal", 3));
+	CACHE_METHOD_THUNK_AND_CHECK(SignalProcessor, ProcessDeferredCall, GODOT_API_CLASS(SignalProcessor)->get_method("ProcessDeferredCall", 1));
 
 	// Start of MarshalUtils methods
 

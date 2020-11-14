@@ -41,8 +41,20 @@ Variant SignalReceiverHandle::_signal_callback(const Variant **p_args, int p_arg
     return Variant();
 }
 
+void SignalReceiverHandle::_deferred_call(int p_id) {
+    MonoException *exc = NULL;
+    GD_MONO_BEGIN_RUNTIME_INVOKE;
+    CACHED_METHOD_THUNK(SignalProcessor, ProcessDeferredCall).invoke(p_id, &exc);
+    GD_MONO_END_RUNTIME_INVOKE;
+    if (exc) {
+        GDMonoUtils::set_pending_exception(exc);
+    }
+
+}
+
 void SignalReceiverHandle::_bind_methods() {
     ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "_signal_callback", &SignalReceiverHandle::_signal_callback, MethodInfo("_signal_callback"));
+    ClassDB::bind_method(D_METHOD("_deferred_call", "id"), &SignalReceiverHandle::_deferred_call);
 }
 
 SignalReceiverHandle *SignalReceiverHandle::get_instance() {

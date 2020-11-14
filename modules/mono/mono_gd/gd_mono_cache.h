@@ -131,6 +131,7 @@ struct CachedData {
 	GDMonoMethodThunk<MonoObject *> methodthunk_SignalAwaiter_FailureCallback;
 	GDMonoMethodThunk<MonoObject *> methodthunk_GodotTaskScheduler_Activate;
 	GDMonoMethodThunk<MonoObject *, mono_byte, MonoArray *> methodthunk_SignalProcessor_ProcessSignal;
+	GDMonoMethodThunk<int> methodthunk_SignalProcessor_ProcessDeferredCall;
 
 	// Start of MarshalUtils methods
 

@@ -173,6 +173,10 @@ void godot_icall_SignalProcessor_disconnect(Object *p_source, MonoString *p_sign
 	p_source->disconnect(signal, SignalReceiverHandle::get_instance(), "_signal_callback");
 }
 
+void godot_icall_SignalProcessor_call_deferred(int id) {
+	SignalReceiverHandle::get_instance()->call_deferred("_deferred_call", id);
+}
+
 MonoArray *godot_icall_DynamicGodotObject_SetMemberList(Object *p_ptr) {
 	List<PropertyInfo> property_list;
 	p_ptr->get_property_list(&property_list);
@@ -259,6 +263,7 @@ void godot_register_object_icalls() {
 	mono_add_internal_call("Godot.SignalAwaiter::godot_icall_SignalAwaiter_connect", (void *)godot_icall_SignalAwaiter_connect);
 	mono_add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_connect", (void *)godot_icall_SignalProcessor_connect);
 	mono_add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_disconnect", (void *)godot_icall_SignalProcessor_disconnect);
+	mono_add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_call_deferred", (void *)godot_icall_SignalProcessor_call_deferred);
 	mono_add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_SetMemberList", (void *)godot_icall_DynamicGodotObject_SetMemberList);
 	mono_add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_InvokeMember", (void *)godot_icall_DynamicGodotObject_InvokeMember);
 	mono_add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_GetMember", (void *)godot_icall_DynamicGodotObject_GetMember);
