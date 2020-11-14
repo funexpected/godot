@@ -41,6 +41,7 @@
 #include "../mono_gd/gd_mono_internals.h"
 #include "../mono_gd/gd_mono_utils.h"
 #include "../signal_awaiter_utils.h"
+#include "../signal_processor_utils.h"
 #include "arguments_vector.h"
 
 Object *godot_icall_Object_Ctor(MonoObject *p_obj) {
@@ -159,6 +160,19 @@ int32_t godot_icall_SignalAwaiter_connect(Object *p_source, MonoString *p_signal
 	return (int32_t)SignalAwaiterUtils::connect_signal_awaiter(p_source, signal, p_target, p_awaiter);
 }
 
+Error godot_icall_SignalProcessor_connect(Object *p_source, MonoString *p_signal, int p_index) {
+	String signal = GDMonoMarshal::mono_string_to_godot(p_signal);
+	Vector<Variant> args;
+	args.push_back(p_source);
+	args.push_back(p_index);
+	return p_source->connect(signal, SignalReceiverHandle::get_instance(), "_signal_callback", args, Object::CONNECT_REFERENCE_COUNTED);	
+}
+
+void godot_icall_SignalProcessor_disconnect(Object *p_source, MonoString *p_signal) {
+	String signal = GDMonoMarshal::mono_string_to_godot(p_signal);
+	p_source->disconnect(signal, SignalReceiverHandle::get_instance(), "_signal_callback");
+}
+
 MonoArray *godot_icall_DynamicGodotObject_SetMemberList(Object *p_ptr) {
 	List<PropertyInfo> property_list;
 	p_ptr->get_property_list(&property_list);
@@ -243,6 +257,8 @@ void godot_register_object_icalls() {
 	GDMonoUtils::add_internal_call("Godot.Object::godot_icall_Object_ToString", godot_icall_Object_ToString);
 	GDMonoUtils::add_internal_call("Godot.Object::godot_icall_Object_weakref", godot_icall_Object_weakref);
 	GDMonoUtils::add_internal_call("Godot.SignalAwaiter::godot_icall_SignalAwaiter_connect", godot_icall_SignalAwaiter_connect);
+	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_connect", (void *)godot_icall_SignalProcessor_connect);
+	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_disconnect", (void *)godot_icall_SignalProcessor_disconnect);
 	GDMonoUtils::add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_SetMemberList", godot_icall_DynamicGodotObject_SetMemberList);
 	GDMonoUtils::add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_InvokeMember", godot_icall_DynamicGodotObject_InvokeMember);
 	GDMonoUtils::add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_GetMember", godot_icall_DynamicGodotObject_GetMember);

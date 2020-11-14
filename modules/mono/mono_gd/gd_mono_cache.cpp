@@ -125,6 +125,7 @@ void CachedData::clear_godot_api_cache() {
 	class_Dictionary = NULL;
 	class_MarshalUtils = NULL;
 	class_ISerializationListener = NULL;
+	class_SignalProcessor = NULL;
 
 #ifdef DEBUG_ENABLED
 	class_DebuggingUtils = NULL;
@@ -135,7 +136,7 @@ void CachedData::clear_godot_api_cache() {
 	field_ExportAttribute_hint = NULL;
 	field_ExportAttribute_hintString = NULL;
 	class_SignalAttribute = NULL;
-	class_SignalHandlerAttribute = NULL;
+	class_ManagedSignalAttribute = NULL;
 	class_ToolAttribute = NULL;
 	class_RemoteAttribute = NULL;
 	class_SyncAttribute = NULL;
@@ -159,6 +160,7 @@ void CachedData::clear_godot_api_cache() {
 	methodthunk_SignalAwaiter_SignalCallback.nullify();
 	methodthunk_SignalAwaiter_FailureCallback.nullify();
 	methodthunk_GodotTaskScheduler_Activate.nullify();
+	methodthunk_SignalProcessor_ProcessSignal.nullify();
 
 	// Start of MarshalUtils methods
 
@@ -251,7 +253,7 @@ void update_godot_api_cache() {
 	CACHE_FIELD_AND_CHECK(ExportAttribute, hint, CACHED_CLASS(ExportAttribute)->get_field("hint"));
 	CACHE_FIELD_AND_CHECK(ExportAttribute, hintString, CACHED_CLASS(ExportAttribute)->get_field("hintString"));
 	CACHE_CLASS_AND_CHECK(SignalAttribute, GODOT_API_CLASS(SignalAttribute));
-	CACHE_CLASS_AND_CHECK(SignalHandlerAttribute, GODOT_API_CLASS(SignalHandlerAttribute));
+	CACHE_CLASS_AND_CHECK(ManagedSignalAttribute, GODOT_API_CLASS(ManagedSignalAttribute));
 	CACHE_CLASS_AND_CHECK(ToolAttribute, GODOT_API_CLASS(ToolAttribute));
 	CACHE_CLASS_AND_CHECK(RemoteAttribute, GODOT_API_CLASS(RemoteAttribute));
 	CACHE_CLASS_AND_CHECK(SyncAttribute, GODOT_API_CLASS(SyncAttribute));
@@ -274,6 +276,7 @@ void update_godot_api_cache() {
 	CACHE_METHOD_THUNK_AND_CHECK(SignalAwaiter, SignalCallback, GODOT_API_CLASS(SignalAwaiter)->get_method("SignalCallback", 1));
 	CACHE_METHOD_THUNK_AND_CHECK(SignalAwaiter, FailureCallback, GODOT_API_CLASS(SignalAwaiter)->get_method("FailureCallback", 0));
 	CACHE_METHOD_THUNK_AND_CHECK(GodotTaskScheduler, Activate, GODOT_API_CLASS(GodotTaskScheduler)->get_method("Activate", 0));
+	CACHE_METHOD_THUNK_AND_CHECK(SignalProcessor, ProcessSignal, GODOT_API_CLASS(SignalProcessor)->get_method("ProcessSignal", 3));
 
 	// Start of MarshalUtils methods
 

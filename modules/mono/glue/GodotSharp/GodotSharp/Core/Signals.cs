@@ -1,170 +1,35 @@
 using System;
-using System.Collections.Generic;
 using ConnectFlags = Godot.Object.ConnectFlags;
-using System.Text.RegularExpressions;
-using System.Reflection;
 
 namespace Godot
 {
-    internal class SignalBackend: IDisposable
+    internal interface IUserSignal
     {
-        static List<string> Names = new List<string>();
-        static Regex Pattern = new Regex("[A-Z]");
-        delegate void SignalHandlerDelegate(object target, object[] args);
-        SignalHandlerDelegate SignalHandler;
-        int NameIndex;
-        int FieldIndex;
-        internal WeakReference<Godot.Object> Owner;
-        bool InternalConnected = false;
-        internal List<(object, ConnectFlags)> connections = new List<(object, ConnectFlags)>();
-        static string FieldToStringName(string fieldName) {
-            return Pattern.Replace(fieldName, "_$0").ToLower().Substring(1);
-        }
-        public static T FetchValue<T>(object[] args, int idx) {
-            if (idx >= args.Length || args[idx] == null) {
-                return default(T);
-            } else {
-                return (T)args[idx];
-            }
-        }
-        public static void HandleSignal(Godot.Object owner, int fieldIndex, object[] args) {
-            var signal = owner.GetType().GetFields(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[fieldIndex].GetValue(owner) as ISignalInternals;
-            signal?.HandleSignal(args);
-        }
-        public static void InjectTo(Godot.Object pOwner)
-        {
-            var idx = -1;
-            var fields = pOwner.GetType().GetFields(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            foreach (var field in fields)
-            {
-                idx++;
-                var boxedSignal = field.GetValue(pOwner) as ISignalInternals;
-                if (boxedSignal == null || boxedSignal.Backend != null || field.Name.StartsWith("__signal_internal__"))
-                {
-                    continue;
-                }
-                var backend = new SignalBackend(pOwner, field, idx);
-                boxedSignal.Backend = backend;
-                backend.SignalHandler = boxedSignal.HandleSignalForTarget;
-                field.SetValue(pOwner, boxedSignal);
-            }
-        }
-        public static void InjectTo(Godot.Object pOwner, PropertyInfo pProp) {
-            var signalName = FieldToStringName(pProp.Name);
-            var fieldName = "__signal_internal__" + pProp.Name;
-            var fields = pOwner.GetType().GetFields(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            for (int i = 0; i < fields.Length; i++) {
-                var field = fields[i];
-                if (field.Name != fieldName) {
-                    continue;
-                }
-                var boxedSignal = field.GetValue(pOwner) as ISignalInternals;
-                if (boxedSignal == null || boxedSignal.Backend != null)
-                {
-                    continue;
-                }
-                var backend = new SignalBackend(pOwner, signalName, i);
-                boxedSignal.Backend = backend;
-                backend.SignalHandler = boxedSignal.HandleSignalForTarget;
-                field.SetValue(pOwner, boxedSignal);
-                break;
-            } 
-        }
-        SignalBackend(Godot.Object pOwner, FieldInfo pField, int pFieldIndex) 
-            : this(pOwner, FieldToStringName(pField.Name), pFieldIndex)
-        {
-        }
-        SignalBackend(Godot.Object pOwner, string pSignalName, int pFieldIndex)
-        {
-            Owner = new WeakReference<Godot.Object>(pOwner, false);
-            FieldIndex = pFieldIndex;
-            NameIndex = Names.IndexOf(pSignalName);
-            if (NameIndex < 0)
-            {
-                NameIndex = Names.Count;
-                Names.Add(pSignalName);
-            }
-        }
-        String SignalName { get { return Names[NameIndex]; } }
-        public void Connect(object target, ConnectFlags flags)
-        {
-            ConnectInternal(target, flags);
-            connections.Add((target, flags));
-        }
-
-        public void IterateTargets(object[] args)
-        {
-            var newConnections = new List<(object, ConnectFlags)>();
-            foreach (var (target, flags) in connections)
-            {
-                SignalHandler(target, args);
-                if (flags != ConnectFlags.Oneshot)
-                {
-                    newConnections.Add((target, flags));
-                    //Owner.Disconnect(Field.Name, Owner, "HandleSignalInternal");
-                }
-            }
-            connections = newConnections;
-            if (connections.Count == 0) {
-                DisconnectInternal();
-            }
-        }
-        public void Emit(object[] args)
-        {
-            Godot.Object owner;
-            if (Owner.TryGetTarget(out owner)) owner.EmitSignal(SignalName, args);
-        }
-        void ConnectInternal(object target, ConnectFlags flags)
-        {
-            if (!InternalConnected)
-            {
-                Godot.Object owner;
-                if (Owner.TryGetTarget(out owner))
-                    owner.Connect(SignalName, owner, "_MonoHandleSignalInternal", new Godot.Collections.Array(new object[] { FieldIndex }), (uint)ConnectFlags.ReferenceCounted);
-                InternalConnected = true;
-            }
-        }
-
-        void DisconnectInternal() {
-            Godot.Object owner;
-            if (InternalConnected && Owner.TryGetTarget(out owner)) {
-                owner.Disconnect(SignalName, owner, "_MonoHandleSignalInternal");
-                InternalConnected = false;
-            }
-        }
-        public void Dispose() {
-            DisconnectInternal();
-        }
+        void ProcessCallback(object callback, object[] args);
+        SignalProcessor Processor { set; get; }
     }
 
-    internal interface ISignalInternals
-    {
-        void HandleSignalForTarget(object target, object[] args);
-        void HandleSignal(object[] args);
-        SignalBackend Backend { set; get; }
-    }
-
-    internal struct SignalBackendReference {
-        WeakReference<SignalBackend> Reference;
-        public void Set(SignalBackend backend) {
+    internal struct SignalProcessorReference {
+        WeakReference<SignalProcessor> Reference;
+        public void Set(SignalProcessor processor) {
             if (Reference == null) {
-                Reference = new WeakReference<SignalBackend>(backend, false);
+                Reference = new WeakReference<SignalProcessor>(processor, false);
             } else {
-                Reference.SetTarget(backend);
+                Reference.SetTarget(processor);
             }
         }
-        public SignalBackend Get() {
-            SignalBackend backend;
-            if (Reference != null && Reference.TryGetTarget(out backend)) {
-                return backend;
+        public SignalProcessor Get() {
+            SignalProcessor processor;
+            if (Reference != null && Reference.TryGetTarget(out processor)) {
+                return processor;
             } else {
                 return null;
             }
         }
     }
 
-    [SignalHandler]
-    public struct Signal : IAwaitable, ISignalInternals
+    [ManagedSignal]
+    public struct Signal : IAwaitable, IUserSignal
     {
 
 
@@ -200,47 +65,46 @@ namespace Godot
 
         public void Emit()
         {
-            _backend.Get()?.Emit(new object[] { });
+            _processor.Get()?.Emit(new object[] { });
         }
         public void Connect(Action callback, ConnectFlags flags = 0)
         {
-            _backend.Get()?.Connect(callback, flags);
+            _processor.Get()?.Connect(callback, flags);
         }
         public IAwaiter GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _backend.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
             return awaiter;
         }
 
         public bool IsValid() {
-            return _backend.Get() != null;
+            return _processor.Get() != null;
         }
 
-        void ISignalInternals.HandleSignalForTarget(object target, object[] args)
-        {
-            switch (target)
+        internal void ProcessCallback(object callback, object[] args) {
+            switch (callback)
             {
-                case Action callback: callback(); break;
+                case Action action: action(); break;
                 case Awaiter awaiter: awaiter.Complete(); break;
             }
         }
 
-        internal SignalBackendReference _backend;
-        SignalBackend ISignalInternals.Backend
+        void IUserSignal.ProcessCallback(object callback, object[] args)
         {
-            get => _backend.Get();
-            set => _backend.Set(value);
+            ProcessCallback(callback, args);
         }
 
-        void ISignalInternals.HandleSignal(object[] args)
+        internal SignalProcessorReference _processor;
+        SignalProcessor IUserSignal.Processor
         {
-            _backend.Get()?.IterateTargets(args);
+            get => _processor.Get();
+            set => _processor.Set(value);
         }
     }
 
-    [SignalHandler]
-    public struct Signal<T> : IAwaitable<T>, ISignalInternals
+    [ManagedSignal]
+    public struct Signal<T> : IAwaitable<T>, IUserSignal
     {
         public class Awaiter : IAwaiter<T>
         {
@@ -276,47 +140,47 @@ namespace Godot
 
         public void Emit(T value)
         {
-            _backend.Get()?.Emit(new object[] { value });
+            _processor.Get()?.Emit(new object[] { value });
         }
         public void Connect(Action<T> callback, ConnectFlags flags = 0)
         {
-            _backend.Get()?.Connect(callback, flags);
+            _processor.Get()?.Connect(callback, flags);
         }
         public IAwaiter<T> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _backend.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
             return awaiter;
         }
 
         public bool IsValid() {
-            return _backend.Get() != null;
+            return _processor.Get() != null;
         }
 
-        void ISignalInternals.HandleSignalForTarget(object target, object[] args)
+        void IUserSignal.ProcessCallback(object callback, object[] args)
         {
-            var arg = SignalBackend.FetchValue<T>(args, 0);
-            switch (target)
+            ProcessCallback(callback, args);
+        }
+
+        internal void ProcessCallback(object callback, object[] args)
+        {
+            var arg = SignalProcessor.FetchValue<T>(args, 0);
+            switch (callback)
             {
-                case Action<T> callback: callback(arg); break;
+                case Action<T> action: action(arg); break;
                 case Awaiter awaiter: awaiter.Complete(arg); break;
             }
         }
 
-        internal SignalBackendReference _backend;
-        SignalBackend ISignalInternals.Backend
+        internal SignalProcessorReference _processor;
+        SignalProcessor IUserSignal.Processor
         {
-            get => _backend.Get();
-            set => _backend.Set(value);
-        }
-
-        void ISignalInternals.HandleSignal(object[] args)
-        {
-            _backend.Get()?.IterateTargets(args);
+            get => _processor.Get();
+            set => _processor.Set(value);
         }
     }
-    [SignalHandler]
-    public struct Signal<T0, T1> : IAwaitable<(T0, T1)>, ISignalInternals
+    [ManagedSignal]
+    public struct Signal<T0, T1> : IAwaitable<(T0, T1)>, IUserSignal
     {
         public class Awaiter : IAwaiter<(T0, T1)>
         {
@@ -352,49 +216,48 @@ namespace Godot
 
         public void Emit(T0 arg0, T1 arg1)
         {
-            _backend.Get()?.Emit(new object[] { arg0, arg1 });
+            _processor.Get()?.Emit(new object[] { arg0, arg1 });
         }
         public void Connect(Action<T0, T1> callback, ConnectFlags flags = 0)
         {
-            _backend.Get()?.Connect(callback, flags);
+            _processor.Get()?.Connect(callback, flags);
         }
         public IAwaiter<(T0, T1)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _backend.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
             return awaiter;
         }
         public bool IsValid() {
-            return _backend.Get() != null;
+            return _processor.Get() != null;
         }
 
-        void ISignalInternals.HandleSignalForTarget(object target, object[] args)
+        void IUserSignal.ProcessCallback(object callback, object[] args)
         {
-            var arg0 = SignalBackend.FetchValue<T0>(args, 0);
-            var arg1 = SignalBackend.FetchValue<T1>(args, 1);
+            ProcessCallback(callback, args);
+        }
+
+        internal void ProcessCallback(object callback, object[] args) {
+            var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
+            var arg1 = SignalProcessor.FetchValue<T1>(args, 1);
             
-            switch (target)
+            switch (callback)
             {
-                case Action<T0, T1> callback: callback(arg0, arg1); break;
+                case Action<T0, T1> action: action(arg0, arg1); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1)); break;
             }
         }
 
-        internal SignalBackendReference _backend;
-        SignalBackend ISignalInternals.Backend
+        internal SignalProcessorReference _processor;
+        SignalProcessor IUserSignal.Processor
         {
-            get => _backend.Get();
-            set => _backend.Set(value);
-        }
-
-        void ISignalInternals.HandleSignal(object[] args)
-        {
-            _backend.Get()?.IterateTargets(args);
+            get => _processor.Get();
+            set => _processor.Set(value);
         }
     }
 
-    [SignalHandler]
-    public struct Signal<T0, T1, T2> : IAwaitable<(T0, T1, T2)>, ISignalInternals
+    [ManagedSignal]
+    public struct Signal<T0, T1, T2> : IAwaitable<(T0, T1, T2)>, IUserSignal
     {
         public class Awaiter : IAwaiter<(T0, T1, T2)>
         {
@@ -430,11 +293,11 @@ namespace Godot
 
         public void Emit(T0 arg0, T1 arg1, T2 arg2)
         {
-            _backend.Get()?.Emit(new object[] { arg0, arg1, arg2 });
+            _processor.Get()?.Emit(new object[] { arg0, arg1, arg2 });
         }
         public void Connect(Action<T0, T1, T2> callback, ConnectFlags flags = 0)
         {
-            _backend.Get()?.Connect(callback, flags);
+            _processor.Get()?.Connect(callback, flags);
         }
         public static Signal<T0, T1, T2> operator +(Signal<T0, T1, T2> signal, Action<T0, T1, T2> action){
             signal.Connect(action);
@@ -443,42 +306,41 @@ namespace Godot
         public IAwaiter<(T0, T1, T2)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _backend.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
             return awaiter;
         }
 
         public bool IsValid() {
-            return _backend.Get() != null;
+            return _processor.Get() != null;
         }
 
-        void ISignalInternals.HandleSignalForTarget(object target, object[] args)
+        void IUserSignal.ProcessCallback(object callback, object[] args)
         {
-            var arg0 = SignalBackend.FetchValue<T0>(args, 0);
-            var arg1 = SignalBackend.FetchValue<T1>(args, 1);
-            var arg2 = SignalBackend.FetchValue<T2>(args, 2);
+            ProcessCallback(callback, args);
+        }
+
+        internal void ProcessCallback(object callback, object[] args) {
+            var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
+            var arg1 = SignalProcessor.FetchValue<T1>(args, 1);
+            var arg2 = SignalProcessor.FetchValue<T2>(args, 2);
             
-            switch (target)
+            switch (callback)
             {
-                case Action<T0, T1, T2> callback: callback(arg0, arg1, arg2); break;
+                case Action<T0, T1, T2> action: action(arg0, arg1, arg2); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1, arg2)); break;
             }
         }
 
-        internal SignalBackendReference _backend;
-        SignalBackend ISignalInternals.Backend
+        internal SignalProcessorReference _processor;
+        SignalProcessor IUserSignal.Processor
         {
-            get => _backend.Get();
-            set => _backend.Set(value);
-        }
-
-        void ISignalInternals.HandleSignal(object[] args)
-        {
-            _backend.Get()?.IterateTargets(args);
+            get => _processor.Get();
+            set => _processor.Set(value);
         }
     }
 
-    [SignalHandler]
-    public struct Signal<T0, T1, T2, T3> : IAwaitable<(T0, T1, T2, T3)>, ISignalInternals
+    [ManagedSignal]
+    public struct Signal<T0, T1, T2, T3> : IAwaitable<(T0, T1, T2, T3)>, IUserSignal
     {
         public class Awaiter : IAwaiter<(T0, T1, T2, T3)>
         {
@@ -514,52 +376,52 @@ namespace Godot
 
         public void Emit(T0 arg0, T1 arg1, T2 arg2, T3 arg3)
         {
-            _backend.Get()?.Emit(new object[] { arg0, arg1, arg2, arg3 });
+            _processor.Get()?.Emit(new object[] { arg0, arg1, arg2, arg3 });
         }
         public void Connect(Action<T0, T1, T2, T3> callback, ConnectFlags flags = 0)
         {
-            _backend.Get()?.Connect(callback, flags);
+            _processor.Get()?.Connect(callback, flags);
         }
         public IAwaiter<(T0, T1, T2, T3)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _backend.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
             return awaiter;
         }
 
         public bool IsValid() {
-            return _backend.Get() != null;
+            return _processor.Get() != null;
         }
 
-        void ISignalInternals.HandleSignalForTarget(object target, object[] args)
+        void IUserSignal.ProcessCallback(object callback, object[] args)
         {
-            var arg0 = SignalBackend.FetchValue<T0>(args, 0);
-            var arg1 = SignalBackend.FetchValue<T1>(args, 1);
-            var arg2 = SignalBackend.FetchValue<T2>(args, 2);
-            var arg3 = SignalBackend.FetchValue<T3>(args, 3);
+            ProcessCallback(callback, args);
+        }
 
-            switch (target)
+        internal void ProcessCallback(object callback, object[] args)
+        {
+            var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
+            var arg1 = SignalProcessor.FetchValue<T1>(args, 1);
+            var arg2 = SignalProcessor.FetchValue<T2>(args, 2);
+            var arg3 = SignalProcessor.FetchValue<T3>(args, 3);
+
+            switch (callback)
             {
-                case Action<T0, T1, T2, T3> callback: callback(arg0, arg1, arg2, arg3); break;
+                case Action<T0, T1, T2, T3> action: action(arg0, arg1, arg2, arg3); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1, arg2, arg3)); break;
             }
         }
 
-        internal SignalBackendReference _backend;
-        SignalBackend ISignalInternals.Backend
+        internal SignalProcessorReference _processor;
+        SignalProcessor IUserSignal.Processor
         {
-            get => _backend.Get();
-            set => _backend.Set(value);
-        }
-
-        void ISignalInternals.HandleSignal(object[] args)
-        {
-            _backend.Get()?.IterateTargets(args);
+            get => _processor.Get();
+            set => _processor.Set(value);
         }
     }
     
-    [SignalHandler]
-    public struct Signal<T0, T1, T2, T3, T4> : IAwaitable<(T0, T1, T2, T3, T4)>, ISignalInternals
+    [ManagedSignal]
+    public struct Signal<T0, T1, T2, T3, T4> : IAwaitable<(T0, T1, T2, T3, T4)>, IUserSignal
     {
         public class Awaiter : IAwaiter<(T0, T1, T2, T3, T4)>
         {
@@ -595,47 +457,47 @@ namespace Godot
 
         public void Emit(T0 arg0, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
         {
-            _backend.Get()?.Emit(new object[] { arg0, arg1, arg2, arg3, arg4 });
+            _processor.Get()?.Emit(new object[] { arg0, arg1, arg2, arg3, arg4 });
         }
         public void Connect(Action<T0, T1, T2, T3, T4> callback, ConnectFlags flags = 0)
         {
-            _backend.Get()?.Connect(callback, flags);
+            _processor.Get()?.Connect(callback, flags);
         }
         public IAwaiter<(T0, T1, T2, T3, T4)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _backend.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
             return awaiter;
         }
 
         public bool IsValid() {
-            return _backend.Get() != null;
+            return _processor.Get() != null;
         }
 
-        void ISignalInternals.HandleSignalForTarget(object target, object[] args)
+        void IUserSignal.ProcessCallback(object callback, object[] args)
         {
-            var arg0 = SignalBackend.FetchValue<T0>(args, 0);
-            var arg1 = SignalBackend.FetchValue<T1>(args, 1);
-            var arg2 = SignalBackend.FetchValue<T2>(args, 2);
-            var arg3 = SignalBackend.FetchValue<T3>(args, 3);
-            var arg4 = SignalBackend.FetchValue<T4>(args, 4);
-            switch (target)
+            ProcessCallback(callback, args);
+        }
+
+        internal void ProcessCallback(object callback, object[] args)
+        {
+            var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
+            var arg1 = SignalProcessor.FetchValue<T1>(args, 1);
+            var arg2 = SignalProcessor.FetchValue<T2>(args, 2);
+            var arg3 = SignalProcessor.FetchValue<T3>(args, 3);
+            var arg4 = SignalProcessor.FetchValue<T4>(args, 4);
+            switch (callback)
             {
-                case Action<T0, T1, T2, T3, T4> callback: callback(arg0, arg1, arg2, arg3, arg4); break;
+                case Action<T0, T1, T2, T3, T4> action: action(arg0, arg1, arg2, arg3, arg4); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1, arg2, arg3, arg4)); break;
             }
         }
 
-        internal SignalBackendReference _backend;
-        SignalBackend ISignalInternals.Backend
+        internal SignalProcessorReference _processor;
+        SignalProcessor IUserSignal.Processor
         {
-            get => _backend.Get();
-            set => _backend.Set(value);
-        }
-
-        void ISignalInternals.HandleSignal(object[] args)
-        {
-            _backend.Get()?.IterateTargets(args);
+            get => _processor.Get();
+            set => _processor.Set(value);
         }
     }
 }

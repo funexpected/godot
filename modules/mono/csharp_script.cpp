@@ -56,6 +56,7 @@
 #include "mono_gd/gd_mono_marshal.h"
 #include "mono_gd/gd_mono_utils.h"
 #include "signal_awaiter_utils.h"
+#include "signal_processor_utils.h"
 #include "utils/macros.h"
 #include "utils/mutex_utils.h"
 #include "utils/string_utils.h"
@@ -155,6 +156,8 @@ void CSharpLanguage::finish() {
 		memdelete(gdmono);
 		gdmono = NULL;
 	}
+
+	SignalReceiverHandle::finish();
 
 	// Clear here, after finalizing all domains to make sure there is nothing else referencing the elements.
 	script_bindings.clear();
@@ -2589,7 +2592,7 @@ bool CSharpScript::_get_signal(GDMonoClass *p_class, GDMonoClass *p_delegate, Ve
 bool CSharpScript::_get_signal(GDMonoClass *p_class, GDMonoField *p_field, Vector<Argument> &params) {
 	GD_MONO_ASSERT_THREAD_ATTACHED;
 
-	if (p_field->get_enclosing_class()->has_attribute(CACHED_CLASS(SignalHandlerAttribute))) {
+	if (p_field->get_enclosing_class()->has_attribute(CACHED_CLASS(ManagedSignalAttribute))) {
 		return false;
 	}
 

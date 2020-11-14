@@ -50,6 +50,10 @@ MonoObject *godot_icall_Object_weakref(Object *p_obj);
 
 int32_t godot_icall_SignalAwaiter_connect(Object *p_source, MonoString *p_signal, Object *p_target, MonoObject *p_awaiter);
 
+Error godot_icall_SignalProcessor_connect(Object *p_source, MonoString *p_signal, int p_index);
+
+void godot_icall_SignalProcessor_disconnect(Object *p_source, MonoString *p_signal);
+
 // DynamicGodotObject
 
 MonoArray *godot_icall_DynamicGodotObject_SetMemberList(Object *p_ptr);
