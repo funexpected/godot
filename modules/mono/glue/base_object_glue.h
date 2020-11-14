@@ -54,6 +54,8 @@ Error godot_icall_SignalProcessor_connect(Object *p_source, MonoString *p_signal
 
 void godot_icall_SignalProcessor_disconnect(Object *p_source, MonoString *p_signal);
 
+void godot_icall_SignalProcessor_call_deferred(int id);
+
 // DynamicGodotObject
 
 MonoArray *godot_icall_DynamicGodotObject_SetMemberList(Object *p_ptr);

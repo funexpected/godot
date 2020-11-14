@@ -16,6 +16,7 @@ class SignalReceiverHandle : public Reference {
     static Ref<SignalReceiverHandle> instance;
 
 	Variant _signal_callback(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
+    void _deferred_call(int p_id);
 
 protected:
 
