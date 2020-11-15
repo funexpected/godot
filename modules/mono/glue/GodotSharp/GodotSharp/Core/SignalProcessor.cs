@@ -5,12 +5,36 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 using ConnectFlags = Godot.Object.ConnectFlags;
-using ConnectionList = System.Collections.Generic.List<(object Callback, Godot.Object.ConnectFlags Flags)>;
 
 namespace  Godot
 {
     internal class SignalProcessor: IDisposable
     {
+
+        public class Connection {
+            public Connection(object callback, ConnectFlags flags) {
+                Callback = callback;
+                Flags = flags;
+                Processed = false;
+            }
+            public object Callback;
+            public ConnectFlags Flags;
+            public bool Processed;
+
+            public bool Deferred {
+                get => (Flags & ConnectFlags.Deferred) > 0;
+            }
+
+            public bool Oneshot {
+                get => (Flags & ConnectFlags.Oneshot) > 0;
+            }
+
+            public bool ReferenceCounted {
+                get => (Flags & ConnectFlags.ReferenceCounted)
+            }
+
+        }
+
         struct DeferredCall {
             public SignalProcessor Processor;
             public object Callback;
@@ -21,6 +45,7 @@ namespace  Godot
                 Args = args;
             }
         }
+
         static int LastDeferredCallId = 0;
         static List<string> Names = new List<string>();
         static Dictionary<int, DeferredCall> DeferredCalls = new Dictionary<int, DeferredCall>();
@@ -32,7 +57,7 @@ namespace  Godot
         int FieldIndex;
         internal WeakReference<Godot.Object> Owner;
         bool InternalConnected = false;
-        internal ConnectionList connections = new List<(object, ConnectFlags)>();
+        internal LinkedList<Connection> connections = new LinkedList<Connection>();
         static string FieldToStringName(string fieldName) {
             string signalName = Pattern.Replace(fieldName, "_$0").ToLower();
             if (signalName.BeginsWith("_")) {
@@ -104,27 +129,52 @@ namespace  Godot
         public void Connect(object callback, ConnectFlags flags)
         {
             ConnectInternal();
-            connections.Add((callback, flags));
+            connections.AddLast(new Connection(callback, flags));
         }
 
         public void IterateTargets(object[] args)
         {
-            ConnectionList disconnecting = new ConnectionList();
-            foreach (var connection in new ConnectionList(connections))
-            {
-                if ((connection.Flags & ConnectFlags.Deferred) > 0) {
-                    ProcessDeferred(connection.Callback, args);
-                } else {
-                    ProcessCallback(connection.Callback, args);
+            LinkedList<Connection>  disconnections = new LinkedList<Connection>();
+            var last = connections.Last;
+            var current = connections.First;
+            while (current != null) {
+                var connection = current.Value;
+                if (!connection.Processed) {
+                    // process oneshot signals only once
+                    if (connection.Oneshot && !connection.Processed) {
+                        connection.Processed = true;
+                        disconnections.AddLast(connection);
+                    }
+                    if (connection.Deferred) {
+                        ProcessDeferred(connection.Callback, args);
+                    } else {
+                        ProcessCallback(connection.Callback, args);
+                    }
                 }
-                if ((connection.Flags & ConnectFlags.Oneshot) > 0) {
-                    disconnecting.Add(connection);
+                if (current == last) {
+                    break;
                 }
+                current = current.Next;
             }
-            foreach (var connection in disconnecting) {
-                connections.Remove(connection);
+
+            // deleting oneshot signals
+            var disconnecting = disconnections.First;
+            current = connections.First;
+            while (current != null && disconnecting != null) {
+                var connection = current.Value;
+                var disconnection = disconnecting.Value;
+                var next = current.Next;
+                if (connection.Callback == disconnection.Callback) {
+                    connections.Remove(current);
+                    disconnecting = disconnecting.Next;
+                }
+                if (current == last) {
+                    break;
+                }
+                current = next;
             }
-            if (connections.Count == 0) {
+
+            if (connections.First == null) {
                 DisconnectInternal();
             }
         }
