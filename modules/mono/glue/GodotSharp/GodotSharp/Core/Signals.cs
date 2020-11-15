@@ -3,7 +3,7 @@ using ConnectFlags = Godot.Object.ConnectFlags;
 
 namespace Godot
 {
-    internal interface IUserSignal
+    internal interface ISignalField
     {
         void ProcessCallback(object callback, object[] args);
         SignalProcessor Processor { set; get; }
@@ -29,7 +29,7 @@ namespace Godot
     }
 
     [ManagedSignal]
-    public struct Signal : IAwaitable, IUserSignal
+    public struct Signal : IAwaitable, ISignalField
     {
 
 
@@ -90,13 +90,13 @@ namespace Godot
             }
         }
 
-        void IUserSignal.ProcessCallback(object callback, object[] args)
+        void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
 
         internal SignalProcessorReference _processor;
-        SignalProcessor IUserSignal.Processor
+        SignalProcessor ISignalField.Processor
         {
             get => _processor.Get();
             set => _processor.Set(value);
@@ -104,7 +104,7 @@ namespace Godot
     }
 
     [ManagedSignal]
-    public struct Signal<T> : IAwaitable<T>, IUserSignal
+    public struct Signal<T> : IAwaitable<T>, ISignalField
     {
         public class Awaiter : IAwaiter<T>
         {
@@ -157,7 +157,7 @@ namespace Godot
             return _processor.Get() != null;
         }
 
-        void IUserSignal.ProcessCallback(object callback, object[] args)
+        void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
@@ -173,14 +173,14 @@ namespace Godot
         }
 
         internal SignalProcessorReference _processor;
-        SignalProcessor IUserSignal.Processor
+        SignalProcessor ISignalField.Processor
         {
             get => _processor.Get();
             set => _processor.Set(value);
         }
     }
     [ManagedSignal]
-    public struct Signal<T0, T1> : IAwaitable<(T0, T1)>, IUserSignal
+    public struct Signal<T0, T1> : IAwaitable<(T0, T1)>, ISignalField
     {
         public class Awaiter : IAwaiter<(T0, T1)>
         {
@@ -232,7 +232,7 @@ namespace Godot
             return _processor.Get() != null;
         }
 
-        void IUserSignal.ProcessCallback(object callback, object[] args)
+        void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
@@ -249,7 +249,7 @@ namespace Godot
         }
 
         internal SignalProcessorReference _processor;
-        SignalProcessor IUserSignal.Processor
+        SignalProcessor ISignalField.Processor
         {
             get => _processor.Get();
             set => _processor.Set(value);
@@ -257,7 +257,7 @@ namespace Godot
     }
 
     [ManagedSignal]
-    public struct Signal<T0, T1, T2> : IAwaitable<(T0, T1, T2)>, IUserSignal
+    public struct Signal<T0, T1, T2> : IAwaitable<(T0, T1, T2)>, ISignalField
     {
         public class Awaiter : IAwaiter<(T0, T1, T2)>
         {
@@ -314,7 +314,7 @@ namespace Godot
             return _processor.Get() != null;
         }
 
-        void IUserSignal.ProcessCallback(object callback, object[] args)
+        void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
@@ -332,7 +332,7 @@ namespace Godot
         }
 
         internal SignalProcessorReference _processor;
-        SignalProcessor IUserSignal.Processor
+        SignalProcessor ISignalField.Processor
         {
             get => _processor.Get();
             set => _processor.Set(value);
@@ -340,7 +340,7 @@ namespace Godot
     }
 
     [ManagedSignal]
-    public struct Signal<T0, T1, T2, T3> : IAwaitable<(T0, T1, T2, T3)>, IUserSignal
+    public struct Signal<T0, T1, T2, T3> : IAwaitable<(T0, T1, T2, T3)>, ISignalField
     {
         public class Awaiter : IAwaiter<(T0, T1, T2, T3)>
         {
@@ -393,7 +393,7 @@ namespace Godot
             return _processor.Get() != null;
         }
 
-        void IUserSignal.ProcessCallback(object callback, object[] args)
+        void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
@@ -413,7 +413,7 @@ namespace Godot
         }
 
         internal SignalProcessorReference _processor;
-        SignalProcessor IUserSignal.Processor
+        SignalProcessor ISignalField.Processor
         {
             get => _processor.Get();
             set => _processor.Set(value);
@@ -421,7 +421,7 @@ namespace Godot
     }
     
     [ManagedSignal]
-    public struct Signal<T0, T1, T2, T3, T4> : IAwaitable<(T0, T1, T2, T3, T4)>, IUserSignal
+    public struct Signal<T0, T1, T2, T3, T4> : IAwaitable<(T0, T1, T2, T3, T4)>, ISignalField
     {
         public class Awaiter : IAwaiter<(T0, T1, T2, T3, T4)>
         {
@@ -474,7 +474,7 @@ namespace Godot
             return _processor.Get() != null;
         }
 
-        void IUserSignal.ProcessCallback(object callback, object[] args)
+        void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
@@ -494,7 +494,7 @@ namespace Godot
         }
 
         internal SignalProcessorReference _processor;
-        SignalProcessor IUserSignal.Processor
+        SignalProcessor ISignalField.Processor
         {
             get => _processor.Get();
             set => _processor.Set(value);

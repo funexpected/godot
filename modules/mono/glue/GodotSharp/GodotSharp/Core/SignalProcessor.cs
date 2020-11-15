@@ -66,7 +66,7 @@ namespace  Godot
             foreach (var field in fields)
             {
                 idx++;
-                var boxedSignal = field.GetValue(pOwner) as IUserSignal;
+                var boxedSignal = field.GetValue(pOwner) as ISignalField;
                 if (boxedSignal == null || boxedSignal.Processor != null)
                 {
                     continue;
@@ -83,27 +83,11 @@ namespace  Godot
                 field.SetValue(pOwner, boxedSignal);
             }
         }
-        public static void InjectTo(Godot.Object pOwner, PropertyInfo pProp) {
-            var signalName = FieldToStringName(pProp.Name);
-            var fieldName = "_" + pProp.Name;
-            var fields = pOwner.GetType().GetFields(BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            for (int i = 0; i < fields.Length; i++) {
-                var field = fields[i];
-                if (field.Name != fieldName) {
-                    continue;
-                }
-                var boxedSignal = field.GetValue(pOwner) as IUserSignal;
-                if (boxedSignal == null || boxedSignal.Processor != null)
-                {
-                    continue;
-                }
-                var processor = new SignalProcessor(pOwner, signalName, pOwner.SignalProcessors.Count);
-                pOwner.SignalProcessors.Add(processor);
-                boxedSignal.Processor = processor;
-                processor.ProcessCallback = boxedSignal.ProcessCallback;
-                field.SetValue(pOwner, boxedSignal);
-                break;
-            } 
+        public static void InjectTo<T>(Godot.Object pOwner, string signalName, ref T signal) where T : ISignalField {
+            var processor = new SignalProcessor(pOwner, signalName, pOwner.SignalProcessors.Count);
+            pOwner.SignalProcessors.Add(processor);
+            signal.Processor = processor;
+            processor.ProcessCallback = signal.ProcessCallback;
         }
         public SignalProcessor(Godot.Object pOwner, string pSignalName, int pFieldIndex)
         {
