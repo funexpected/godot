@@ -91,6 +91,7 @@ namespace Godot
             {
                 case Action action: action(); break;
                 case Awaiter awaiter: awaiter.Complete(); break;
+                case Delegate func: func.DynamicInvoke(); break;
             }
         }
 
@@ -177,6 +178,7 @@ namespace Godot
             {
                 case Action<T> action: action(arg); break;
                 case Awaiter awaiter: awaiter.Complete(arg); break;
+                case Delegate func: func.DynamicInvoke(arg); break;
             }
         }
 
@@ -257,6 +259,7 @@ namespace Godot
             {
                 case Action<T0, T1> action: action(arg0, arg1); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1)); break;
+                case Delegate func: func.DynamicInvoke(arg0, arg1); break;
             }
         }
 
@@ -344,6 +347,7 @@ namespace Godot
             {
                 case Action<T0, T1, T2> action: action(arg0, arg1, arg2); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1, arg2)); break;
+                case Delegate func: func.DynamicInvoke(arg0, arg1, arg2); break;
             }
         }
 
@@ -429,6 +433,7 @@ namespace Godot
             {
                 case Action<T0, T1, T2, T3> action: action(arg0, arg1, arg2, arg3); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1, arg2, arg3)); break;
+                case Delegate func: func.DynamicInvoke(arg0, arg1, arg2, arg3); break;
             }
         }
 
@@ -514,6 +519,7 @@ namespace Godot
             {
                 case Action<T0, T1, T2, T3, T4> action: action(arg0, arg1, arg2, arg3, arg4); break;
                 case Awaiter awaiter: awaiter.Complete((arg0, arg1, arg2, arg3, arg4)); break;
+                case Delegate func: func.DynamicInvoke(arg0, arg1, arg2, arg3, arg4); break;
             }
         }
 
