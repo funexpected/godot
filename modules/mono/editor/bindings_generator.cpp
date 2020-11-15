@@ -1405,7 +1405,7 @@ Error BindingsGenerator::_generate_cs_signal(const BindingsGenerator::TypeInterf
 	String field_name = "_" + prop_name;
 	String signal_sig = p_itype.is_singleton ? "static Signal" : "Signal";
 	String signal_doc_sig = "signal " + signal_name;
-	String signal_instance = p_itype.is_singleton ? "singleton	" : "this";
+	String signal_owner = p_itype.is_singleton ? "singleton	" : "this";
 	
 	const List<ArgumentInterface>::Element *A = p_isignal.arguments.front();
 	if (A) {
@@ -1446,17 +1446,13 @@ Error BindingsGenerator::_generate_cs_signal(const BindingsGenerator::TypeInterf
 		}
 	}
 
-	String bindings_type = "BindingFlags.FlattenHierarchy | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance";
 	p_output.append(MEMBER_BEGIN "public " + signal_sig + " " + prop_name + "\n");
 	p_output.append(INDENT2 "{\n");
 	p_output.append(INDENT3 "get\n");
 	p_output.append(INDENT3 "{\n");
 	p_output.append(INDENT4 "if (!" + field_name + ".IsValid())\n");
 	p_output.append(INDENT4 "{\n");
-	p_output.append(INDENT4 "var processor = new SignalProcessor(" + signal_instance + ", \"" + signal_name + "\", " + signal_instance + ".SignalProcessors.Count);\n");
-	p_output.append(INDENT4 "processor.ProcessCallback = " + field_name + ".ProcessCallback;\n");
-	p_output.append(INDENT4 + signal_instance + ".SignalProcessors.Add(processor);\n");
-	p_output.append(INDENT4 + field_name + "._processor.Set(processor);\n");
+	p_output.append(INDENT5 "SignalProcessor.InjectTo(" + signal_owner + ", \"" + signal_name + "\", ref " + field_name + ");\n");
 	p_output.append(INDENT4 "}\n");
 	p_output.append(INDENT4 "return " + field_name + ";\n");
 	p_output.append(INDENT3 "}\n");
