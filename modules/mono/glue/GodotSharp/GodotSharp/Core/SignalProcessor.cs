@@ -30,7 +30,7 @@ namespace  Godot
             }
 
             public bool ReferenceCounted {
-                get => (Flags & ConnectFlags.ReferenceCounted)
+                get => (Flags & ConnectFlags.ReferenceCounted) > 0;
             }
 
         }
