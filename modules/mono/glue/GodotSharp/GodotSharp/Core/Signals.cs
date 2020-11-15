@@ -71,6 +71,10 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Connect<TResult>(Func<TResult> callback, ConnectFlags flags = 0)
+        {
+            _processor.Get()?.Connect(callback, flags);
+        }
         public IAwaiter GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -143,6 +147,10 @@ namespace Godot
             _processor.Get()?.Emit(new object[] { value });
         }
         public void Connect(Action<T> callback, ConnectFlags flags = 0)
+        {
+            _processor.Get()?.Connect(callback, flags);
+        }
+        public void Connect<TResult>(Func<T, TResult> callback, ConnectFlags flags = 0)
         {
             _processor.Get()?.Connect(callback, flags);
         }
@@ -222,6 +230,10 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Connect<TResult>(Func<T0, T1, TResult> callback, ConnectFlags flags = 0)
+        {
+            _processor.Get()?.Connect(callback, flags);
+        }
         public IAwaiter<(T0, T1)> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -296,6 +308,10 @@ namespace Godot
             _processor.Get()?.Emit(new object[] { arg0, arg1, arg2 });
         }
         public void Connect(Action<T0, T1, T2> callback, ConnectFlags flags = 0)
+        {
+            _processor.Get()?.Connect(callback, flags);
+        }
+        public void Connect<TResult>(Func<T0, T1, T2, TResult> callback, ConnectFlags flags = 0)
         {
             _processor.Get()?.Connect(callback, flags);
         }
@@ -382,6 +398,10 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Connect<TResult>(Func<T0, T1, T2, T3, TResult> callback, ConnectFlags flags = 0)
+        {
+            _processor.Get()?.Connect(callback, flags);
+        }
         public IAwaiter<(T0, T1, T2, T3)> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -460,6 +480,10 @@ namespace Godot
             _processor.Get()?.Emit(new object[] { arg0, arg1, arg2, arg3, arg4 });
         }
         public void Connect(Action<T0, T1, T2, T3, T4> callback, ConnectFlags flags = 0)
+        {
+            _processor.Get()?.Connect(callback, flags);
+        }
+        public void Connect<TResult>(Func<T0, T1, T2, T3, T4, TResult> callback, ConnectFlags flags = 0)
         {
             _processor.Get()?.Connect(callback, flags);
         }
