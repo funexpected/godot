@@ -190,7 +190,7 @@ namespace  Godot
                     }
                 }
                 if (ProcessingLevel > 0) {
-                    item.Value.Processed = true;
+                    connection.Processed = true;
                     DisconnectionQueued = true;
                 } else {
                     connections.Remove(item);
@@ -200,6 +200,22 @@ namespace  Godot
                     }
                     return;
                 }
+            }
+        }
+        public void DisconnectAll() {
+            for (var item = connections.First; item != null; item = item.Next) {
+                var connection = item.Value;
+                if (ProcessingLevel > 0) {
+                    connection.Processed = true;
+                } else {
+                    CancelCallback(connection.Callback);
+                    connections.Remove(item);
+                }
+            }
+            if (ProcessingLevel > 0) {
+                DisconnectionQueued = true;
+            } else {
+                DisconnectInternal();
             }
         }
 
