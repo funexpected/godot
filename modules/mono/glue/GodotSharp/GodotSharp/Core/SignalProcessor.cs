@@ -75,7 +75,7 @@ namespace  Godot
         bool InternalConnected = false;
         uint ProcessingLevel = 0;
         bool DisconnectionQueued = false;
-        internal LinkedList<Connection> connections = new LinkedList<Connection>();
+        internal LinkedList<Connection> Connections = new LinkedList<Connection>();
         static string FieldToStringName(string fieldName) {
             string signalName = Pattern.Replace(fieldName, "_$0").ToLower();
             if (signalName.BeginsWith("_")) {
@@ -151,13 +151,13 @@ namespace  Godot
             ConnectInternal();
             // no need to check awaiters, they are unique
             if (!checkForDuplicates) {
-                connections.AddLast(new Connection(callback, flags));
+                Connections.AddLast(new Connection(callback, flags));
                 return;
             }
 
-            var connection = connections.FirstOrDefault(c => c.Callback.Equals(callback) && !c.Processed);
+            var connection = Connections.FirstOrDefault(c => c.Callback.Equals(callback) && !c.Processed);
             if (connection == null) {
-                connections.AddLast(new Connection(callback, flags));
+                Connections.AddLast(new Connection(callback, flags));
                 return;
             }
 
@@ -181,7 +181,7 @@ namespace  Godot
         }
 
         public void Disconnect(object callback) {
-            for (var item = connections.First; item != null; item = item.Next) {
+            for (var item = Connections.First; item != null; item = item.Next) {
                 var connection = item.Value;
                 if (!connection.Callback.Equals(callback) || connection.Processed) continue;
                 if (connection.ReferenceCounted) {
@@ -193,9 +193,9 @@ namespace  Godot
                     connection.Processed = true;
                     DisconnectionQueued = true;
                 } else {
-                    connections.Remove(item);
+                    Connections.Remove(item);
                     CancelCallback(connection.Callback);
-                    if (connections.First == null) {
+                    if (Connections.First == null) {
                         DisconnectInternal();
                     }
                     return;
@@ -203,13 +203,13 @@ namespace  Godot
             }
         }
         public void DisconnectAll() {
-            for (var item = connections.First; item != null; item = item.Next) {
+            for (var item = Connections.First; item != null; item = item.Next) {
                 var connection = item.Value;
                 if (ProcessingLevel > 0) {
                     connection.Processed = true;
                 } else {
                     CancelCallback(connection.Callback);
-                    connections.Remove(item);
+                    Connections.Remove(item);
                 }
             }
             if (ProcessingLevel > 0) {
@@ -223,8 +223,8 @@ namespace  Godot
         {
             ProcessingLevel++;
             LinkedList<Connection>  disconnections = new LinkedList<Connection>();
-            var last = connections.Last;
-            var current = connections.First;
+            var last = Connections.Last;
+            var current = Connections.First;
             while (current != null) {
                 var connection = current.Value;
                 if (!connection.Processed) {
@@ -247,13 +247,13 @@ namespace  Godot
 
             // deleting oneshot signals
             var disconnecting = disconnections.First;
-            current = connections.First;
+            current = Connections.First;
             while (current != null && disconnecting != null) {
                 var connection = current.Value;
                 var disconnection = disconnecting.Value;
                 var next = current.Next;
                 if (connection.Callback.Equals(disconnection.Callback)) {
-                    connections.Remove(current);
+                    Connections.Remove(current);
                     disconnecting = disconnecting.Next;
                 }
                 if (current == last) {
@@ -264,11 +264,11 @@ namespace  Godot
 
             ProcessingLevel--;
             if (ProcessingLevel == 0 && DisconnectionQueued){
-                var item = connections.First;
+                var item = Connections.First;
                 while (item != null) {
                     var next = item.Next;
                     if (item.Value.Processed) {
-                        connections.Remove(item);
+                        Connections.Remove(item);
                         CancelCallback(item.Value.Callback);
                     }
                     item = next;
@@ -276,7 +276,7 @@ namespace  Godot
                 DisconnectionQueued = false;
             }
 
-            if (connections.First == null) {
+            if (Connections.First == null) {
                 DisconnectInternal();
             }
         }
