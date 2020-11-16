@@ -148,6 +148,8 @@ struct CachedData {
 
 	GDMonoMethodThunkR<MonoReflectionType *, MonoReflectionType *> methodthunk_MarshalUtils_MakeGenericArrayType;
 	GDMonoMethodThunkR<MonoReflectionType *, MonoReflectionType *, MonoReflectionType *> methodthunk_MarshalUtils_MakeGenericDictionaryType;
+	GDMonoMethodThunkR<int, MonoReflectionType *> methodthunk_MarshalUtils_GetGenericParametersCount;
+	GDMonoMethodThunkR<MonoReflectionType *, MonoReflectionType *, int> methodthunk_MarshalUtils_GetGenericTypeForParameter;
 
 	// End of MarshalUtils methods
 
