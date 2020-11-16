@@ -43,6 +43,7 @@
 #include "editor/editor_log.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
+#include "main/splash.gen.h"
 #include "platform/android/export/gradle_export_util.h"
 #include "platform/android/logo.gen.h"
 #include "platform/android/plugin/godot_plugin_config.h"
@@ -198,6 +199,9 @@ static const char *android_perms[] = {
 	"WRITE_USER_DICTIONARY",
 	NULL
 };
+
+static const char *SPLASH_IMAGE_EXPORT_PATH = "res/drawable/splash.png";
+static const char *SPLASH_BG_COLOR_PATH = "res/drawable/splash_bg_color.png";
 
 struct LauncherIcon {
 	const char *export_path;
@@ -598,7 +602,7 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		zipfi.tmz_date.tm_hour = time.hour;
 		zipfi.tmz_date.tm_mday = date.day;
 		zipfi.tmz_date.tm_min = time.min;
-		zipfi.tmz_date.tm_mon = date.month;
+		zipfi.tmz_date.tm_mon = date.month - 1; // tm_mon is zero indexed
 		zipfi.tmz_date.tm_sec = time.sec;
 		zipfi.tmz_date.tm_year = date.year;
 		zipfi.dosDate = 0;
@@ -833,7 +837,7 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		int version_code = p_preset->get("version/code");
 		String package_name = p_preset->get("package/unique_name");
 
-		int orientation = p_preset->get("screen/orientation");
+		const int screen_orientation = _get_android_orientation_value(_get_screen_orientation());
 
 		bool min_gles3 = ProjectSettings::get_singleton()->get("rendering/quality/driver/driver_name") == "GLES3" &&
 						 !ProjectSettings::get_singleton()->get("rendering/quality/driver/fallback_to_gles2");
@@ -951,7 +955,7 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 
 						if (tname == "activity" && attrname == "screenOrientation") {
 
-							encode_uint32(orientation == 0 ? 0 : 1, &p_manifest.write[iofs + 16]);
+							encode_uint32(screen_orientation, &p_manifest.write[iofs + 16]);
 						}
 
 						if (tname == "supports-screens") {
@@ -1467,6 +1471,18 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		//printf("end\n");
 	}
 
+	void _load_image_data(const Ref<Image> &p_splash_image, Vector<uint8_t> &p_data) {
+		PoolVector<uint8_t> png_buffer;
+		Error err = PNGDriverCommon::image_to_png(p_splash_image, png_buffer);
+		if (err == OK) {
+			p_data.resize(png_buffer.size());
+			memcpy(p_data.ptrw(), png_buffer.read().ptr(), p_data.size());
+		} else {
+			String err_str = String("Failed to convert splash image to png.");
+			WARN_PRINT(err_str.utf8().get_data());
+		}
+	}
+
 	void _process_launcher_icons(const String &p_file_name, const Ref<Image> &p_source_image, int dimension, Vector<uint8_t> &p_data) {
 		Ref<Image> working_image = p_source_image;
 
@@ -1484,6 +1500,35 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 			String err_str = String("Failed to convert resized icon (") + p_file_name + ") to png.";
 			WARN_PRINT(err_str.utf8().get_data());
 		}
+	}
+
+	void load_splash_refs(Ref<Image> &splash_image, Ref<Image> &splash_bg_color_image) {
+		// TODO: Figure out how to handle remaining boot splash parameters (e.g: fullsize, filter)
+		String project_splash_path = ProjectSettings::get_singleton()->get("application/boot_splash/image");
+
+		if (!project_splash_path.empty()) {
+			splash_image.instance();
+			const Error err = ImageLoader::load_image(project_splash_path, splash_image);
+			if (err) {
+				splash_image.unref();
+			}
+		}
+
+		if (splash_image.is_null()) {
+			// Use the default
+			splash_image = Ref<Image>(memnew(Image(boot_splash_png)));
+		}
+
+		// Setup the splash bg color
+		bool bg_color_valid;
+		Color bg_color = ProjectSettings::get_singleton()->get("application/boot_splash/bg_color", &bg_color_valid);
+		if (!bg_color_valid) {
+			bg_color = boot_splash_bg_color;
+		}
+
+		splash_bg_color_image.instance();
+		splash_bg_color_image->create(splash_image->get_width(), splash_image->get_height(), false, splash_image->get_format());
+		splash_bg_color_image->fill(bg_color);
 	}
 
 	void load_icon_refs(const Ref<EditorExportPreset> &p_preset, Ref<Image> &icon, Ref<Image> &foreground, Ref<Image> &background) {
@@ -1513,13 +1558,34 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 	}
 
 	void store_image(const LauncherIcon launcher_icon, const Vector<uint8_t> &data) {
-		String img_path = launcher_icon.export_path;
-		img_path = img_path.insert(0, "res://android/build/");
+		store_image(launcher_icon.export_path, data);
+	}
+
+	void store_image(const String &export_path, const Vector<uint8_t> &data) {
+		String img_path = export_path.insert(0, "res://android/build/");
 		store_file_at_path(img_path, data);
 	}
 
-	void _copy_icons_to_gradle_project(const Ref<EditorExportPreset> &p_preset, const Ref<Image> &main_image,
-			const Ref<Image> &foreground, const Ref<Image> &background) {
+	void _copy_icons_to_gradle_project(const Ref<EditorExportPreset> &p_preset,
+			const Ref<Image> &splash_image,
+			const Ref<Image> &splash_bg_color_image,
+			const Ref<Image> &main_image,
+			const Ref<Image> &foreground,
+			const Ref<Image> &background) {
+		// Store the splash image
+		if (splash_image.is_valid() && !splash_image->empty()) {
+			Vector<uint8_t> data;
+			_load_image_data(splash_image, data);
+			store_image(SPLASH_IMAGE_EXPORT_PATH, data);
+		}
+
+		// Store the splash bg color image
+		if (splash_bg_color_image.is_valid() && !splash_bg_color_image->empty()) {
+			Vector<uint8_t> data;
+			_load_image_data(splash_bg_color_image, data);
+			store_image(SPLASH_BG_COLOR_PATH, data);
+		}
+
 		// Prepare images to be resized for the icons. If some image ends up being uninitialized,
 		// the default image from the export template will be used.
 
@@ -1607,7 +1673,6 @@ public:
 		r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "package/name", PROPERTY_HINT_PLACEHOLDER_TEXT, "Game Name [default if blank]"), ""));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "package/signed"), true));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/immersive_mode"), true));
-		r_options->push_back(ExportOption(PropertyInfo(Variant::INT, "screen/orientation", PROPERTY_HINT_ENUM, "Landscape,Portrait"), 0));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/support_small"), true));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/support_normal"), true));
 		r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "screen/support_large"), true));
@@ -1961,9 +2026,21 @@ public:
 				valid = false;
 			} else {
 				Error errn;
+				// Check for the platform-tools directory.
 				DirAccessRef da = DirAccess::open(sdk_path.plus_file("platform-tools"), &errn);
 				if (errn != OK) {
-					err += TTR("Invalid Android SDK path for custom build in Editor Settings.") + "\n";
+					err += TTR("Invalid Android SDK path for custom build in Editor Settings.");
+					err += TTR("Missing 'platform-tools' directory!");
+					err += "\n";
+					valid = false;
+				}
+
+				// Check for the build-tools directory.
+				DirAccessRef build_tools_da = DirAccess::open(sdk_path.plus_file("build-tools"), &errn);
+				if (errn != OK) {
+					err += TTR("Invalid Android SDK path for custom build in Editor Settings.");
+					err += TTR("Missing 'build-tools' directory!");
+					err += "\n";
 					valid = false;
 				}
 			}
@@ -2382,9 +2459,9 @@ public:
 		return fullpath;
 	}
 
-	Error save_apk_expansion_file(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug) {
+	Error save_apk_expansion_file(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
 		String fullpath = get_apk_expansion_fullpath(p_preset, p_path);
-		Error err = save_pack(p_preset, fullpath, p_debug);
+		Error err = save_pack(p_preset, fullpath);
 		return err;
 	}
 
@@ -2551,6 +2628,58 @@ public:
 		}
 	}
 
+	Error _zip_align_project(const String &sdk_path, const String &unaligned_file_path, const String &aligned_file_path) {
+		// Look for the zipalign tool.
+		String zipalign_command;
+		Error errn;
+		String build_tools_dir = sdk_path.plus_file("build-tools");
+		DirAccessRef da = DirAccess::open(build_tools_dir, &errn);
+		if (errn != OK) {
+			return errn;
+		}
+
+		// There are additional versions directories we need to go through.
+		da->list_dir_begin();
+		String sub_dir = da->get_next();
+		while (!sub_dir.empty()) {
+			if (!sub_dir.begins_with(".") && da->current_is_dir()) {
+				// Check if the tool is here.
+				String tool_path = build_tools_dir.plus_file(sub_dir).plus_file("zipalign");
+				if (FileAccess::exists(tool_path)) {
+					zipalign_command = tool_path;
+					break;
+				}
+			}
+			sub_dir = da->get_next();
+		}
+		da->list_dir_end();
+
+		if (zipalign_command.empty()) {
+			EditorNode::get_singleton()->show_warning(TTR("Unable to find the zipalign tool."));
+			return ERR_CANT_CREATE;
+		}
+
+		List<String> zipalign_args;
+		zipalign_args.push_back("-f");
+		zipalign_args.push_back("-v");
+		zipalign_args.push_back("4");
+		zipalign_args.push_back(unaligned_file_path); // source file
+		zipalign_args.push_back(aligned_file_path); // destination file
+
+		int result = EditorNode::get_singleton()->execute_and_show_output(TTR("Aligning APK..."), zipalign_command, zipalign_args);
+		if (result != 0) {
+			EditorNode::get_singleton()->show_warning(TTR("Unable to complete APK alignment."));
+			return ERR_CANT_CREATE;
+		}
+
+		// Delete the unaligned path.
+		errn = da->remove(unaligned_file_path);
+		if (errn != OK) {
+			EditorNode::get_singleton()->show_warning(TTR("Unable to delete unaligned APK."));
+		}
+		return OK;
+	}
+
 	virtual Error export_project(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags = 0) {
 
 		ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
@@ -2566,6 +2695,10 @@ public:
 		bool _signed = p_preset->get("package/signed");
 		bool apk_expansion = p_preset->get("apk_expansion/enable");
 		Vector<String> enabled_abis = get_enabled_abis(p_preset);
+
+		Ref<Image> splash_image;
+		Ref<Image> splash_bg_color_image;
+		load_splash_refs(splash_image, splash_bg_color_image);
 
 		Ref<Image> main_image;
 		Ref<Image> foreground;
@@ -2599,15 +2732,18 @@ public:
 
 		if (use_custom_build) {
 			//test that installed build version is alright
-			FileAccessRef f = FileAccess::open("res://android/.build_version", FileAccess::READ);
-			if (!f) {
-				EditorNode::get_singleton()->show_warning(TTR("Trying to build from a custom built template, but no version info for it exists. Please reinstall from the 'Project' menu."));
-				return ERR_UNCONFIGURED;
-			}
-			String version = f->get_line().strip_edges();
-			if (version != VERSION_FULL_CONFIG) {
-				EditorNode::get_singleton()->show_warning(vformat(TTR("Android build version mismatch:\n   Template installed: %s\n   Godot Version: %s\nPlease reinstall Android build template from 'Project' menu."), version, VERSION_FULL_CONFIG));
-				return ERR_UNCONFIGURED;
+			{
+				FileAccessRef f = FileAccess::open("res://android/.build_version", FileAccess::READ);
+				if (!f) {
+					EditorNode::get_singleton()->show_warning(TTR("Trying to build from a custom built template, but no version info for it exists. Please reinstall from the 'Project' menu."));
+					return ERR_UNCONFIGURED;
+				}
+				String version = f->get_line().strip_edges();
+				f->close();
+				if (version != VERSION_FULL_CONFIG) {
+					EditorNode::get_singleton()->show_warning(vformat(TTR("Android build version mismatch:\n   Template installed: %s\n   Godot Version: %s\nPlease reinstall Android build template from 'Project' menu."), version, VERSION_FULL_CONFIG));
+					return ERR_UNCONFIGURED;
+				}
 			}
 			String sdk_path = EDITOR_GET("export/android/custom_build_sdk_path");
 			ERR_FAIL_COND_V_MSG(sdk_path == "", ERR_UNCONFIGURED, "Android SDK path must be configured in Editor Settings at 'export/android/custom_build_sdk_path'.");
@@ -2619,7 +2755,7 @@ public:
 				EditorNode::add_io_error("Unable to overwrite res://android/build/res/*.xml files with project name");
 			}
 			// Copies the project icon files into the appropriate Gradle project directory.
-			_copy_icons_to_gradle_project(p_preset, main_image, foreground, background);
+			_copy_icons_to_gradle_project(p_preset, splash_image, splash_bg_color_image, main_image, foreground, background);
 			// Write an AndroidManifest.xml file into the Gradle project directory.
 			_write_tmp_manifest(p_preset, p_give_internet, p_debug);
 			_update_custom_build_project();
@@ -2632,7 +2768,7 @@ public:
 					return err;
 				}
 			} else {
-				err = save_apk_expansion_file(p_preset, p_path, p_debug);
+				err = save_apk_expansion_file(p_preset, p_path);
 				if (err != OK) {
 					EditorNode::add_io_error("Could not write expansion package file!");
 					return err;
@@ -2713,11 +2849,16 @@ public:
 			copy_args.push_back(build_path); // start directory.
 
 			String export_filename = p_path.get_file();
+			if (export_format == 0) {
+				// By default, generated apk are not aligned.
+				export_filename += ".unaligned";
+			}
 			String export_path = p_path.get_base_dir();
 			if (export_path.is_rel_path()) {
 				export_path = OS::get_singleton()->get_resource_dir().plus_file(export_path);
 			}
 			export_path = ProjectSettings::get_singleton()->globalize_path(export_path).simplify_path();
+			String export_file_path = export_path.plus_file(export_filename);
 
 			copy_args.push_back("-Pexport_path=file:" + export_path);
 			copy_args.push_back("-Pexport_filename=" + export_filename);
@@ -2729,11 +2870,20 @@ public:
 			}
 
 			if (_signed) {
-				err = sign_apk(p_preset, p_debug, p_path, ep);
+				err = sign_apk(p_preset, p_debug, export_file_path, ep);
 				if (err != OK) {
 					return err;
 				}
 			}
+
+			if (export_format == 0) {
+				// Perform zip alignment
+				err = _zip_align_project(sdk_path, export_file_path, export_path.plus_file(p_path.get_file()));
+				if (err != OK) {
+					return err;
+				}
+			}
+
 			return OK;
 		}
 		// This is the start of the Legacy build system
@@ -2822,6 +2972,17 @@ public:
 			if (file == "resources.arsc") {
 				_fix_resources(p_preset, data);
 			}
+
+			// Process the splash image
+			if (file == SPLASH_IMAGE_EXPORT_PATH && splash_image.is_valid() && !splash_image->empty()) {
+				_load_image_data(splash_image, data);
+			}
+
+			// Process the splash bg color image
+			if (file == SPLASH_BG_COLOR_PATH && splash_bg_color_image.is_valid() && !splash_bg_color_image->empty()) {
+				_load_image_data(splash_bg_color_image, data);
+			}
+
 			for (int i = 0; i < icon_densities_count; ++i) {
 				if (main_image.is_valid() && !main_image->empty()) {
 					if (file == launcher_icons[i].export_path) {
@@ -2900,10 +3061,10 @@ public:
 			APKExportData ed;
 			ed.ep = &ep;
 			ed.apk = unaligned_apk;
-			err = export_project_files(p_preset, ignore_apk_file, &ed, p_debug, save_apk_so);
+			err = export_project_files(p_preset, ignore_apk_file, &ed, save_apk_so);
 		} else {
 			if (apk_expansion) {
-				err = save_apk_expansion_file(p_preset, p_path, p_debug);
+				err = save_apk_expansion_file(p_preset, p_path);
 				if (err != OK) {
 					EditorNode::add_io_error("Could not write expansion package file!");
 					return err;
@@ -2912,7 +3073,7 @@ public:
 				APKExportData ed;
 				ed.ep = &ep;
 				ed.apk = unaligned_apk;
-				err = export_project_files(p_preset, save_apk_file, &ed, p_debug, save_apk_so);
+				err = export_project_files(p_preset, save_apk_file, &ed, save_apk_so);
 			}
 		}
 
