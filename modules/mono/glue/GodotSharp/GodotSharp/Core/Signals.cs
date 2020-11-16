@@ -6,6 +6,7 @@ namespace Godot
     internal interface ISignalField
     {
         void ProcessCallback(object callback, object[] args);
+        void CancelCallback(object callback);
         SignalProcessor Processor { set; get; }
     }
 
@@ -75,6 +76,14 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Disonnect(Action callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
+        public void Disconnect<TResult>(Func<TResult> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
         public IAwaiter GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -85,7 +94,6 @@ namespace Godot
         public bool IsValid() {
             return _processor.Get() != null;
         }
-
         internal void ProcessCallback(object callback, object[] args) {
             switch (callback)
             {
@@ -94,11 +102,18 @@ namespace Godot
                 case Delegate func: func.DynamicInvoke(); break;
             }
         }
-
         void ISignalField.ProcessCallback(object callback, object[] args)
         {
             ProcessCallback(callback, args);
         }
+        void ISignalField.CancelCallback(object callback) {
+            switch (callback)
+            {
+                case Awaiter awaiter: awaiter.Fail(); break;
+            }
+        }
+
+        
 
         internal SignalProcessorReference _processor;
         SignalProcessor ISignalField.Processor
@@ -155,6 +170,14 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Disonnect(Action<T> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
+        public void Disconnect<TResult>(Func<T, TResult> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
         public IAwaiter<T> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -165,12 +188,6 @@ namespace Godot
         public bool IsValid() {
             return _processor.Get() != null;
         }
-
-        void ISignalField.ProcessCallback(object callback, object[] args)
-        {
-            ProcessCallback(callback, args);
-        }
-
         internal void ProcessCallback(object callback, object[] args)
         {
             var arg = SignalProcessor.FetchValue<T>(args, 0);
@@ -181,7 +198,16 @@ namespace Godot
                 case Delegate func: func.DynamicInvoke(arg); break;
             }
         }
-
+        void ISignalField.ProcessCallback(object callback, object[] args)
+        {
+            ProcessCallback(callback, args);
+        }
+        void ISignalField.CancelCallback(object callback) {
+            switch (callback)
+            {
+                case Awaiter awaiter: awaiter.Fail(); break;
+            }
+        }
         internal SignalProcessorReference _processor;
         SignalProcessor ISignalField.Processor
         {
@@ -236,6 +262,14 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Disonnect(Action<T0, T1> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
+        public void Disconnect<TResult>(Func<T0, T1, TResult> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
         public IAwaiter<(T0, T1)> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -245,12 +279,6 @@ namespace Godot
         public bool IsValid() {
             return _processor.Get() != null;
         }
-
-        void ISignalField.ProcessCallback(object callback, object[] args)
-        {
-            ProcessCallback(callback, args);
-        }
-
         internal void ProcessCallback(object callback, object[] args) {
             var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
             var arg1 = SignalProcessor.FetchValue<T1>(args, 1);
@@ -262,7 +290,16 @@ namespace Godot
                 case Delegate func: func.DynamicInvoke(arg0, arg1); break;
             }
         }
-
+        void ISignalField.ProcessCallback(object callback, object[] args)
+        {
+            ProcessCallback(callback, args);
+        }
+        void ISignalField.CancelCallback(object callback) {
+            switch (callback)
+            {
+                case Awaiter awaiter: awaiter.Fail(); break;
+            }
+        }
         internal SignalProcessorReference _processor;
         SignalProcessor ISignalField.Processor
         {
@@ -318,6 +355,14 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Disonnect(Action<T0, T1, T2> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
+        public void Disconnect<TResult>(Func<T0, T1, T2, TResult> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
         public static Signal<T0, T1, T2> operator +(Signal<T0, T1, T2> signal, Action<T0, T1, T2> action){
             signal.Connect(action);
             return signal;
@@ -332,12 +377,6 @@ namespace Godot
         public bool IsValid() {
             return _processor.Get() != null;
         }
-
-        void ISignalField.ProcessCallback(object callback, object[] args)
-        {
-            ProcessCallback(callback, args);
-        }
-
         internal void ProcessCallback(object callback, object[] args) {
             var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
             var arg1 = SignalProcessor.FetchValue<T1>(args, 1);
@@ -350,7 +389,16 @@ namespace Godot
                 case Delegate func: func.DynamicInvoke(arg0, arg1, arg2); break;
             }
         }
-
+        void ISignalField.ProcessCallback(object callback, object[] args)
+        {
+            ProcessCallback(callback, args);
+        }
+        void ISignalField.CancelCallback(object callback) {
+            switch (callback)
+            {
+                case Awaiter awaiter: awaiter.Fail(); break;
+            }
+        }
         internal SignalProcessorReference _processor;
         SignalProcessor ISignalField.Processor
         {
@@ -406,6 +454,14 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Disonnect(Action<T0, T1, T2, T3> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
+        public void Disconnect<TResult>(Func<T0, T1, T2, T3, TResult> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
         public IAwaiter<(T0, T1, T2, T3)> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -416,12 +472,6 @@ namespace Godot
         public bool IsValid() {
             return _processor.Get() != null;
         }
-
-        void ISignalField.ProcessCallback(object callback, object[] args)
-        {
-            ProcessCallback(callback, args);
-        }
-
         internal void ProcessCallback(object callback, object[] args)
         {
             var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
@@ -436,7 +486,16 @@ namespace Godot
                 case Delegate func: func.DynamicInvoke(arg0, arg1, arg2, arg3); break;
             }
         }
-
+        void ISignalField.ProcessCallback(object callback, object[] args)
+        {
+            ProcessCallback(callback, args);
+        }
+        void ISignalField.CancelCallback(object callback) {
+            switch (callback)
+            {
+                case Awaiter awaiter: awaiter.Fail(); break;
+            }
+        }
         internal SignalProcessorReference _processor;
         SignalProcessor ISignalField.Processor
         {
@@ -492,6 +551,14 @@ namespace Godot
         {
             _processor.Get()?.Connect(callback, flags);
         }
+        public void Disonnect(Action<T0, T1, T2, T3, T4> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
+        public void Disconnect<TResult>(Func<T0, T1, T2, T3, T4, TResult> callback)
+        {
+            _processor.Get()?.Disconnect(callback);
+        }
         public IAwaiter<(T0, T1, T2, T3, T4)> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -502,12 +569,6 @@ namespace Godot
         public bool IsValid() {
             return _processor.Get() != null;
         }
-
-        void ISignalField.ProcessCallback(object callback, object[] args)
-        {
-            ProcessCallback(callback, args);
-        }
-
         internal void ProcessCallback(object callback, object[] args)
         {
             var arg0 = SignalProcessor.FetchValue<T0>(args, 0);
@@ -522,7 +583,16 @@ namespace Godot
                 case Delegate func: func.DynamicInvoke(arg0, arg1, arg2, arg3, arg4); break;
             }
         }
-
+        void ISignalField.ProcessCallback(object callback, object[] args)
+        {
+            ProcessCallback(callback, args);
+        }
+        void ISignalField.CancelCallback(object callback) {
+            switch (callback)
+            {
+                case Awaiter awaiter: awaiter.Fail(); break;
+            }
+        }
         internal SignalProcessorReference _processor;
         SignalProcessor ISignalField.Processor
         {
