@@ -62,5 +62,13 @@ namespace Godot
         {
             return typeof(Godot.Collections.Dictionary<,>).MakeGenericType(keyType, valueType);
         }
+
+        static int GetGenericParametersCount(Type type) {
+            return type.GenericTypeArguments.Length;
+        }
+
+        static Type GetGenericTypeForParameter(Type type, int idx) {
+            return type.GenericTypeArguments[idx];
+        }
     }
 }

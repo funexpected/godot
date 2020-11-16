@@ -622,6 +622,20 @@ GDMonoClass *make_generic_dictionary_type(MonoReflectionType *p_key_reftype, Mon
 	UNHANDLED_EXCEPTION(exc);
 	return GDMono::get_singleton()->get_class(mono_class_from_mono_type(mono_reflection_type_get_type(reftype)));
 }
+int get_generic_parameters_count(MonoReflectionType *p_reftype) {
+	NO_GLUE_RET(NULL);
+	MonoException *exc = NULL;
+	int parameters_count = CACHED_METHOD_THUNK(MarshalUtils, GetGenericParametersCount).invoke(p_reftype, &exc);
+	UNHANDLED_EXCEPTION(exc);
+	return parameters_count;
+}
+Variant::Type get_generic_type_for_parameter(MonoReflectionType *p_reftype, int p_idx) {
+	NO_GLUE_RET(Variant::Type::NIL);
+	MonoException *exc = NULL;
+	MonoReflectionType *reftype = CACHED_METHOD_THUNK(MarshalUtils, GetGenericTypeForParameter).invoke(p_reftype, p_idx, &exc);
+	UNHANDLED_EXCEPTION(exc);
+	return GDMonoMarshal::managed_to_variant_type(ManagedType::from_reftype(reftype));
+}
 
 } // namespace Marshal
 

@@ -178,6 +178,8 @@ void CachedData::clear_godot_api_cache() {
 
 	methodthunk_MarshalUtils_MakeGenericArrayType.nullify();
 	methodthunk_MarshalUtils_MakeGenericDictionaryType.nullify();
+	methodthunk_MarshalUtils_GetGenericParametersCount.nullify();
+	methodthunk_MarshalUtils_GetGenericTypeForParameter.nullify();
 
 	// End of MarshalUtils methods
 
@@ -295,6 +297,8 @@ void update_godot_api_cache() {
 
 	CACHE_METHOD_THUNK_AND_CHECK(MarshalUtils, MakeGenericArrayType, GODOT_API_CLASS(MarshalUtils)->get_method("MakeGenericArrayType", 1));
 	CACHE_METHOD_THUNK_AND_CHECK(MarshalUtils, MakeGenericDictionaryType, GODOT_API_CLASS(MarshalUtils)->get_method("MakeGenericDictionaryType", 2));
+	CACHE_METHOD_THUNK_AND_CHECK(MarshalUtils, GetGenericParametersCount, GODOT_API_CLASS(MarshalUtils)->get_method("GetGenericParametersCount", 1));
+	CACHE_METHOD_THUNK_AND_CHECK(MarshalUtils, GetGenericTypeForParameter, GODOT_API_CLASS(MarshalUtils)->get_method("GetGenericTypeForParameter", 2));
 
 	// End of MarshalUtils methods
 

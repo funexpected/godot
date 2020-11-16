@@ -2605,25 +2605,13 @@ bool CSharpScript::_get_signal(GDMonoClass *p_class, GDMonoField *p_field, Vecto
 		return false;
 	}
 
-	GDMonoClass *field_type = p_field->get_type().type_class;
-
-	void *iter = NULL;
-	MonoClass *raw_class = NULL;
-	int idx = 0;
-	while ((raw_class = mono_class_get_nested_types(field_type->get_mono_ptr(), &iter)) != NULL) {
-		MonoType* raw_type = mono_class_get_type(raw_class);
-		if (mono_type_is_generic_parameter(raw_type)){
-			ManagedType t = ManagedType::from_type(raw_type);
-			Argument arg;
-			arg.name = "arg" + itos(idx);
-			arg.type = GDMonoMarshal::managed_to_variant_type(t);
-			params.push_back(arg);
-			if (arg.type == Variant::NIL) {
-				ERR_PRINTS("Unknown type of signal parameter: '" + arg.name + "' in '" + p_class->get_full_name() + "'.");
-				return false;
-			}
-			idx += 1;
-		}
+	MonoReflectionType *field_type = mono_type_get_object(mono_domain_get(), p_field->get_type().type_class->get_mono_type());
+	int params_count = GDMonoUtils::Marshal::get_generic_parameters_count(field_type);
+	for (int i=0; i<params_count; i++) {
+		Argument arg;
+		arg.name = "arg" + itos(i);
+		arg.type = GDMonoUtils::Marshal::get_generic_type_for_parameter(field_type, i);
+		params.push_back(arg);
 	}
 
 	return true;

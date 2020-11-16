@@ -67,6 +67,8 @@ void dictionary_get_key_value_types(MonoReflectionType *p_dict_reftype, MonoRefl
 
 GDMonoClass *make_generic_array_type(MonoReflectionType *p_elem_reftype);
 GDMonoClass *make_generic_dictionary_type(MonoReflectionType *p_key_reftype, MonoReflectionType *p_value_reftype);
+int get_generic_parameters_count(MonoReflectionType *p_reftype);
+Variant::Type get_generic_type_for_parameter(MonoReflectionType *p_key_reftype, int idx);
 
 } // namespace Marshal
 
