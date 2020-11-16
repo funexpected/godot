@@ -78,7 +78,7 @@ namespace Godot
         public IAwaiter GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot, false);
             return awaiter;
         }
 
@@ -158,7 +158,7 @@ namespace Godot
         public IAwaiter<T> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot, false);
             return awaiter;
         }
 
@@ -239,7 +239,7 @@ namespace Godot
         public IAwaiter<(T0, T1)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot, false);
             return awaiter;
         }
         public bool IsValid() {
@@ -325,7 +325,7 @@ namespace Godot
         public IAwaiter<(T0, T1, T2)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot, false);
             return awaiter;
         }
 
@@ -409,7 +409,7 @@ namespace Godot
         public IAwaiter<(T0, T1, T2, T3)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot, false);
             return awaiter;
         }
 
@@ -495,7 +495,7 @@ namespace Godot
         public IAwaiter<(T0, T1, T2, T3, T4)> GetAwaiter()
         {
             var awaiter = new Awaiter();
-            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot);
+            _processor.Get()?.Connect(awaiter, ConnectFlags.Oneshot, false);
             return awaiter;
         }
 

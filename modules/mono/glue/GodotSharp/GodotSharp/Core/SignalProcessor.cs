@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -12,14 +13,22 @@ namespace  Godot
     {
 
         public class Connection {
+            public object Callback;
+            public ConnectFlags Flags;
+            public bool Processed;
+            int References = 0;
+
             public Connection(object callback, ConnectFlags flags) {
                 Callback = callback;
                 Flags = flags;
                 Processed = false;
+                References = 1; 
             }
-            public object Callback;
-            public ConnectFlags Flags;
-            public bool Processed;
+
+            public void Reference() {
+                References += 1;
+                Flags = Flags | ConnectFlags.ReferenceCounted;
+            }
 
             public bool Deferred {
                 get => (Flags & ConnectFlags.Deferred) > 0;
@@ -126,10 +135,38 @@ namespace  Godot
             }
         }
         String SignalName { get { return Names[NameIndex]; } }
-        public void Connect(object callback, ConnectFlags flags)
+        public void Connect(object callback, ConnectFlags flags, bool checkForDuplicates = true)
         {
             ConnectInternal();
-            connections.AddLast(new Connection(callback, flags));
+            // no need to check awaiters, they are unique
+            if (!checkForDuplicates) {
+                connections.AddLast(new Connection(callback, flags));
+                return;
+            }
+
+            var connection = connections.FirstOrDefault(c => c.Callback.Equals(callback) && !c.Processed);
+            if (connection == null) {
+                connections.AddLast(new Connection(callback, flags));
+                return;
+            }
+
+            if (connection.ReferenceCounted || (flags & ConnectFlags.ReferenceCounted) > 0) {
+                connection.Reference();
+                return;
+            }
+
+            Godot.Object owner;
+            String methodRepr;
+            if (callback is Delegate dlg) {
+                methodRepr = $"{dlg.Method.DeclaringType.Name}.{dlg.Method.Name}";
+            }  else {
+                methodRepr = $"{callback}";
+            }
+            if (Owner.TryGetTarget(out owner)) {
+                GD.PushError($"Signal '{SignalName}' is already connected to {methodRepr} in object {owner}.");
+            } else {
+                GD.PushError($"Unable to connect signal '{SignalName}' to {methodRepr}: Object is gone.");
+            }
         }
 
         public void IterateTargets(object[] args)
@@ -164,7 +201,7 @@ namespace  Godot
                 var connection = current.Value;
                 var disconnection = disconnecting.Value;
                 var next = current.Next;
-                if (connection.Callback == disconnection.Callback) {
+                if (connection.Callback.Equals(disconnection.Callback)) {
                     connections.Remove(current);
                     disconnecting = disconnecting.Next;
                 }
