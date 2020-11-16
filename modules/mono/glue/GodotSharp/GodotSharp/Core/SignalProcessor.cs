@@ -237,8 +237,8 @@ namespace Godot
                     {
                         DisconnectInternal();
                     }
-                    return;
                 }
+                return;
             }
         }
         public void DisconnectAll()
