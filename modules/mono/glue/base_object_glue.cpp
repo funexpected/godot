@@ -165,7 +165,7 @@ Error godot_icall_SignalProcessor_connect(Object *p_source, MonoString *p_signal
 	Vector<Variant> args;
 	args.push_back(p_source);
 	args.push_back(p_index);
-	return p_source->connect(signal, SignalReceiverHandle::get_instance(), "_signal_callback", args, Object::CONNECT_REFERENCE_COUNTED);	
+	return p_source->connect(signal, SignalReceiverHandle::get_instance(), "_signal_callback", args);	
 }
 
 void godot_icall_SignalProcessor_disconnect(Object *p_source, MonoString *p_signal) {
