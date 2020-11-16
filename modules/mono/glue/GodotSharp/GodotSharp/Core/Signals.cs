@@ -84,6 +84,9 @@ namespace Godot
         {
             _processor.Get()?.Disconnect(callback);
         }
+        public void DisconnectAll() {
+            _processor.Get()?.DisconnectAll();
+        }
         public IAwaiter GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -178,6 +181,9 @@ namespace Godot
         {
             _processor.Get()?.Disconnect(callback);
         }
+        public void DisconnectAll() {
+            _processor.Get()?.DisconnectAll();
+        }
         public IAwaiter<T> GetAwaiter()
         {
             var awaiter = new Awaiter();
@@ -269,6 +275,9 @@ namespace Godot
         public void Disconnect<TResult>(Func<T0, T1, TResult> callback)
         {
             _processor.Get()?.Disconnect(callback);
+        }
+        public void DisconnectAll() {
+            _processor.Get()?.DisconnectAll();
         }
         public IAwaiter<(T0, T1)> GetAwaiter()
         {
@@ -363,9 +372,8 @@ namespace Godot
         {
             _processor.Get()?.Disconnect(callback);
         }
-        public static Signal<T0, T1, T2> operator +(Signal<T0, T1, T2> signal, Action<T0, T1, T2> action){
-            signal.Connect(action);
-            return signal;
+        public void DisconnectAll() {
+            _processor.Get()?.DisconnectAll();
         }
         public IAwaiter<(T0, T1, T2)> GetAwaiter()
         {
@@ -461,6 +469,9 @@ namespace Godot
         public void Disconnect<TResult>(Func<T0, T1, T2, T3, TResult> callback)
         {
             _processor.Get()?.Disconnect(callback);
+        }
+        public void DisconnectAll() {
+            _processor.Get()?.DisconnectAll();
         }
         public IAwaiter<(T0, T1, T2, T3)> GetAwaiter()
         {
@@ -558,6 +569,9 @@ namespace Godot
         public void Disconnect<TResult>(Func<T0, T1, T2, T3, T4, TResult> callback)
         {
             _processor.Get()?.Disconnect(callback);
+        }
+        public void DisconnectAll() {
+            _processor.Get()?.DisconnectAll();
         }
         public IAwaiter<(T0, T1, T2, T3, T4)> GetAwaiter()
         {
