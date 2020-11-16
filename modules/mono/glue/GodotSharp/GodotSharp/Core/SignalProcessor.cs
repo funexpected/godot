@@ -30,6 +30,11 @@ namespace  Godot
                 Flags = Flags | ConnectFlags.ReferenceCounted;
             }
 
+            public bool Unreference() {
+                References -= 1;
+                return References <= 0;
+            }
+
             public bool Deferred {
                 get => (Flags & ConnectFlags.Deferred) > 0;
             }
@@ -61,11 +66,15 @@ namespace  Godot
         static Regex Pattern = new Regex("[A-Z]");
         
         public delegate void ProcessCallbackDelegate(object callback, object[] args);
+        public delegate void CancelCallbackDelegate(object callback);
         public ProcessCallbackDelegate ProcessCallback;
+        public CancelCallbackDelegate CancelCallback;
         int NameIndex;
         int FieldIndex;
         internal WeakReference<Godot.Object> Owner;
         bool InternalConnected = false;
+        uint ProcessingLevel = 0;
+        bool DisconnectionQueued = false;
         internal LinkedList<Connection> connections = new LinkedList<Connection>();
         static string FieldToStringName(string fieldName) {
             string signalName = Pattern.Replace(fieldName, "_$0").ToLower();
@@ -114,6 +123,7 @@ namespace  Godot
                 pOwner.SignalProcessors.Add(processor);
                 boxedSignal.Processor = processor;
                 processor.ProcessCallback = boxedSignal.ProcessCallback;
+                processor.CancelCallback = boxedSignal.CancelCallback;
                 field.SetValue(pOwner, boxedSignal);
             }
         }
@@ -122,6 +132,7 @@ namespace  Godot
             pOwner.SignalProcessors.Add(processor);
             signal.Processor = processor;
             processor.ProcessCallback = signal.ProcessCallback;
+            processor.CancelCallback = signal.CancelCallback;
         }
         public SignalProcessor(Godot.Object pOwner, string pSignalName, int pFieldIndex)
         {
@@ -169,8 +180,32 @@ namespace  Godot
             }
         }
 
+        public void Disconnect(object callback) {
+            for (var item = connections.First; item != null; item = item.Next) {
+                var connection = item.Value;
+                if (!connection.Callback.Equals(callback) || connection.Processed) continue;
+                if (connection.ReferenceCounted) {
+                    if (!connection.Unreference()) {
+                        return;
+                    }
+                }
+                if (ProcessingLevel > 0) {
+                    item.Value.Processed = true;
+                    DisconnectionQueued = true;
+                } else {
+                    connections.Remove(item);
+                    CancelCallback(connection.Callback);
+                    if (connections.First == null) {
+                        DisconnectInternal();
+                    }
+                    return;
+                }
+            }
+        }
+
         public void IterateTargets(object[] args)
         {
+            ProcessingLevel++;
             LinkedList<Connection>  disconnections = new LinkedList<Connection>();
             var last = connections.Last;
             var current = connections.First;
@@ -209,6 +244,20 @@ namespace  Godot
                     break;
                 }
                 current = next;
+            }
+
+            ProcessingLevel--;
+            if (ProcessingLevel == 0 && DisconnectionQueued){
+                var item = connections.First;
+                while (item != null) {
+                    var next = item.Next;
+                    if (item.Value.Processed) {
+                        connections.Remove(item);
+                        CancelCallback(item.Value.Callback);
+                    }
+                    item = next;
+                }
+                DisconnectionQueued = false;
             }
 
             if (connections.First == null) {
