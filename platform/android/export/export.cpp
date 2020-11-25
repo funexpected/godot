@@ -837,7 +837,7 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 		int version_code = p_preset->get("version/code");
 		String package_name = p_preset->get("package/unique_name");
 
-		const int screen_orientation = _get_android_orientation_value(_get_screen_orientation());
+		const int screen_orientation = 0;//_get_android_orientation_value(_get_screen_orientation());
 
 		bool min_gles3 = ProjectSettings::get_singleton()->get("rendering/quality/driver/driver_name") == "GLES3" &&
 						 !ProjectSettings::get_singleton()->get("rendering/quality/driver/fallback_to_gles2");
@@ -2459,9 +2459,9 @@ public:
 		return fullpath;
 	}
 
-	Error save_apk_expansion_file(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
+	Error save_apk_expansion_file(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug) {
 		String fullpath = get_apk_expansion_fullpath(p_preset, p_path);
-		Error err = save_pack(p_preset, fullpath);
+		Error err = save_pack(p_preset, fullpath, p_debug);
 		return err;
 	}
 
@@ -2768,7 +2768,7 @@ public:
 					return err;
 				}
 			} else {
-				err = save_apk_expansion_file(p_preset, p_path);
+				err = save_apk_expansion_file(p_preset, p_path, p_debug);
 				if (err != OK) {
 					EditorNode::add_io_error("Could not write expansion package file!");
 					return err;
@@ -3064,7 +3064,7 @@ public:
 			err = export_project_files(p_preset, ignore_apk_file, &ed, save_apk_so);
 		} else {
 			if (apk_expansion) {
-				err = save_apk_expansion_file(p_preset, p_path);
+				err = save_apk_expansion_file(p_preset, p_path, p_debug);
 				if (err != OK) {
 					EditorNode::add_io_error("Could not write expansion package file!");
 					return err;
