@@ -1073,6 +1073,7 @@ StringName TranslationServer::translate(const StringName &p_message) const {
 	// logic, so be sure to propagate changes there when changing things here.
 
 	StringName res;
+	StringName current_res;
 	String lang = get_language_code(locale);
 	bool near_match = false;
 
@@ -1081,7 +1082,9 @@ StringName TranslationServer::translate(const StringName &p_message) const {
 		ERR_FAIL_COND_V(t.is_null(), p_message);
 		String l = t->get_locale();
 		if (l == locale) {
-			res = t->get_message(p_message);
+			current_res = t->get_message(p_message);
+			if (current_res)
+				res = current_res;
 		}
 		/*
 		if (lptr[0] != l[0] || lptr[1] != l[1])
