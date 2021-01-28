@@ -136,6 +136,9 @@ public:
 	void set_script_encryption_key(const String &p_key);
 	String get_script_encryption_key() const;
 
+	bool get_export_non_resource_files() const;
+	void set_export_non_resource_files(bool mode);
+
 	const List<PropertyInfo> &get_properties() const { return properties; }
 
 	EditorExportPreset();

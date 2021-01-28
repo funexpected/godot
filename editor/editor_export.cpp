@@ -264,6 +264,16 @@ String EditorExportPreset::get_script_encryption_key() const {
 	return script_key;
 }
 
+bool EditorExportPreset::get_export_non_resource_files() const {
+
+	return is_common_application_files_needed;
+}
+
+void EditorExportPreset::set_export_non_resource_files(bool mode) {
+
+	is_common_application_files_needed = mode;
+}
+
 EditorExportPreset::EditorExportPreset() :
 		export_filter(EXPORT_ALL_RESOURCES),
 		export_path(""),
@@ -945,17 +955,18 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 		}
 	}
 
-	// Store icon and splash images directly, they need to bypass the import system and be loaded as images
-	String icon = ProjectSettings::get_singleton()->get("application/config/icon");
-	String splash = ProjectSettings::get_singleton()->get("application/boot_splash/image");
-	if (icon != String() && FileAccess::exists(icon)) {
-		Vector<uint8_t> array = FileAccess::get_file_as_array(icon);
-		p_func(p_udata, icon, array, idx, total);
-	}
-	if (splash != String() && FileAccess::exists(splash) && icon != splash) {
-		Vector<uint8_t> array = FileAccess::get_file_as_array(splash);
-		p_func(p_udata, splash, array, idx, total);
-	}
+	if (p_preset->get_export_non_resource_files()) {
+		// Store icon and splash images directly, they need to bypass the import system and be loaded as images
+		String icon = ProjectSettings::get_singleton()->get("application/config/icon");
+		String splash = ProjectSettings::get_singleton()->get("application/boot_splash/image");
+		if (icon != String() && FileAccess::exists(icon)) {
+			Vector<uint8_t> array = FileAccess::get_file_as_array(icon);
+			p_func(p_udata, icon, array, idx, total);
+		}
+		if (splash != String() && FileAccess::exists(splash) && icon != splash) {
+			Vector<uint8_t> array = FileAccess::get_file_as_array(splash);
+			p_func(p_udata, splash, array, idx, total);
+		}
 
 	String config_file = "project.binary";
 	String engine_cfb = EditorSettings::get_singleton()->get_cache_dir().plus_file("tmp" + config_file);
@@ -1257,6 +1268,8 @@ void EditorExport::_save() {
 		config->set_value(section, "patch_list", preset->get_patches());
 		config->set_value(section, "script_export_mode", preset->get_script_export_mode());
 		config->set_value(section, "script_encryption_key", preset->get_script_encryption_key());
+		if (!preset->get_export_non_resource_files())
+			config->set_value(section, "export_non_resource_files", preset->get_export_non_resource_files());
 
 		String option_section = "preset." + itos(i) + ".options";
 
@@ -1464,7 +1477,10 @@ void EditorExport::load_config() {
 		if (config->has_section_key(section, "script_encryption_key")) {
 			preset->set_script_encryption_key(config->get_value(section, "script_encryption_key"));
 		}
-
+		if (config->has_section_key(section, "export_non_resource_files")) {
+			preset->set_export_non_resource_files(config->get_value(section, "export_non_resource_files"));
+		}
+		
 		String option_section = "preset." + itos(index) + ".options";
 
 		List<String> options;
