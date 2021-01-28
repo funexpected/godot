@@ -70,6 +70,7 @@ private:
 	Set<String> selected_files;
 	bool runnable;
 	bool export_non_resource_files;
+	Vector<String> patches;
 
 	friend class EditorExport;
 	friend class EditorExportPlatform;
