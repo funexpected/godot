@@ -69,6 +69,7 @@ private:
 	String exporter;
 	Set<String> selected_files;
 	bool runnable;
+	bool export_non_resource_files;
 
 	friend class EditorExport;
 	friend class EditorExportPlatform;
@@ -127,6 +128,9 @@ public:
 
 	void set_script_encryption_key(const String &p_key);
 	String get_script_encryption_key() const;
+
+	bool get_export_non_resource_files() const;
+	void set_export_non_resource_files(bool mode);
 
 	const List<PropertyInfo> &get_properties() const { return properties; }
 
