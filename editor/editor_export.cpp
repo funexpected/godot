@@ -968,15 +968,15 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 			Vector<uint8_t> array = FileAccess::get_file_as_array(splash);
 			p_func(p_udata, splash, array, idx, total);
 		}
+
+		String config_file = "project.binary";
+		String engine_cfb = EditorSettings::get_singleton()->get_cache_dir().plus_file("tmp" + config_file);
+		ProjectSettings::get_singleton()->save_custom(engine_cfb, custom_map, custom_list);
+		Vector<uint8_t> data = FileAccess::get_file_as_array(engine_cfb);
+		DirAccess::remove_file_or_error(engine_cfb);
+
+		p_func(p_udata, "res://" + config_file, data, idx, total);
 	}
-
-	String config_file = "project.binary";
-	String engine_cfb = EditorSettings::get_singleton()->get_cache_dir().plus_file("tmp" + config_file);
-	ProjectSettings::get_singleton()->save_custom(engine_cfb, custom_map, custom_list);
-	Vector<uint8_t> data = FileAccess::get_file_as_array(engine_cfb);
-	DirAccess::remove_file_or_error(engine_cfb);
-
-	p_func(p_udata, "res://" + config_file, data, idx, total);
 
 	return OK;
 }
