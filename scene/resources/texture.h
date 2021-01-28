@@ -110,6 +110,9 @@ private:
 	float lossy_storage_quality;
 	mutable Ref<BitMap> alpha_cache;
 	bool image_stored;
+#ifdef TOOLS_ENABLED
+	Ref<Image> original_image;
+#endif
 
 protected:
 	virtual void reload_from_file();
@@ -182,6 +185,7 @@ public:
 		FORMAT_BIT_DETECT_3D = 1 << 24,
 		FORMAT_BIT_DETECT_SRGB = 1 << 25,
 		FORMAT_BIT_DETECT_NORMAL = 1 << 26,
+		FORMAT_BIT_STORE_COMPRESSED = 1 << 27
 	};
 
 private:

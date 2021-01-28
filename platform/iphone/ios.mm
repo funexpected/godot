@@ -30,12 +30,18 @@
 
 #include "ios.h"
 #include <sys/sysctl.h>
+#include "core/os/os.h"
 
 #import <UIKit/UIKit.h>
+#import "app_delegate.h"
 
 void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
+	ClassDB::bind_method(D_METHOD("get_interface_orientation"), &iOS::get_interface_orientation);
+	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
+	ClassDB::bind_method(D_METHOD("get_app_version"), &iOS::get_app_version);
+	
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -80,5 +86,46 @@ String iOS::get_rate_url(int p_app_id) const {
 	printf("returning rate url %ls\n", ret.c_str());
 	return ret;
 };
+
+int iOS::get_interface_orientation() const {
+	UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+	if (orientation == UIInterfaceOrientationPortrait) {
+		return OS::SCREEN_PORTRAIT;
+	} else if (orientation == UIInterfaceOrientationPortraitUpsideDown) {
+		return OS::SCREEN_REVERSE_PORTRAIT;
+	} else if (orientation == UIInterfaceOrientationLandscapeLeft) {
+		return OS::SCREEN_LANDSCAPE;
+	} else if (orientation == UIInterfaceOrientationLandscapeRight) {
+		return OS::SCREEN_REVERSE_LANDSCAPE;
+	} else {
+		return OS::SCREEN_SENSOR;
+	}
+}
+
+String iOS::get_app_version()
+{
+	NSString	*appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+	const char	*str = [appVersionString UTF8String];
+	return String(str != NULL ? str : "");
+}
+
+
+void iOS::share_data(const String &title, const String &subject, const String &text)
+{
+UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIApplication sharedApplication] delegate]).window.rootViewController;
+    
+    NSString * message = [NSString stringWithCString:text.utf8().get_data() encoding:NSUTF8StringEncoding];
+    
+    NSArray * shareItems = @[message];
+    
+    UIActivityViewController * avc = [[UIActivityViewController alloc] initWithActivityItems:shareItems applicationActivities:nil];
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        avc.popoverPresentationController.sourceView = root_controller.view;
+        avc.popoverPresentationController.sourceRect = CGRectMake(root_controller.view.bounds.size.width/2, root_controller.view.bounds.size.height/4, 0, 0); 
+    }
+    [root_controller presentViewController:avc animated:true completion:nil];
+
+}
 
 iOS::iOS(){};

@@ -108,6 +108,10 @@ PoolStringArray _ResourceLoader::get_dependencies(const String &p_path) {
 	return ret;
 };
 
+PoolStringArray _ResourceLoader::get_cached_resource_pathes() {
+	return ResourceLoader::get_cached_resource_pathes();
+}
+
 #ifndef DISABLE_DEPRECATED
 bool _ResourceLoader::has(const String &p_path) {
 	WARN_PRINTS("ResourceLoader.has() is deprecated, please replace it with the equivalent has_cached() or the new exists().");
@@ -132,6 +136,7 @@ void _ResourceLoader::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_recognized_extensions_for_type", "type"), &_ResourceLoader::get_recognized_extensions_for_type);
 	ClassDB::bind_method(D_METHOD("set_abort_on_missing_resources", "abort"), &_ResourceLoader::set_abort_on_missing_resources);
 	ClassDB::bind_method(D_METHOD("get_dependencies", "path"), &_ResourceLoader::get_dependencies);
+	ClassDB::bind_method(D_METHOD("get_cached_resource_pathes"), &_ResourceLoader::get_cached_resource_pathes);
 	ClassDB::bind_method(D_METHOD("has_cached", "path"), &_ResourceLoader::has_cached);
 	ClassDB::bind_method(D_METHOD("exists", "path", "type_hint"), &_ResourceLoader::exists, DEFVAL(""));
 #ifndef DISABLE_DEPRECATED
@@ -1643,6 +1648,11 @@ bool _Geometry::point_is_inside_triangle(const Vector2 &s, const Vector2 &a, con
 	return Geometry::is_point_in_triangle(s, a, b, c);
 }
 
+bool _Geometry::point_is_inside_polygon(const Vector2 &point, const Vector<Vector2> &polygon) const{
+
+	return Geometry::is_point_in_polygon(point, polygon);
+}
+
 PoolVector<Vector3> _Geometry::segment_intersects_sphere(const Vector3 &p_from, const Vector3 &p_to, const Vector3 &p_sphere_pos, real_t p_sphere_radius) {
 
 	PoolVector<Vector3> r;
@@ -1866,6 +1876,7 @@ void _Geometry::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("segment_intersects_cylinder", "from", "to", "height", "radius"), &_Geometry::segment_intersects_cylinder);
 	ClassDB::bind_method(D_METHOD("segment_intersects_convex", "from", "to", "planes"), &_Geometry::segment_intersects_convex);
 	ClassDB::bind_method(D_METHOD("point_is_inside_triangle", "point", "a", "b", "c"), &_Geometry::point_is_inside_triangle);
+	ClassDB::bind_method(D_METHOD("point_is_inside_polygon", "point", "polygon"), &_Geometry::point_is_inside_polygon);
 
 	ClassDB::bind_method(D_METHOD("is_polygon_clockwise", "polygon"), &_Geometry::is_polygon_clockwise);
 	ClassDB::bind_method(D_METHOD("is_point_in_polygon", "point", "polygon"), &_Geometry::is_point_in_polygon);
@@ -3158,6 +3169,10 @@ Object *_Engine::get_singleton_object(const String &p_name) const {
 	return Engine::get_singleton()->get_singleton_object(p_name);
 }
 
+void _Engine::add_global_constant(const String &p_name, const Variant &p_value) const {
+	Engine::get_singleton()->add_global_constant(p_name, p_value);
+}
+
 void _Engine::set_editor_hint(bool p_enabled) {
 
 	Engine::get_singleton()->set_editor_hint(p_enabled);
@@ -3199,6 +3214,8 @@ void _Engine::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("has_singleton", "name"), &_Engine::has_singleton);
 	ClassDB::bind_method(D_METHOD("get_singleton", "name"), &_Engine::get_singleton_object);
+
+	ClassDB::bind_method(D_METHOD("add_global_constant", "name", "value"), &_Engine::add_global_constant);
 
 	ClassDB::bind_method(D_METHOD("set_editor_hint", "enabled"), &_Engine::set_editor_hint);
 	ClassDB::bind_method(D_METHOD("is_editor_hint"), &_Engine::is_editor_hint);

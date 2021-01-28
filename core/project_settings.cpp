@@ -162,6 +162,10 @@ bool ProjectSettings::_set(const StringName &p_name, const Variant &p_value) {
 
 				custom_features.insert(custom_feature_array[i]);
 			}
+			for (Map<StringName, VariantContainer>::Element *E = props.front(); E; E = E->next()) {
+				set(E->key(), get(E->key())); 
+			}
+
 			return true;
 		}
 
@@ -765,7 +769,7 @@ Error ProjectSettings::_save_settings_text(const String &p_file, const Map<Strin
 
 	file->store_string("config_version=" + itos(CONFIG_VERSION) + "\n");
 	if (p_custom_features != String())
-		file->store_string("custom_features=\"" + p_custom_features + "\"\n");
+		file->store_string("_custom_features=\"" + p_custom_features + "\"\n");
 	file->store_string("\n");
 
 	for (Map<String, List<String> >::Element *E = props.front(); E; E = E->next()) {
@@ -1201,6 +1205,8 @@ ProjectSettings::ProjectSettings() {
 	action["events"] = events;
 	GLOBAL_DEF("input/ui_end", action);
 	input_presets.push_back("input/ui_end");
+
+	GLOBAL_DEF("input_devices/pointing/android_touch_micromovement_threshold", 10);
 
 	custom_prop_info["display/window/handheld/orientation"] = PropertyInfo(Variant::STRING, "display/window/handheld/orientation", PROPERTY_HINT_ENUM, "landscape,portrait,reverse_landscape,reverse_portrait,sensor_landscape,sensor_portrait,sensor");
 	custom_prop_info["rendering/threads/thread_model"] = PropertyInfo(Variant::INT, "rendering/threads/thread_model", PROPERTY_HINT_ENUM, "Single-Unsafe,Single-Safe,Multi-Threaded");

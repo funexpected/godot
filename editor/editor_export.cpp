@@ -264,10 +264,21 @@ String EditorExportPreset::get_script_encryption_key() const {
 	return script_key;
 }
 
+bool EditorExportPreset::get_export_non_resource_files() const {
+
+	return export_non_resource_files;
+}
+
+void EditorExportPreset::set_export_non_resource_files(bool mode) {
+
+	export_non_resource_files = mode;
+}
+
 EditorExportPreset::EditorExportPreset() :
 		export_filter(EXPORT_ALL_RESOURCES),
 		export_path(""),
 		runnable(false),
+		export_non_resource_files(true),
 		script_mode(MODE_SCRIPT_COMPILED) {
 }
 
@@ -610,6 +621,14 @@ Vector<String> EditorExportPlugin::get_ios_project_static_libs() const {
 	return ios_project_static_libs;
 }
 
+void EditorExportPlugin::add_ios_entitlements(const String &p_code) {
+	ios_entitlements += p_code;
+}
+
+String EditorExportPlugin::get_ios_entitlements() const {
+	return ios_entitlements;
+}
+
 void EditorExportPlugin::_export_file_script(const String &p_path, const String &p_type, const PoolVector<String> &p_features) {
 
 	if (get_script_instance()) {
@@ -653,6 +672,7 @@ void EditorExportPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_ios_linker_flags", "flags"), &EditorExportPlugin::add_ios_linker_flags);
 	ClassDB::bind_method(D_METHOD("add_ios_bundle_file", "path"), &EditorExportPlugin::add_ios_bundle_file);
 	ClassDB::bind_method(D_METHOD("add_ios_cpp_code", "code"), &EditorExportPlugin::add_ios_cpp_code);
+	ClassDB::bind_method(D_METHOD("add_ios_entitlements", "code"), &EditorExportPlugin::add_ios_entitlements);
 	ClassDB::bind_method(D_METHOD("skip"), &EditorExportPlugin::skip);
 
 	BIND_VMETHOD(MethodInfo("_export_file", PropertyInfo(Variant::STRING, "path"), PropertyInfo(Variant::STRING, "type"), PropertyInfo(Variant::POOL_STRING_ARRAY, "features")));
@@ -715,7 +735,7 @@ EditorExportPlatform::ExportNotifier::~ExportNotifier() {
 	}
 }
 
-Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &p_preset, EditorExportSaveFunction p_func, void *p_udata, EditorExportSaveSharedObject p_so_func) {
+Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &p_preset, EditorExportSaveFunction p_func, void *p_udata, bool p_debug, EditorExportSaveSharedObject p_so_func) {
 	//figure out paths of files that will be exported
 	Set<String> paths;
 	Vector<String> path_remaps;
@@ -762,6 +782,13 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 	FeatureContainers feature_containers = get_feature_containers(p_preset);
 	Set<String> &features = feature_containers.features;
 	PoolVector<String> &features_pv = feature_containers.features_pv;
+	if (p_debug) {
+		features.insert("debug");
+		features_pv.append("debug");
+	} else {
+		features.insert("release");
+		features_pv.append("release");
+	}
 
 	//store everything in the export medium
 	int idx = 0;
@@ -805,18 +832,35 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 			for (List<String>::Element *F = remaps.front(); F; F = F->next()) {
 
 				String remap = F->get();
+				String remapped_path;
 				if (remap == "path") {
-					String remapped_path = config->get_value("remap", remap);
+					remapped_path = config->get_value("remap", remap);
 					Vector<uint8_t> array = FileAccess::get_file_as_array(remapped_path);
 					err = p_func(p_udata, remapped_path, array, idx, total);
 				} else if (remap.begins_with("path.")) {
 					String feature = remap.get_slice(".", 1);
-
 					if (remap_features.has(feature)) {
-						String remapped_path = config->get_value("remap", remap);
+						remapped_path = config->get_value("remap", remap);
 						Vector<uint8_t> array = FileAccess::get_file_as_array(remapped_path);
 						err = p_func(p_udata, remapped_path, array, idx, total);
+
 					}
+				}
+				if (remapped_path != String()){
+					List<String> deps;
+					ResourceLoader::get_dependencies(remapped_path, &deps);
+					for (List<String>::Element *D = deps.front(); D; D = D->next()){
+						String dep_path = D->get();
+						Vector<uint8_t> array = FileAccess::get_file_as_array(dep_path);
+						err = p_func(p_udata, dep_path, array, idx, total);
+						if (err != OK) {
+							break;
+						}
+					}
+				}
+
+				if (err != OK) {
+					break;
 				}
 			}
 
@@ -912,25 +956,27 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 		}
 	}
 
-	// Store icon and splash images directly, they need to bypass the import system and be loaded as images
-	String icon = ProjectSettings::get_singleton()->get("application/config/icon");
-	String splash = ProjectSettings::get_singleton()->get("application/boot_splash/image");
-	if (icon != String() && FileAccess::exists(icon)) {
-		Vector<uint8_t> array = FileAccess::get_file_as_array(icon);
-		p_func(p_udata, icon, array, idx, total);
-	}
-	if (splash != String() && FileAccess::exists(splash) && icon != splash) {
-		Vector<uint8_t> array = FileAccess::get_file_as_array(splash);
-		p_func(p_udata, splash, array, idx, total);
-	}
+	if (p_preset->get_export_non_resource_files()) {
+		// Store icon and splash images directly, they need to bypass the import system and be loaded as images
+		String icon = ProjectSettings::get_singleton()->get("application/config/icon");
+		String splash = ProjectSettings::get_singleton()->get("application/boot_splash/image");
+		if (icon != String() && FileAccess::exists(icon)) {
+			Vector<uint8_t> array = FileAccess::get_file_as_array(icon);
+			p_func(p_udata, icon, array, idx, total);
+		}
+		if (splash != String() && FileAccess::exists(splash) && icon != splash) {
+			Vector<uint8_t> array = FileAccess::get_file_as_array(splash);
+			p_func(p_udata, splash, array, idx, total);
+		}
 
-	String config_file = "project.binary";
-	String engine_cfb = EditorSettings::get_singleton()->get_cache_dir().plus_file("tmp" + config_file);
-	ProjectSettings::get_singleton()->save_custom(engine_cfb, custom_map, custom_list);
-	Vector<uint8_t> data = FileAccess::get_file_as_array(engine_cfb);
-	DirAccess::remove_file_or_error(engine_cfb);
+		String config_file = "project.binary";
+		String engine_cfb = EditorSettings::get_singleton()->get_cache_dir().plus_file("tmp" + config_file);
+		ProjectSettings::get_singleton()->save_custom(engine_cfb, custom_map, custom_list);
+		Vector<uint8_t> data = FileAccess::get_file_as_array(engine_cfb);
+		DirAccess::remove_file_or_error(engine_cfb);
 
-	p_func(p_udata, "res://" + config_file, data, idx, total);
+		p_func(p_udata, "res://" + config_file, data, idx, total);
+	}
 
 	return OK;
 }
@@ -944,7 +990,7 @@ Error EditorExportPlatform::_add_shared_object(void *p_userdata, const SharedObj
 	return OK;
 }
 
-Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, const String &p_path, Vector<SharedObject> *p_so_files, bool p_embed, int64_t *r_embedded_start, int64_t *r_embedded_size) {
+Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug, Vector<SharedObject> *p_so_files, bool p_embed, int64_t *r_embedded_start, int64_t *r_embedded_size) {
 
 	EditorProgress ep("savepack", TTR("Packing"), 102, true);
 
@@ -957,7 +1003,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, c
 	pd.f = ftmp;
 	pd.so_files = p_so_files;
 
-	Error err = export_project_files(p_preset, _save_pack_file, &pd, _add_shared_object);
+	Error err = export_project_files(p_preset, _save_pack_file, &pd, p_debug, _add_shared_object);
 
 	memdelete(ftmp); //close tmp file
 
@@ -1094,7 +1140,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, c
 	return OK;
 }
 
-Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, const String &p_path) {
+Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug) {
 
 	EditorProgress ep("savezip", TTR("Packing"), 102, true);
 
@@ -1106,7 +1152,7 @@ Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, co
 	zd.ep = &ep;
 	zd.zip = zip;
 
-	Error err = export_project_files(p_preset, _save_zip_file, &zd);
+	Error err = export_project_files(p_preset, _save_zip_file, &zd, p_debug);
 	if (err != OK && err != ERR_SKIP)
 		ERR_PRINT("Failed to export project files");
 
@@ -1117,12 +1163,12 @@ Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, co
 
 Error EditorExportPlatform::export_pack(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
 	ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
-	return save_pack(p_preset, p_path);
+	return save_pack(p_preset, p_path, p_debug);
 }
 
 Error EditorExportPlatform::export_zip(const Ref<EditorExportPreset> &p_preset, bool p_debug, const String &p_path, int p_flags) {
 	ExportNotifier notifier(*this, p_preset, p_debug, p_path, p_flags);
-	return save_zip(p_preset, p_path);
+	return save_zip(p_preset, p_path, p_debug);
 }
 
 void EditorExportPlatform::gen_export_flags(Vector<String> &r_flags, int p_flags) {
@@ -1224,6 +1270,8 @@ void EditorExport::_save() {
 		config->set_value(section, "patch_list", preset->get_patches());
 		config->set_value(section, "script_export_mode", preset->get_script_export_mode());
 		config->set_value(section, "script_encryption_key", preset->get_script_encryption_key());
+		if (!preset->get_export_non_resource_files())
+			config->set_value(section, "export_non_resource_files", preset->get_export_non_resource_files());
 
 		String option_section = "preset." + itos(i) + ".options";
 
@@ -1232,7 +1280,7 @@ void EditorExport::_save() {
 		}
 	}
 
-	config->save("res://export_presets.cfg");
+	config->save(export_presets_path);
 }
 
 void EditorExport::save_presets() {
@@ -1298,6 +1346,10 @@ String EditorExportPlatform::test_etc2() const {
 	return String();
 }
 
+void EditorExport::set_export_presets_path(const String &p_presets_path){
+	export_presets_path = p_presets_path;
+}
+
 int EditorExport::get_export_preset_count() const {
 
 	return export_presets.size();
@@ -1348,7 +1400,7 @@ void EditorExport::load_config() {
 
 	Ref<ConfigFile> config;
 	config.instance();
-	Error err = config->load("res://export_presets.cfg");
+	Error err = config->load(export_presets_path);
 	if (err != OK)
 		return;
 
@@ -1427,7 +1479,10 @@ void EditorExport::load_config() {
 		if (config->has_section_key(section, "script_encryption_key")) {
 			preset->set_script_encryption_key(config->get_value(section, "script_encryption_key"));
 		}
-
+		if (config->has_section_key(section, "export_non_resource_files")) {
+			preset->set_export_non_resource_files(config->get_value(section, "export_non_resource_files"));
+		}
+		
 		String option_section = "preset." + itos(index) + ".options";
 
 		List<String> options;
@@ -1670,7 +1725,7 @@ Error EditorExportPlatformPC::export_project(const Ref<EditorExportPreset> &p_pr
 
 		int64_t embedded_pos;
 		int64_t embedded_size;
-		err = save_pack(p_preset, pck_path, &so_files, p_preset->get("binary_format/embed_pck"), &embedded_pos, &embedded_size);
+		err = save_pack(p_preset, pck_path, p_debug, &so_files, p_preset->get("binary_format/embed_pck"), &embedded_pos, &embedded_size);
 		if (err == OK && p_preset->get("binary_format/embed_pck")) {
 
 			if (embedded_size >= 0x100000000 && !p_preset->get("binary_format/64_bits")) {

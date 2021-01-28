@@ -990,7 +990,7 @@ public abstract class Godot extends FragmentActivity implements SensorEventListe
 				arr[i * 3 + 1] = (int)event.getX(i);
 				arr[i * 3 + 2] = (int)event.getY(i);
 			}
-			final int pointer_idx = event.getPointerId(event.getActionIndex());
+			final int pointer_id = event.getPointerId(event.getActionIndex());
 
 			//System.out.printf("gaction: %d\n",event.getAction());
 			final int action = event.getAction() & MotionEvent.ACTION_MASK;
@@ -1007,16 +1007,16 @@ public abstract class Godot extends FragmentActivity implements SensorEventListe
 							/*
 							for(int i=0;i<event.getPointerCount();i++) {
 								System.out.printf("%d - moved to: %f,%f\n",i, event.getX(i),event.getY(i));
-							}
-							*/
+							}*/
+							
 						} break;
 						case MotionEvent.ACTION_POINTER_UP: {
-							GodotLib.touch(4, pointer_idx, evcount, arr);
-							//System.out.printf("%d - s.up at: %f,%f\n",pointer_idx, event.getX(pointer_idx),event.getY(pointer_idx));
+							GodotLib.touch(4, pointer_id, evcount, arr);
+							//System.out.printf("%d - s.up", pointer_id);
 						} break;
 						case MotionEvent.ACTION_POINTER_DOWN: {
-							GodotLib.touch(3, pointer_idx, evcount, arr);
-							//System.out.printf("%d - s.down at: %f,%f\n",pointer_idx, event.getX(pointer_idx),event.getY(pointer_idx));
+							GodotLib.touch(3, pointer_id, evcount, arr);
+							//System.out.printf("%d - s.down", pointer_id);
 						} break;
 						case MotionEvent.ACTION_CANCEL:
 						case MotionEvent.ACTION_UP: {
@@ -1024,8 +1024,8 @@ public abstract class Godot extends FragmentActivity implements SensorEventListe
 							/*
 							for(int i=0;i<event.getPointerCount();i++) {
 								System.out.printf("%d - up! %f,%f\n",i, event.getX(i),event.getY(i));
-							}
-							*/
+							}*/
+							
 						} break;
 					}
 				}

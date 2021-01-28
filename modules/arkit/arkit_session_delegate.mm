@@ -53,4 +53,8 @@
 	}
 }
 
+- (void)session:(ARSession *)session didUpdateFrame:(ARFrame *)frame {
+	arkit_interface->_update_frame(frame);
+}
+
 @end

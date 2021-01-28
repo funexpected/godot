@@ -128,6 +128,7 @@ enum PropertyUsageFlags {
 	PROPERTY_USAGE_NODE_PATH_FROM_SCENE_ROOT = 1 << 23,
 	PROPERTY_USAGE_RESOURCE_NOT_PERSISTENT = 1 << 24,
 	PROPERTY_USAGE_KEYING_INCREMENTS = 1 << 25, // Used in inspector to increment property when keyed in animation player
+	PROPERTY_USAGE_ALWAYS_SHARE_ON_DUPLICATE = 1 << 26, // If the object is duplicated this property will never be duplicated
 
 	PROPERTY_USAGE_DEFAULT = PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_NETWORK,
 	PROPERTY_USAGE_DEFAULT_INTL = PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_NETWORK | PROPERTY_USAGE_INTERNATIONALIZED,
@@ -558,6 +559,8 @@ protected:
 
 	Variant _call_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 	Variant _call_deferred_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
+	Variant _call_multilevel_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
+	Variant _call_multilevel_reversed_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 
 	virtual const StringName *_get_class_namev() const {
 		if (!_class_name)

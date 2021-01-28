@@ -662,7 +662,7 @@ Error EditorExportPlatformOSX::export_project(const Ref<EditorExportPreset> &p_p
 
 		String pack_path = tmp_app_path_name + "/Contents/Resources/" + pkg_name + ".pck";
 		Vector<SharedObject> shared_objects;
-		err = save_pack(p_preset, pack_path, &shared_objects);
+		err = save_pack(p_preset, pack_path, p_debug, &shared_objects);
 
 		// See if we can code sign our new package.
 		bool sign_enabled = p_preset->get("codesign/enable");

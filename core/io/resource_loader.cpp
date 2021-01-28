@@ -275,6 +275,7 @@ RES ResourceLoader::_load(const String &p_path, const String &p_original_path, c
 		return res;
 	}
 
+	print_line(String("Failed to load resource from '") + p_path + "'.");
 	ERR_FAIL_COND_V_MSG(found, RES(),
 			vformat("Failed loading resource: %s. Make sure resources have been imported by opening the project in the editor at least once.", p_path));
 
@@ -921,6 +922,16 @@ void ResourceLoader::load_path_remaps() {
 void ResourceLoader::clear_path_remaps() {
 
 	path_remaps.clear();
+}
+
+PoolStringArray ResourceLoader::get_cached_resource_pathes() {
+	PoolStringArray result;
+	List<String> keys;
+	ResourceCache::resources.get_key_list(&keys);
+	for (List<String>::Element *E = keys.front(); E; E = E->next()) {
+		result.push_back(E->get());
+	}
+	return result;
 }
 
 void ResourceLoader::set_load_callback(ResourceLoadedCallback p_callback) {

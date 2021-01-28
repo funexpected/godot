@@ -69,6 +69,7 @@ private:
 	String exporter;
 	Set<String> selected_files;
 	bool runnable;
+	bool export_non_resource_files;
 
 	Vector<String> patches;
 
@@ -135,6 +136,9 @@ public:
 
 	void set_script_encryption_key(const String &p_key);
 	String get_script_encryption_key() const;
+
+	bool get_export_non_resource_files() const;
+	void set_export_non_resource_files(bool mode);
 
 	const List<PropertyInfo> &get_properties() const { return properties; }
 
@@ -241,10 +245,10 @@ public:
 	virtual String get_name() const = 0;
 	virtual Ref<Texture> get_logo() const = 0;
 
-	Error export_project_files(const Ref<EditorExportPreset> &p_preset, EditorExportSaveFunction p_func, void *p_udata, EditorExportSaveSharedObject p_so_func = NULL);
+	Error export_project_files(const Ref<EditorExportPreset> &p_preset, EditorExportSaveFunction p_func, void *p_udata, bool p_debug, EditorExportSaveSharedObject p_so_func = NULL);
 
-	Error save_pack(const Ref<EditorExportPreset> &p_preset, const String &p_path, Vector<SharedObject> *p_so_files = NULL, bool p_embed = false, int64_t *r_embedded_start = NULL, int64_t *r_embedded_size = NULL);
-	Error save_zip(const Ref<EditorExportPreset> &p_preset, const String &p_path);
+	Error save_pack(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug, Vector<SharedObject> *p_so_files = NULL, bool p_embed = false, int64_t *r_embedded_start = NULL, int64_t *r_embedded_size = NULL);
+	Error save_zip(const Ref<EditorExportPreset> &p_preset, const String &p_path, bool p_debug);
 
 	virtual bool poll_export() { return false; }
 	virtual int get_options_count() const { return 0; }
@@ -300,6 +304,7 @@ class EditorExportPlugin : public Reference {
 	String ios_linker_flags;
 	Vector<String> ios_bundle_files;
 	String ios_cpp_code;
+	String ios_entitlements;
 
 	_FORCE_INLINE_ void _clear() {
 		shared_objects.clear();
@@ -314,6 +319,7 @@ class EditorExportPlugin : public Reference {
 		ios_plist_content = "";
 		ios_linker_flags = "";
 		ios_cpp_code = "";
+		ios_entitlements = "";
 	}
 
 	void _export_file_script(const String &p_path, const String &p_type, const PoolVector<String> &p_features);
@@ -334,6 +340,7 @@ protected:
 	void add_ios_linker_flags(const String &p_flags);
 	void add_ios_bundle_file(const String &p_path);
 	void add_ios_cpp_code(const String &p_code);
+	void add_ios_entitlements(const String &p_code);
 
 	void skip();
 
@@ -350,6 +357,7 @@ public:
 	String get_ios_linker_flags() const;
 	Vector<String> get_ios_bundle_files() const;
 	String get_ios_cpp_code() const;
+	String get_ios_entitlements() const;
 
 	EditorExportPlugin();
 };
@@ -365,6 +373,7 @@ class EditorExport : public Node {
 
 	Timer *save_timer;
 	bool block_save;
+	String export_presets_path = "res://export_presets.cfg";
 
 	static EditorExport *singleton;
 
@@ -379,6 +388,8 @@ protected:
 
 public:
 	static EditorExport *get_singleton() { return singleton; }
+
+	void set_export_presets_path(const String &p_presets_path);
 
 	void add_export_platform(const Ref<EditorExportPlatform> &p_platform);
 	int get_export_platform_count();

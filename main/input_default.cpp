@@ -230,6 +230,14 @@ void InputDefault::joy_connection_changed(int p_idx, bool p_connected, String p_
 	emit_signal("joy_connection_changed", p_idx, p_connected);
 };
 
+void InputDefault::keyboard_hidden() {
+	emit_signal("keyboard_hidden");
+}
+
+void InputDefault::virtual_keyboard_height_changed(int p_height) {
+	emit_signal("keyboard_height_changed", p_height);
+}
+
 Vector3 InputDefault::get_gravity() const {
 
 	_THREAD_SAFE_METHOD_

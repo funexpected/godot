@@ -481,6 +481,7 @@ extern void _hide_keyboard();
 extern Error _shell_open(String p_uri);
 extern void _set_keep_screen_on(bool p_enabled);
 extern void _vibrate();
+extern void _change_orientation(OS::ScreenOrientation p_orientation) ;
 
 void OSIPhone::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
 	_show_keyboard(p_existing_text);
@@ -492,10 +493,17 @@ void OSIPhone::hide_virtual_keyboard() {
 
 void OSIPhone::set_virtual_keyboard_height(int p_height) {
 	virtual_keyboard_height = p_height;
+	if (input)
+		input->virtual_keyboard_height_changed(p_height);
 }
 
 int OSIPhone::get_virtual_keyboard_height() const {
 	return virtual_keyboard_height;
+}
+
+void OSIPhone::keyboard_hidden() {
+	set_virtual_keyboard_height(0);
+	input->keyboard_hidden();
 }
 
 Error OSIPhone::shell_open(String p_uri) {
@@ -506,6 +514,11 @@ void OSIPhone::set_keep_screen_on(bool p_enabled) {
 	OS::set_keep_screen_on(p_enabled);
 	_set_keep_screen_on(p_enabled);
 };
+
+void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
+	OS::set_screen_orientation(p_orientation);
+	_change_orientation(p_orientation);
+}
 
 String OSIPhone::get_user_data_dir() const {
 

@@ -31,6 +31,7 @@
 #include "texture.h"
 
 #include "core/core_string_names.h"
+#include "core/io/compression.h"
 #include "core/io/image_loader.h"
 #include "core/method_bind_ext.gen.inc"
 #include "core/os/os.h"
@@ -197,6 +198,11 @@ void ImageTexture::create(int p_width, int p_height, Image::Format p_format, uin
 void ImageTexture::create_from_image(const Ref<Image> &p_image, uint32_t p_flags) {
 
 	ERR_FAIL_COND(p_image.is_null());
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint() && p_image.is_valid()){
+		original_image = p_image;
+	}
+#endif
 	flags = p_flags;
 	w = p_image->get_width();
 	h = p_image->get_height();
@@ -249,6 +255,11 @@ Error ImageTexture::load(const String &p_path) {
 void ImageTexture::set_data(const Ref<Image> &p_image) {
 
 	ERR_FAIL_COND(p_image.is_null());
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint() && p_image.is_valid()){
+		original_image = p_image;
+	}
+#endif
 
 	VisualServer::get_singleton()->texture_set_data(texture, p_image);
 
@@ -265,8 +276,12 @@ void ImageTexture::_resource_path_changed() {
 }
 
 Ref<Image> ImageTexture::get_data() const {
-
 	if (image_stored) {
+#ifdef TOOLS_ENABLED
+		if (Engine::get_singleton()->is_editor_hint() && original_image.is_valid()){
+			return original_image;
+		}
+#endif
 		return VisualServer::get_singleton()->texture_get_data(texture);
 	} else {
 		return Ref<Image>();
@@ -644,6 +659,7 @@ Error StreamTexture::_load_data(const String &p_path, int &tw, int &th, int &tw_
 		//look for regular format
 		Image::Format format = (Image::Format)(df & FORMAT_MASK_IMAGE_FORMAT);
 		bool mipmaps = df & FORMAT_BIT_HAS_MIPMAPS;
+		bool store_compressed = df & FORMAT_BIT_STORE_COMPRESSED;
 
 		if (!mipmaps) {
 			int size = Image::get_image_data_size(tw, th, format, false);
@@ -653,12 +669,20 @@ Error StreamTexture::_load_data(const String &p_path, int &tw, int &th, int &tw_
 
 			{
 				PoolVector<uint8_t>::Write w = img_data.write();
-				f->get_buffer(w.ptr(), size);
+				int bytes = f->get_buffer(w.ptr(), size);
+				if (store_compressed) {
+					PoolVector<uint8_t> decompressed;
+					decompressed.resize(size);
+					int decompressed_size = Compression::decompress(decompressed.write().ptr(), decompressed.size(), img_data.read().ptr(), bytes, Compression::MODE_FASTLZ);
+					decompressed.resize(decompressed_size);
+					image->create(tw, th, false, format, decompressed);
+				} else {
+					image->create(tw, th, false, format, img_data);
+				}
 			}
 
 			memdelete(f);
 
-			image->create(tw, th, false, format, img_data);
 			return OK;
 		} else {
 
@@ -703,9 +727,16 @@ Error StreamTexture::_load_data(const String &p_path, int &tw, int &th, int &tw_
 				} else if (bytes != expected) {
 					ERR_FAIL_V(ERR_FILE_CORRUPT);
 				}
+				if (store_compressed) {
+					PoolVector<uint8_t> decompressed;
+					decompressed.resize(total_size);
+					int decompressed_size = Compression::decompress(decompressed.write().ptr(), decompressed.size(), img_data.read().ptr(), bytes, Compression::MODE_FASTLZ);
+					decompressed.resize(decompressed_size);
+					image->create(sw, sh, true, format, decompressed);
+				} else {
+					image->create(sw, sh, true, format, img_data);
+				}
 			}
-
-			image->create(sw, sh, true, format, img_data);
 
 			return OK;
 		}
