@@ -933,7 +933,10 @@ public abstract class Godot extends FragmentActivity implements SensorEventListe
 	}
 
 	private boolean obbIsCorrupted(String f, String main_pack_md5) {
-
+		// Quick fix for using APK Expansion with Google Play-signing
+		// If checking was on, an apk expansion would always be considered corrupted because its md5 (after signing) would not match the original md5 
+		return false;
+		
 		try {
 
 			InputStream fis = new FileInputStream(f);
