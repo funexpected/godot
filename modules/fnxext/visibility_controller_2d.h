@@ -14,7 +14,6 @@ class VisibilityController2D: public Control {
     };
 
 protected:
-    static Rect2 visible_rect;
 
     VisibilityType visibility;
     ParallaxLayer *layer;
