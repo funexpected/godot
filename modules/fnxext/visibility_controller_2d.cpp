@@ -6,8 +6,6 @@
 #include "canvas_layers_editor_plugin.h"
 #endif
 
-Rect2 VisibilityController2D::visible_rect = Rect2(Vector2(-50, -50), Vector2(100, 100));
-
 bool VisibilityController2D::_get(const String &p_name, Variant &r_ret) const {
     if (p_name == "editor/canvas_layer") {
         r_ret = "visibility_controller";
@@ -23,6 +21,9 @@ NodePath VisibilityController2D::get_controlled_node() const {
 
 void VisibilityController2D::set_controlled_node(const NodePath &p_node) {
     controlled_node = p_node;
+#ifdef TOOLS_ENABLED
+    if (Engine::get_singleton()->is_editor_hint()) return;
+#endif
     setup_controlled_node();
 }
 
@@ -32,6 +33,9 @@ bool VisibilityController2D::should_control_visibility() const {
 
 void VisibilityController2D::set_control_visibility(bool p_value) {
     control_visibility = p_value;
+#ifdef TOOLS_ENABLED
+    if (Engine::get_singleton()->is_editor_hint()) return;
+#endif
     update_visibility(true);
 }
 
@@ -41,16 +45,19 @@ bool VisibilityController2D::should_control_activity() const {
 
 void VisibilityController2D::set_control_activity(bool p_value) {
     control_activity = p_value;
+#ifdef TOOLS_ENABLED
+    if (Engine::get_singleton()->is_editor_hint()) return;
+#endif
     update_visibility(true);
 }
 
 Rect2 VisibilityController2D::get_bounding_box(){
-    Rect2 rect = get_rect();
+    Vector2 size = get_size();
     Transform2D tr = get_global_transform();
-    Rect2 gr = Rect2(tr.xform(rect.position), Vector2());
-    gr = gr.expand(tr.xform(rect.position + rect.size * Vector2(1, 0)));
-    gr = gr.expand(tr.xform(rect.position + rect.size * Vector2(0, 1)));
-    gr = gr.expand(tr.xform(rect.position + rect.size));
+    Rect2 gr = Rect2(tr.xform(Vector2()), Vector2());
+    gr = gr.expand(tr.xform(size * Vector2(1, 0)));
+    gr = gr.expand(tr.xform(size * Vector2(0, 1)));
+    gr = gr.expand(tr.xform(size));
     return gr;
 }
 
@@ -134,7 +141,7 @@ void VisibilityController2D::_notification(int p_what){
     if (Engine::get_singleton()->is_editor_hint()) {
 #ifdef TOOLS_ENABLED
         if (p_what == NOTIFICATION_DRAW && CanvasLayersEditorPlugin::get_singleton()->is_layer_visible("visibility_controller")) {
-            draw_rect(get_rect(), Color::html("3219f064"), true);
+            draw_rect(Rect2(Vector2(), get_rect().size), Color::html("3219f064"), true);
         }
 #endif
         return;
