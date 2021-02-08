@@ -119,6 +119,8 @@ DynamicFontData::~DynamicFontData() {
 }
 
 ////////////////////
+HashMap<String, Vector<uint8_t> > DynamicFontAtSize::_fontdata;
+
 
 Error DynamicFontAtSize::_load() {
 
