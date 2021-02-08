@@ -194,7 +194,6 @@ void VisibilityController2D::_bind_methods(){
     ClassDB::bind_method(D_METHOD("should_control_activity"), &VisibilityController2D::should_control_activity);
     ClassDB::bind_method(D_METHOD("set_control_activity", "value"), &VisibilityController2D::set_control_activity);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "controlled_node"), "set_controlled_node", "get_controlled_node");
-    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "rect"), "set_rect", "get_rect");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "control_visibility"), "set_control_visibility", "should_control_visibility");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "control_activity"), "set_control_activity", "should_control_activity");
 
