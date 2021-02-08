@@ -1,11 +1,11 @@
 #ifndef VISIBILITY_CONTROLLER_2D_H
 #define VISIBILITY_CONTROLLER_2D_H
 
-#include "scene/2d/node_2d.h"
+#include "scene/gui/control.h"
 #include "scene/2d/parallax_layer.h"
 
-class VisibilityController2D: public Node2D {
-    GDCLASS(VisibilityController2D, Node2D);
+class VisibilityController2D: public Control {
+    GDCLASS(VisibilityController2D, Control);
 
     enum VisibilityType {
         UNKNOWN,
@@ -31,14 +31,10 @@ protected:
     VisibilityType detect_visibility_inside_parallax();
 
 public:
-	virtual Rect2 _edit_get_rect() const;
-	virtual bool _edit_use_rect() const;
     bool _get(const String &p_name, Variant &r_ret) const;
 
-    Rect2 get_global_rect();
+    Rect2 get_bounding_box();
 
-    Rect2 get_rect() const;
-    void set_rect(const Rect2 &p_rect);
     NodePath get_controlled_node() const;
     void set_controlled_node(const NodePath &p_node);
     bool should_control_visibility() const;
