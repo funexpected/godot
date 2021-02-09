@@ -29,6 +29,9 @@
 /*************************************************************************/
 
 #import <UIKit/UIKit.h>
+#import "gl_view.h"
+#import "view_controller.h"
+
 
 @class ViewController;
 
