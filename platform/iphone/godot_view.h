@@ -35,7 +35,7 @@
 #import <OpenGLES/ES1/glext.h>
 #import <UIKit/UIKit.h>
 
-class String;
+//class String;
 
 @class GodotView;
 @protocol DisplayLayer;

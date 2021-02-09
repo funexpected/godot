@@ -29,13 +29,17 @@
 /*************************************************************************/
 
 #import <UIKit/UIKit.h>
-#import "gl_view.h"
+#import "godot_view.h"
 #import "view_controller.h"
 
 
-@class ViewController;
+//@class ViewController;
 
-@interface AppDelegate : NSObject <UIApplicationDelegate>
+@interface AppDelegate : NSObject <UIApplicationDelegate, GodotViewDelegate> {
+	//@property (strong, nonatomic) UIWindow *window;
+	ViewController *view_controller;
+	bool is_focus_out;
+};
 
 @property(strong, nonatomic) UIWindow *window;
 @property(strong, class, readonly, nonatomic) ViewController *viewController;

@@ -32,7 +32,6 @@
 
 #include "core/project_settings.h"
 #include "drivers/coreaudio/audio_driver_coreaudio.h"
-#import "gl_view.h"
 #import "godot_view.h"
 #include "main/main.h"
 #include "os_iphone.h"
@@ -380,13 +379,13 @@ OS::VideoMode _get_video_mode() {
 // notification panel by swiping from the upper part of the screen.
 
 - (void)applicationWillResignActive:(UIApplication *)application {
-	on_focus_out(view_controller, &is_focus_out);
+	OSIPhone::get_singleton()->on_focus_out();
 	[[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"applicationWillResignActive_finish" object:nil userInfo: @{}];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-	on_focus_in(view_controller, &is_focus_out);
+	OSIPhone::get_singleton()->on_focus_in();
 	[[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"applicationDidBecomeActive_finish" object:nil userInfo: @{}];
 }
