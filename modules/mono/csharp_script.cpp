@@ -2601,9 +2601,9 @@ bool CSharpScript::_get_signal(GDMonoClass *p_class, GDMonoField *p_field, Vecto
 	}
 	MonoType *raw_type = p_class->get_mono_type();
 
-	if (mono_type_get_type(raw_type) != MONO_TYPE_CLASS) {
-		return false;
-	}
+	// if (mono_type_get_type(raw_type) != MONO_TYPE_CLASS) {
+	// 	return false;
+	// }
 
 	MonoReflectionType *field_type = mono_type_get_object(mono_domain_get(), p_field->get_type().type_class->get_mono_type());
 	int params_count = GDMonoUtils::Marshal::get_generic_parameters_count(field_type);
