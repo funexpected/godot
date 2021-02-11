@@ -261,10 +261,10 @@ void godot_register_object_icalls() {
 	GDMonoUtils::add_internal_call("Godot.Object::godot_icall_Object_ToString", godot_icall_Object_ToString);
 	GDMonoUtils::add_internal_call("Godot.Object::godot_icall_Object_weakref", godot_icall_Object_weakref);
 	GDMonoUtils::add_internal_call("Godot.SignalAwaiter::godot_icall_SignalAwaiter_connect", godot_icall_SignalAwaiter_connect);
-	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_connect", (void *)godot_icall_SignalProcessor_connect);
-	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_disconnect", (void *)godot_icall_SignalProcessor_disconnect);
-	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_connect", (void *)godot_icall_SignalProcessor_connect);
-	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_disconnect", (void *)godot_icall_SignalProcessor_disconnect);
+	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_connect", godot_icall_SignalProcessor_connect);
+	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_disconnect", godot_icall_SignalProcessor_disconnect);
+	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_connect", godot_icall_SignalProcessor_connect);
+	GDMonoUtils::add_internal_call("Godot.SignalProcessor::godot_icall_SignalProcessor_disconnect", godot_icall_SignalProcessor_disconnect);
 	GDMonoUtils::add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_SetMemberList", godot_icall_DynamicGodotObject_SetMemberList);
 	GDMonoUtils::add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_InvokeMember", godot_icall_DynamicGodotObject_InvokeMember);
 	GDMonoUtils::add_internal_call("Godot.DynamicGodotObject::godot_icall_DynamicGodotObject_GetMember", godot_icall_DynamicGodotObject_GetMember);
