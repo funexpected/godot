@@ -99,6 +99,8 @@ CanvasLayersEditorPlugin::CanvasLayersEditorPlugin() {
 	
 	for (List<StringName>::Element *E = classes.front(); E; E = E->next()) {
         StringName cls = E->get();
+        String class_name = cls;
+        if (class_name.begins_with("_")) continue;
         Object *c = NULL;
 		bool cleanup_c = false;
 		if (Engine::get_singleton()->has_singleton(cls)) {
