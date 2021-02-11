@@ -847,6 +847,18 @@ Variant mono_object_to_variant_impl(MonoObject *p_obj, const ManagedType &p_type
 		} break;
 
 		case MONO_TYPE_GENERICINST: {
+			GDMonoClass *type_class = p_type.type_class;
+
+			// GodotObject
+			if (CACHED_CLASS(GodotObject)->is_assignable_from(type_class)) {
+				Object *ptr = unbox<Object *>(CACHED_FIELD(GodotObject, ptr)->get_value(p_obj));
+				if (ptr != NULL) {
+					Reference *ref = Object::cast_to<Reference>(ptr);
+					return ref ? Variant(Ref<Reference>(ref)) : Variant(ptr);
+				}
+				return Variant();
+			}
+
 			MonoReflectionType *reftype = mono_type_get_object(mono_domain_get(), p_type.type_class->get_mono_type());
 
 			// Godot.Collections.Dictionary<TKey, TValue>
