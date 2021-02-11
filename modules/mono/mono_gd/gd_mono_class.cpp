@@ -175,7 +175,7 @@ void GDMonoClass::fetch_methods_with_godot_api_checks(GDMonoClass *p_native_base
 	void *iter = NULL;
 	MonoMethod *raw_method = NULL;
 	while ((raw_method = mono_class_get_methods(get_mono_ptr(), &iter)) != NULL) {
-		StringName name = String::utf8(mono_method_get_name(raw_method));
+		StringName name = get_method_name(raw_method);
 
 		// get_method implicitly fetches methods and adds them to this->methods
 		GDMonoMethod *method = get_method(raw_method, name);
@@ -289,6 +289,15 @@ bool GDMonoClass::has_public_parameterless_ctor() {
 	return ctor && ctor->get_visibility() == IMonoClassMember::PUBLIC;
 }
 
+StringName GDMonoClass::get_method_name(MonoMethod *p_raw_method) {
+	const char* raw_name = mono_method_get_name(p_raw_method);
+	if (*raw_name == '_') {
+
+	}
+	StringName name = *raw_name == '_' || namespace_name == "Godot" || namespace_name == "GodotTools"  ? String::utf8(raw_name) : String::utf8(raw_name).camelcase_to_underscore();
+	return name;
+}
+
 GDMonoMethod *GDMonoClass::get_method(const StringName &p_name, int p_params_count) {
 
 	MethodKey key = MethodKey(p_name, p_params_count);
@@ -318,7 +327,7 @@ GDMonoMethod *GDMonoClass::get_method(MonoMethod *p_raw_method) {
 	MonoMethodSignature *sig = mono_method_signature(p_raw_method);
 
 	int params_count = mono_signature_get_param_count(sig);
-	StringName method_name = String::utf8(mono_method_get_name(p_raw_method));
+	StringName method_name = get_method_name(p_raw_method);
 
 	return get_method(p_raw_method, method_name, params_count);
 }
@@ -490,7 +499,7 @@ const Vector<GDMonoMethod *> &GDMonoClass::get_all_methods() {
 		void *iter = NULL;
 		MonoMethod *raw_method = NULL;
 		while ((raw_method = mono_class_get_methods(get_mono_ptr(), &iter)) != NULL) {
-			method_list.push_back(memnew(GDMonoMethod(String::utf8(mono_method_get_name(raw_method)), raw_method)));
+			method_list.push_back(memnew(GDMonoMethod(get_method_name(raw_method), raw_method)));
 		}
 
 		method_list_fetched = true;
