@@ -51,6 +51,34 @@ void VisibilityController2D::set_control_activity(bool p_value) {
     update_visibility(true);
 }
 
+bool VisibilityController2D::should_mark_using_group() const {
+    return mark_using_group;
+}
+
+void VisibilityController2D::set_mark_using_group(bool p_value) {
+    mark_using_group = p_value;
+#ifdef TOOLS_ENABLED
+    if (Engine::get_singleton()->is_editor_hint()) {
+        _change_notify("mark_using_group");
+        _change_notify("group_name");
+        return;
+    } 
+#endif
+    update_group_mark();
+}
+
+String VisibilityController2D::get_group_name() const {
+    return group_name;
+}
+
+void VisibilityController2D::set_group_name(const String &p_group_name) {
+    if (mark_using_group && _node != NULL && _node->is_in_group(p_group_name)) {
+        _node->remove_from_group(group_name);
+    }
+    group_name = p_group_name;
+    update_group_mark();
+}
+
 Rect2 VisibilityController2D::get_bounding_box(){
     Vector2 size = get_size();
     Transform2D tr = get_global_transform();
@@ -63,6 +91,7 @@ Rect2 VisibilityController2D::get_bounding_box(){
 
 void VisibilityController2D::setup_controlled_node() {
     Node *parent = get_node(controlled_node);
+    _node = Object::cast_to<CanvasItem>(parent);
     while (parent != NULL && Object::cast_to<ParallaxLayer>(parent) == NULL){
         parent = parent->get_parent();
     }
@@ -84,13 +113,27 @@ void VisibilityController2D::update_visibility(bool force) {
         visibility = active_visibility;
     }
 
-    CanvasItem* item = Object::cast_to<CanvasItem>(get_node(controlled_node));
-    if (item == NULL) return;
+    if (_node == NULL) return;
 
     
-    if (control_visibility) VS::get_singleton()->canvas_item_set_visible(item->get_canvas_item(), visible);
-    if (control_activity) item->set_branch_paused(!visible);
+    if (control_visibility) VS::get_singleton()->canvas_item_set_visible(_node->get_canvas_item(), visible);
+    if (control_activity) _node->set_branch_paused(!visible);
+    if (mark_using_group) update_group_mark();
 }
+
+void VisibilityController2D::update_group_mark() {
+    if (_node == NULL) return;
+    if (mark_using_group) {
+        if (visibility == VISIBLE) {
+            _node->add_to_group(group_name);
+        } else if (_node->is_in_group(group_name)) {
+            _node->remove_from_group(group_name);
+        }
+    } else if (_node->is_in_group(group_name)) {
+        _node->remove_from_group(group_name);
+    }
+}
+
 VisibilityController2D::VisibilityType VisibilityController2D::detect_visibility_outside_parallax() {
     Rect2 vp_rect = get_viewport_rect();
     Rect2 global_rect = get_bounding_box();
@@ -147,16 +190,29 @@ void VisibilityController2D::_notification(int p_what){
         return;
     }
     switch (p_what){
+        case NOTIFICATION_EXIT_TREE: {
+            _node = NULL;
+            visibility = UNKNOWN;
+        } break;
         case NOTIFICATION_ENTER_TREE: {
             setup_controlled_node();
             update_visibility();
             set_notify_transform(true);
-        }break;
+        } break;
         case NOTIFICATION_RESIZED:
         case NOTIFICATION_TRANSFORM_CHANGED: {
             update_visibility();
         } break;
     }
+}
+
+void VisibilityController2D::_validate_property(PropertyInfo &prop) const {
+#ifdef TOOLS_ENABLED
+    if (!Engine::get_singleton()->is_editor_hint()) return;
+    if (prop.name == "group_name") {
+        prop.usage = mark_using_group ? PROPERTY_USAGE_DEFAULT : PROPERTY_USAGE_NOEDITOR; 
+    }
+#endif
 }
 
 bool VisibilityController2D::is_visible_on_screen(){ return visibility; }
@@ -170,19 +226,28 @@ void VisibilityController2D::_bind_methods(){
     ClassDB::bind_method(D_METHOD("set_control_visibility", "value"), &VisibilityController2D::set_control_visibility);
     ClassDB::bind_method(D_METHOD("should_control_activity"), &VisibilityController2D::should_control_activity);
     ClassDB::bind_method(D_METHOD("set_control_activity", "value"), &VisibilityController2D::set_control_activity);
+    ClassDB::bind_method(D_METHOD("should_mark_using_group"), &VisibilityController2D::should_mark_using_group);
+    ClassDB::bind_method(D_METHOD("set_mark_using_group", "value"), &VisibilityController2D::set_mark_using_group);
+    ClassDB::bind_method(D_METHOD("get_group_name"), &VisibilityController2D::get_group_name);
+    ClassDB::bind_method(D_METHOD("set_group_name", "value"), &VisibilityController2D::set_group_name);
     
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "controlled_node"), "set_controlled_node", "get_controlled_node");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "control_visibility"), "set_control_visibility", "should_control_visibility");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "control_activity"), "set_control_activity", "should_control_activity");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "mark_using_group"), "set_mark_using_group", "should_mark_using_group");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "group_name"), "set_group_name", "get_group_name");
 
     ADD_SIGNAL(MethodInfo("screen_entered"));
     ADD_SIGNAL(MethodInfo("screen_exited"));
 }
 
 VisibilityController2D::VisibilityController2D(){
+    _node = NULL;
     controlled_node = NodePath("..");
     control_visibility = true;
     control_activity = false;
+    mark_using_group = false;
+    group_name = "visible_on_screen";
     set_mouse_filter(MOUSE_FILTER_IGNORE);
     layer = NULL;
 }

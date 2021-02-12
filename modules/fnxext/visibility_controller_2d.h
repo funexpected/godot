@@ -13,19 +13,26 @@ class VisibilityController2D: public Control {
         INVISIBLE
     };
 
-protected:
+    CanvasItem *_node;
 
     VisibilityType visibility;
     ParallaxLayer *layer;
     NodePath controlled_node;
     bool control_visibility;
     bool control_activity;
+    bool mark_using_group;
+    String group_name;
+
+protected:
+
 
     void _notification(int p_what);
+    virtual void _validate_property(PropertyInfo &prop) const;
     static void _bind_methods();
 
     void setup_controlled_node();
     void update_visibility(bool forced=false);
+    void update_group_mark();
     VisibilityType detect_visibility_outside_parallax();
     VisibilityType detect_visibility_inside_parallax();
 
@@ -40,6 +47,10 @@ public:
     void set_control_visibility(bool p_value);
     bool should_control_activity() const;
     void set_control_activity(bool p_value);
+    bool should_mark_using_group() const;
+    void set_mark_using_group(bool p_value);
+    String get_group_name() const;
+    void set_group_name(const String &p_group_name);
     
 
     bool is_visible_on_screen();
