@@ -258,7 +258,7 @@ public:
 			}
 			da->list_dir_end();
 		}
-
+		
 		return dir_files;
 	}
 
@@ -1018,7 +1018,7 @@ Error EditorExportPlatformIOS::_copy_asset(const String &p_out_dir, const String
 	DirAccess *filesystem_da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	ERR_FAIL_COND_V_MSG(!filesystem_da, ERR_CANT_CREATE, "Cannot create DirAccess for path '" + p_out_dir + "'.");
 
-	String binary_name = p_out_dir.get_file().get_basename();
+	String binary_name = p_out_dir.get_file();
 
 	DirAccess *da = DirAccess::create_for_path(p_asset);
 	if (!da) {
