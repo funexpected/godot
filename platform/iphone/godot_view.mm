@@ -460,6 +460,8 @@ static const int max_touches = 8;
 
 void _change_orientation(OS::ScreenOrientation p_orienation) {
 	NSNumber *value;
+	NSLog(@"_change_orientation() to: %d", p_orienation);
+
 	switch (p_orienation) {
 		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
 		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
@@ -471,7 +473,6 @@ void _change_orientation(OS::ScreenOrientation p_orienation) {
 		default:
 			value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
 	}
-	NSLog(@"_change_orientation()");
 	[[UIDevice currentDevice] setValue:value forKey:@"orientation"]; 
 	[UIViewController attemptRotationToDeviceOrientation];
 }
