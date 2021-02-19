@@ -256,7 +256,7 @@ OS::VideoMode _get_video_mode() {
 	mainViewController = viewController;
 
 	// prevent to stop music in another background app
-	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:nil];
+	[[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 
 	bool keep_screen_on = bool(GLOBAL_DEF("display/window/energy_saving/keep_screen_on", true));
 	OSIPhone::get_singleton()->set_keep_screen_on(keep_screen_on);
@@ -313,7 +313,6 @@ OS::VideoMode _get_video_mode() {
 	return YES;
 }
 
-
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
   // handler for Push Notifications
   NSLog(@"appDidReceiveRemoteNotification_finish");
@@ -338,12 +337,6 @@ OS::VideoMode _get_video_mode() {
   [[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"didRegisterForRemoteNotificationsWithDeviceToken_finish" object:nil userInfo: @{@"deviceToken":deviceToken}];
 }
-
-
-
-
-
-
 
 - (void)onAudioInterruption:(NSNotification *)notification {
 	if ([notification.name isEqualToString:AVAudioSessionInterruptionNotification]) {
