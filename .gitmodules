@@ -7,3 +7,6 @@
 [submodule "executables"]
 	path = executables
 	url = git@github.com:funexpected/godot.executables.git
+[submodule "ios_plugins"]
+	path = ios_plugins
+	url = git@github.com:funexpected/godot.ios_plugins.git
