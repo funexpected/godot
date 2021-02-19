@@ -258,9 +258,17 @@ public:
 			}
 			da->list_dir_end();
 		}
-		
+
 		return dir_files;
 	}
+
+	// Custom sorter to see plugins listed alphabetically in export list
+    struct PluginNameAscendingSorter {
+        _FORCE_INLINE_ bool operator()(const PluginConfigIOS &l, const PluginConfigIOS &r) const {
+            StringName::AlphCompare ac;
+            return ac(l.name, r.name);
+        }
+    };
 
 	static Vector<PluginConfigIOS> get_plugins() {
 		Vector<PluginConfigIOS> loaded_plugins;
@@ -282,6 +290,8 @@ public:
 				}
 			}
 		}
+		// Sort plugin by name for easier manipulations
+        loaded_plugins.sort_custom<PluginNameAscendingSorter>();
 
 		return loaded_plugins;
 	}
