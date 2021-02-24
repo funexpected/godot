@@ -33,6 +33,7 @@
 #include "register_types.h"
 #include "stylebox_bordered_texture.h"
 #include "visibility_controller_2d.h"
+#include "mesh_line_2d.h"
 
 #ifdef TOOLS_ENABLED
 #include <editor/editor_node.h>
@@ -48,6 +49,7 @@ static void _editor_init() {
 void register_fnxext_types() {
 	ClassDB::register_class<StyleBoxBorderedTexture>();
 	ClassDB::register_class<VisibilityController2D>();
+	ClassDB::register_class<MeshLine2D>();
 
 #ifdef TOOLS_ENABLED
 	// Control* gui = EditorNode::get_singleton()->get_gui_base();
