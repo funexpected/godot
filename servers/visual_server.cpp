@@ -2430,6 +2430,9 @@ VisualServer::VisualServer() {
 	GLOBAL_DEF("rendering/quality/depth_prepass/enable", true);
 	GLOBAL_DEF("rendering/quality/depth_prepass/disable_for_vendors", "PowerVR,Mali,Adreno,Apple");
 
+	GLOBAL_DEF("rendering/quality/srgb_decode/enable", true);
+	GLOBAL_DEF("rendering/quality/srgb_decode/disable_for_vendors", "Mali");
+
 	GLOBAL_DEF("rendering/quality/filters/use_nearest_mipmap_filter", false);
 
 	GLOBAL_DEF("rendering/batching/options/use_batching", true);
