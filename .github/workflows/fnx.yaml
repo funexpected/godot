@@ -1,9 +1,6 @@
 name: build
-on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-    - 'fnx.*' # Push events to matching v*, i.e. v1.0, v20.15.10
+on: [push]
+
 env:
   GODOT_BASE_BRANCH: 3.2
   SCONS_CACHE_MSVC_CONFIG: true
@@ -21,12 +18,12 @@ jobs:
         id: macos-editor-cache
         uses: actions/cache@v2
         with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          path: .scons_cache
+          key: editor.osx-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+            editor.osx-${{github.ref}}-${{github.sha}}
+            editor.osx-${{github.ref}}
+            editor.osx
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -68,12 +65,12 @@ jobs:
         id: macos-editor-cache
         uses: actions/cache@v2
         with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          path: .scons_cache
+          key: editor.osx.headless-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+            editor.osx.headless-${{github.ref}}-${{github.sha}}
+            editor.osx.headless-${{github.ref}}
+            editor.osx.headless
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -116,12 +113,12 @@ jobs:
         id: macos-editor-cache
         uses: actions/cache@v2
         with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          path: .scons_cache
+          key: ios.release-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+            ios.release-${{github.ref}}-${{github.sha}}
+            ios.release-${{github.ref}}
+            ios.release
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -156,7 +153,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ios.templates.release
-          path: iphone.zip
+          path: ios.release.zip
 
   archive:
     runs-on: ubuntu-latest
@@ -167,17 +164,17 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: osx.editor
-          path: release
+          path: fnx.godot
       - name: Download OSX Headless Editor
         uses: actions/download-artifact@v2
         with:
           name: osx.editor.headless
-          path: release
+          path: fnx.godot
       - name: Download iOS Release Templates
         uses: actions/download-artifact@v2
         with:
           name: ios.templates.release
-          path: release
+          path: fnx.godot
       - name: Show contents
         run: find release
       - name: Prepare assets
@@ -189,8 +186,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${GITHUB_SHA::8}
+          release_name: Release ${GITHUB_SHA::8} (${{ github.ref }})
           draft: false
           prerelease: false
       - name: Upload Release
