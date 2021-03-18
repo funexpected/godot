@@ -21,12 +21,12 @@ jobs:
         id: macos-editor-cache
         uses: actions/cache@v2
         with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          path: .scons_cache
+          key: editor.osx-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+            editor.osx-${{github.ref}}-${{github.sha}}
+            editor.osx-${{github.ref}}
+            editor.osx
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -68,12 +68,12 @@ jobs:
         id: macos-editor-cache
         uses: actions/cache@v2
         with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          path: .scons_cache
+          key: editor.osx.headless-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+            editor.osx.headless-${{github.ref}}-${{github.sha}}
+            editor.osx.headless-${{github.ref}}
+            editor.osx.headless
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -116,12 +116,12 @@ jobs:
         id: macos-editor-cache
         uses: actions/cache@v2
         with:
-          path: ${{github.workspace}}/.scons_cache/
-          key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
+          path: .scons_cache
+          key: ios.release-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}
-            ${{github.job}}-${{env.GODOT_BASE_BRANCH}}
+            ios.release-${{github.ref}}-${{github.sha}}
+            ios.release-${{github.ref}}
+            ios.release
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -156,7 +156,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ios.templates.release
-          path: iphone.zip
+          path: ios.release.zip
 
   archive:
     runs-on: ubuntu-latest
