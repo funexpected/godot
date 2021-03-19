@@ -159,6 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-osx-editor, build-osx-editor-headless, build-ios-release]
     steps:
+      - run: echo "Publishing fnx.${{ github.sha[0:8] }}"
       - run: mkdir -p fnx.godot
       - name: Download OSX Editor
         uses: actions/download-artifact@v2
@@ -186,8 +187,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${GITHUB_SHA::8}
-          release_name: Release ${GITHUB_SHA::8} (${{ github.ref }})
+          tag_name: fnx.${{ github.sha[0:8] }}
+          release_name: Release fnx.${{ github.sha[0:8] }} (${{ github.ref }})
           draft: false
           prerelease: false
       - name: Upload Release
