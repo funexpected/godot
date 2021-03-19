@@ -15,7 +15,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: macos-editor-cache
+        id: editor.osx.cache
         uses: actions/cache@v2
         with:
           path: .scons_cache
@@ -62,7 +62,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: macos-editor-cache
+        id: editor.osx.headless.cache
         uses: actions/cache@v2
         with:
           path: .scons_cache
@@ -110,7 +110,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: macos-editor-cache
+        id: ios.release.cache
         uses: actions/cache@v2
         with:
           path: .scons_cache
@@ -181,14 +181,17 @@ jobs:
       - name: Prepare assets
         run: |
           zip -r fnx.godot.zip fnx.godot
+      - name: Calculate tag
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: fnx.${{ github.sha[0:8] }}
-          release_name: Release fnx.${{ github.sha[0:8] }} (${{ github.ref }})
+          tag_name: fnx.${{ steps.vars.outputs.sha_short }}
+          release_name: Release fnx.${{ steps.vars.outputs.sha_short }} (${{ github.ref }})
           draft: false
           prerelease: false
       - name: Upload Release
