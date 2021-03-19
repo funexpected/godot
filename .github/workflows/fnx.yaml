@@ -176,7 +176,7 @@ jobs:
           name: ios.templates.release
           path: fnx.godot
       - name: Show contents
-        run: find release
+        run: find fnx.godot
       - name: Prepare assets
         run: |
           zip -r fnx.godot.zip fnx.godot
