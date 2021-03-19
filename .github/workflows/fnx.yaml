@@ -15,7 +15,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: editor.osx.cache
+        id: editor-osx-cache
         uses: actions/cache@v2
         with:
           path: .scons_cache
@@ -62,7 +62,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: editor.osx.headless.cache
+        id: editor-osx-headless-cache
         uses: actions/cache@v2
         with:
           path: .scons_cache
@@ -110,7 +110,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        id: ios.release.cache
+        id: ios-release-cache
         uses: actions/cache@v2
         with:
           path: .scons_cache
