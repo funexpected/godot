@@ -94,7 +94,7 @@ jobs:
         run: |
           find . -type f -maxdepth 2 -mindepth 2
           mkdir fnx.godot
-          find . -type f -maxdepth 2 -mindepth 2 | xargs -I{} copy "{}" fnx.godot
+          find . -type f -maxdepth 2 -mindepth 2 | xargs -I{} cp "{}" fnx.godot
           find fnx.godot
       - name: Prepare assets
         run: |
