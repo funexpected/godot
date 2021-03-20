@@ -13,6 +13,7 @@ env:
 
 jobs:
   build:
+    name: Build ${{ matrix.token }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -88,23 +89,14 @@ jobs:
     needs: [build]
     steps:
       - run: mkdir -p fnx.godot
-      - name: Download OSX Editor
+      - name: Download artifacts
         uses: actions/download-artifact@v2
-        with:
-          name: osx.editor
-          path: fnx.godot
-      - name: Download OSX Headless Editor
-        uses: actions/download-artifact@v2
-        with:
-          name: osx.editor.headless
-          path: fnx.godot
-      - name: Download iOS Release Templates
-        uses: actions/download-artifact@v2
-        with:
-          name: ios.release
-          path: fnx.godot
-      - name: Show contents
-        run: find fnx.godot
+      - name: Join artifacts
+        run: |
+          find . -type f -depth 2
+          mkdir fnx.godot
+          find . -type f -depth 2 | xargs -I{} copy "{}" fnx.godot
+          find fnx.godot
       - name: Prepare assets
         run: |
           zip -r fnx.godot.zip fnx.godot
