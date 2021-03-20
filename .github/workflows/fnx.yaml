@@ -218,7 +218,6 @@ jobs:
             =====
             run.id: ${{ github.run_id }}
           draft: false
-          prerelease: false
       - name: Upload Release
         id: upload-release
         uses: actions/upload-release-asset@v1
