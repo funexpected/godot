@@ -17,13 +17,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: osx-latest
+          - os: macos-latest
             token: osx.editor
             build: scons -j2 platform=osx tool=yes target=release_debug verbose=yes
-          - os: osx-latest
+          - os: macos-latest
             token: osx.editor.headless
             build: scons -j2 platform=server tool=yes target=release_debug verbose=yes
-          - os: osx-latest
+          - os: macos-latest
             token: ios.release
             build: |
               mkdir iphone
