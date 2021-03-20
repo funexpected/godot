@@ -191,6 +191,16 @@ jobs:
         with:
           tag_name: godot.${{ steps.vars.outputs.sha_short }}
           release_name: Release godot.${{ steps.vars.outputs.sha_short }} (${{ github.ref }})
+          body: |
+            ABOUT
+            =====
+            Automatic release of Godot Engine by Funexpected Team.
+            Some day there will be useful info here, for now it is used only for storing some info for 
+            future API calls in `SPECS` secion.
+            
+            SPECS
+            =====
+            run.id: ${{ github.run_id }}
           draft: false
           prerelease: false
       - name: Upload Release
