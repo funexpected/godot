@@ -1,5 +1,10 @@
 name: build
-on: [push]
+on:
+  push:
+    branches:    
+      # Push events on main branch
+      - master
+      - 'release/**'
 
 env:
   GODOT_BASE_BRANCH: 3.2
@@ -199,6 +204,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          prerelease: ${{ contains(github.ref, 'release/') }}
           tag_name: godot.${{ steps.vars.outputs.sha_short }}
           release_name: Release godot.${{ steps.vars.outputs.sha_short }} (${{ github.ref }})
           body: |
