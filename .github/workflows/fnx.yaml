@@ -1,10 +1,11 @@
 name: build
-on:
-  push:
-    branches:    
-      # Push events on main branch
-      - master
-      - 'release/**'
+on: [push]
+  # let's build everty time for now
+  # push:
+  #   branches:    
+  #     # Push events on main branch
+  #     - master
+  #     - 'release/**'
 
 env:
   GODOT_BASE_BRANCH: 3.2
