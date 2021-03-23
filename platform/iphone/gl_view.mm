@@ -33,6 +33,7 @@
 
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
+#include "core/os/input.h"
 #include "core/project_settings.h"
 #include "os_iphone.h"
 #include "servers/audio_server.h"
@@ -196,7 +197,17 @@ void _stop_video() {
 void _change_orientation(OS::ScreenOrientation p_orienation) {
 	NSNumber *value;
 	switch (p_orienation) {
-		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
+            Vector3 acc = Input::get_singleton()->get_accelerometer();
+            if (acc[0] < 0) {
+                value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+			    break;
+            }
+            else {
+                value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+			    break;
+            }
+        }
 		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
 			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
 			break;
