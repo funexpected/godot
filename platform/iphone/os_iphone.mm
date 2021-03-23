@@ -42,6 +42,7 @@
 #include "core/io/file_access_pack.h"
 #include "core/os/dir_access.h"
 #include "core/os/file_access.h"
+#include "core/os/input.h"
 #include "core/project_settings.h"
 #include "drivers/unix/syslog_logger.h"
 
@@ -473,7 +474,14 @@ void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 	OS::set_screen_orientation(p_orientation);
 	NSNumber *value;
 	switch (p_orienation) {
-		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
+			Vector3 acc = Input::get_singleton()->get_accelerometer();
+			if (acc[0] < 0.0) {
+				value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+			} else {
+				value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+			}
+		} break;
 		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
 			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
 			break;
