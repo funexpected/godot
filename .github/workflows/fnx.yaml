@@ -29,7 +29,7 @@ jobs:
             token: ios.release
             build: |
               mkdir iphone
-              scons p=iphone -j2 tools=no bits=64 target=release_debug arch=arm64 module_firebase_enabled=no module_websocket_enabled=no game_center=no debug_symbols=no separate_debug_symbols=yes
+              scons p=iphone -j2 tools=no bits=64 target=release_debug arch=arm64 module_firebase_enabled=no module_websocket_enabled=no game_center=no
               cp -R misc/dist/ios_xcode/ iphone/
               find bin
               cp bin/libgodot.iphone.opt.debug.arm64.a iphone/libgodot.iphone.release.fat.a
