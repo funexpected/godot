@@ -79,6 +79,9 @@ void InAppStore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_auto_finish_transaction"), &InAppStore::set_auto_finish_transaction);
 	ClassDB::bind_method(D_METHOD("request_review"), &InAppStore::request_review);
 	ClassDB::bind_method(D_METHOD("get_payload"), &InAppStore::get_payload);
+	ClassDB::bind_method(D_METHOD("has_feature"), &InAppStore::has_feature);
+	ClassDB::bind_method(D_METHOD("is_sandbox"), &InAppStore::is_sandbox);
+	ClassDB::bind_method(D_METHOD("get_subscription_expiration"), &InAppStore::get_subscription_expiration);
 };
 
 @interface ProductsDelegate : NSObject <SKProductsRequestDelegate> {
@@ -245,30 +248,72 @@ Error InAppStore::restore_purchases() {
 	return OK;
 };
 
-Dictionary InAppStore::get_payload(){
+
+Dictionary InAppStore::get_payload() {
+	if (!cached_payload.empty())
+		return cached_payload;
+
+	print_line("Requesting payload");
+	NSBundle *bundle = [NSBundle mainBundle];
+	NSURL *url = [bundle appStoreReceiptURL];	
 	NSData *receipt = nil;
+	receipt = [NSData dataWithContentsOfURL:url];
+
+	Dictionary res;
+	if (receipt != nil) {
+		print_line("Validating payload");
+		res = _validate_payload([receipt bytes], [receipt length]);
+	} else {
+		res["error"] = "Payload not available";
+	}
+
+	res["sandbox"] = is_sandbox();
+	cached_payload = res;
+	return res;
+}
+
+
+bool InAppStore::has_feature(String feature) const {
+	if (feature == "restore_purchases_supported")
+		return true;
+	if (feature == "get_payload_supported")
+		return true;
+	return false;
+}
+
+
+bool InAppStore::is_sandbox() const {
 	NSBundle *bundle = [NSBundle mainBundle];
 	NSURL *url = [bundle appStoreReceiptURL];
 	String url_string = String([[url absoluteString] UTF8String]);
-	bool sandbox = url_string.find("sandboxReceipt") >= 0;
-	print_line(String("appstorereceipturl: ") + url_string + ", sandbox: " + Variant(sandbox));
-	receipt = [NSData dataWithContentsOfURL:url];
-	if (receipt != nil) {
-		const void *_Nullable rawData = [receipt bytes];
-		char *data = (char *)rawData;
-		Dictionary res = InAppStore::_validate_payload(data, [receipt length]);
-		res["sandbox"] = sandbox;
-		return res;
-	} else {
-		Dictionary res;
-		res["error"] = "Payload not available";
-		res["sandbox"] = sandbox;
-		return res;
-	}
 
+	bool sandbox = url_string.find("sandboxReceipt") >= 0;
+
+	print_line(String("appStoreReceiptURL: ") + url_string + ", sandbox: " + Variant(sandbox));	
+	return sandbox;
 }
 
-Dictionary InAppStore::_validate_payload(char* buff, int buff_size){
+
+Variant InAppStore::get_subscription_expiration() {
+	Dictionary payload = get_payload();
+
+	if ((bool)(payload["error"]) != false ) {
+		print_line("Failed to get payload: " + (String)payload.get("error", "Unknown error"));
+		return Variant(0);
+	}
+
+	Array receipts = payload.get("receipts", Array());
+	Array receipt_expirations;
+	for (int i = 0; i < receipts.size(); ++i) {
+		receipt_expirations.push_back(((Dictionary)receipts[i]).get_valid("subscription_expiration_date_ts"));
+	}
+
+	return receipt_expirations.max();
+}
+
+
+
+Dictionary InAppStore::_validate_payload(const void * buff, int buff_size){
 	print_line("parsing receipt");
 	Dictionary res;
 	res["error"] = "Invalid receipt";

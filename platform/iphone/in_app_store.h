@@ -43,6 +43,7 @@ class InAppStore : public Object {
 	static void _bind_methods();
 
 	List<Variant> pending_events;
+	Dictionary cached_payload;
 
 public:
 	Error request_product_info(Variant p_params);
@@ -55,18 +56,21 @@ public:
 	void finish_all_transactions();
 	void set_auto_finish_transaction(bool b);
 	Dictionary get_payload();
-
-
 	void request_review();
+	bool has_feature(String feature) const;
+	bool is_sandbox() const;
+	Variant get_subscription_expiration();
 
 	void _post_event(Variant p_event);
 	void _record_purchase(String product_id);
 
 	static InAppStore *get_singleton();
-	static Dictionary _validate_payload(char* buff, int length);
-
+	
 	InAppStore();
 	~InAppStore();
+
+private:
+	Dictionary _validate_payload(const void * buff, int length);
 };
 
 #endif
