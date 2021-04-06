@@ -86,6 +86,7 @@ private:
 
 	String font_path;
 	String font_name;
+	int font_idx;
 	Map<CacheID, DynamicFontAtSize *> size_cache;
 
 	friend class DynamicFontAtSize;
