@@ -2762,7 +2762,7 @@ public:
 			//stores all the project files inside the Gradle project directory. Also includes all ABIs
 			_clear_assets_directory();
 			if (!apk_expansion) {
-				err = export_project_files(p_preset, rename_and_store_file_in_gradle_project, NULL, ignore_so_file);
+				err = export_project_files(p_preset, rename_and_store_file_in_gradle_project, NULL, p_debug, ignore_so_file);
 				if (err != OK) {
 					EditorNode::add_io_error("Could not export project files to gradle project\n");
 					return err;
@@ -3061,7 +3061,7 @@ public:
 			APKExportData ed;
 			ed.ep = &ep;
 			ed.apk = unaligned_apk;
-			err = export_project_files(p_preset, ignore_apk_file, &ed, save_apk_so);
+			err = export_project_files(p_preset, ignore_apk_file, &ed, p_debug, save_apk_so);
 		} else {
 			if (apk_expansion) {
 				err = save_apk_expansion_file(p_preset, p_path, p_debug);
@@ -3073,7 +3073,7 @@ public:
 				APKExportData ed;
 				ed.ep = &ep;
 				ed.apk = unaligned_apk;
-				err = export_project_files(p_preset, save_apk_file, &ed, save_apk_so);
+				err = export_project_files(p_preset, save_apk_file, &ed, p_debug, save_apk_so);
 			}
 		}
 
