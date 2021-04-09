@@ -7,7 +7,6 @@ on: [push]
   #     - master
   #     - 'release/**'
 
-
 env:
   GODOT_BASE_BRANCH: 3.2
   SCONS_CACHE_MSVC_CONFIG: true
