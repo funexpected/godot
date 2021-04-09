@@ -1,5 +1,5 @@
 name: 🤖 Android Builds
-on: [public]
+on: [push]
 
 # Global Cache Settings
 env:
