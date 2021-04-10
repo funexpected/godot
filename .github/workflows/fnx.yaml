@@ -11,6 +11,7 @@ env:
   GODOT_BASE_BRANCH: 3.2
   SCONS_CACHE_MSVC_CONFIG: true
   SCONS_CACHE_LIMIT: 4096
+  ANDROID_NDK_VERSION: 21.1.6352462
 
 jobs:
   build:
@@ -39,12 +40,37 @@ jobs:
               zip -X -r ios.release.zip iphone
               rm -rf bin/*
               mv ios.release.zip bin/
+          - os: ubuntu-20.04
+            token: android.template
+            build: |
+              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+              scons platform=android -j 8 target=debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
   
     steps:
       - name: Checkout Engine
         uses: actions/checkout@v2
         with:
           submodules: 'recursive'
+
+      - name: Make apt sources.list use the default Ubuntu repositories
+        if: ${{matrix.token == 'android.template'}}
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*
+          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
+          sudo apt-get update
+
+      - name: Set up Java 8
+        if: ${{matrix.token == 'android.template'}}
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+
+      - name: Install Android NDK r21
+        if: ${{matrix.token == 'android.template'}}
+        run: |
+          sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
@@ -78,6 +104,7 @@ jobs:
         env:
           SCONS_CACHE: ${{github.workspace}}/.scons_cache/
         run: ${{ matrix.build }}
+        
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
