@@ -1979,7 +1979,7 @@ public:
 				err += template_err;
 			}
 		} else {
-			valid = exists_export_template("android_source.zip", &err);
+			valid = true; //exists_export_template("android_source.zip", &err);
 		}
 		r_missing_templates = !valid;
 
@@ -2706,10 +2706,6 @@ public:
 
 		load_icon_refs(p_preset, main_image, foreground, background);
 
-		Vector<uint8_t> command_line_flags;
-		// Write command line flags into the command_line_flags variable.
-		get_command_line_flags(p_preset, p_path, p_flags, command_line_flags);
-
 		if (export_format == 1) {
 			if (!p_path.ends_with(".aab")) {
 				EditorNode::get_singleton()->show_warning(TTR("Invalid filename! Android App Bundle requires the *.aab extension."));
@@ -2774,6 +2770,11 @@ public:
 					return err;
 				}
 			}
+
+			Vector<uint8_t> command_line_flags;
+			// Write command line flags into the command_line_flags variable.
+			get_command_line_flags(p_preset, p_path, p_flags, command_line_flags);
+
 			store_file_at_path("res://android/build/assets/_cl_", command_line_flags);
 
 			OS::get_singleton()->set_environment("ANDROID_HOME", sdk_path); //set and overwrite if required
@@ -3094,6 +3095,11 @@ public:
 				NULL,
 				0, // No compress (little size gain and potentially slower startup)
 				Z_DEFAULT_COMPRESSION);
+
+		Vector<uint8_t> command_line_flags;
+		// Write command line flags into the command_line_flags variable.
+		get_command_line_flags(p_preset, p_path, p_flags, command_line_flags);
+
 		zipWriteInFileInZip(unaligned_apk, command_line_flags.ptr(), command_line_flags.size());
 		zipCloseFileInZip(unaligned_apk);
 
