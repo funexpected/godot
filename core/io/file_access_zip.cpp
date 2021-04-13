@@ -46,7 +46,10 @@ static void *godot_open(void *data, const char *p_fname, int mode) {
 	}
 
 	FileAccess *f = (FileAccess *)data;
-	f->open(p_fname, FileAccess::READ);
+	// file already opened at ZipArchive::get_file_handle(p_path)
+	if (!f->is_open()) {
+		f->open(p_fname, FileAccess::READ);
+	}
 
 	return f->is_open() ? data : NULL;
 }
@@ -116,7 +119,6 @@ static void godot_free(voidpf opaque, voidpf address) {
 } // extern "C"
 
 void ZipArchive::close_handle(unzFile p_file) const {
-
 	ERR_FAIL_COND_MSG(!p_file, "Cannot close a file if none is open.");
 	FileAccess *f = (FileAccess *)unzGetOpaque(p_file);
 	unzCloseCurrentFile(p_file);
@@ -218,6 +220,7 @@ bool ZipArchive::try_open_pack(const String &p_path, bool p_replace_files) {
 		}
 	}
 
+	fa->close();
 	return true;
 }
 
