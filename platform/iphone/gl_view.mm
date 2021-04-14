@@ -503,6 +503,9 @@ static void clear_touches() {
 
 // Updates the OpenGL view when the timer fires
 - (void)drawView {
+	if ([[UIApplication sharedApplication] applicationState] != UIApplicationStateActive) {
+		return;
+	}
 
 	if (!active) {
 		printf("draw view not active!\n");
