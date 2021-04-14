@@ -75,6 +75,7 @@ jobs:
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
         uses: actions/cache@v2
+        if: ${{matrix.token == 'android.template'}}
         with:
           path: .scons_cache
           key: ${{matrix.token}}-${{github.ref}}-${{github.sha}}
