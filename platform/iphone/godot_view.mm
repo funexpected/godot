@@ -209,6 +209,10 @@ static const int max_touches = 8;
 
 // Updates the OpenGL view when the timer fires
 - (void)drawView {
+	if ([[UIApplication sharedApplication] applicationState] != UIApplicationStateActive) {
+		return;
+	}
+
 	if (!self.isActive) {
 		printf("draw view not active!\n");
 		return;
