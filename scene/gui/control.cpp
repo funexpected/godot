@@ -1335,14 +1335,21 @@ bool Control::has_constant(const StringName &p_name, const StringName &p_type) c
 }
 
 Rect2 Control::get_parent_anchorable_rect() const {
-	if (!is_inside_tree())
-		return Rect2();
 
 	Rect2 parent_rect;
-	if (data.parent_canvas_item) {
-		parent_rect = data.parent_canvas_item->get_anchorable_rect();
+	if (is_inside_tree()) {
+		if (data.parent_canvas_item) {
+			parent_rect = data.parent_canvas_item->get_anchorable_rect();
+		} else {
+			parent_rect = get_viewport()->get_visible_rect();
+		}
 	} else {
-		parent_rect = get_viewport()->get_visible_rect();
+		Control *p = Object::cast_to<Control>(get_parent());
+		if (p == NULL) {
+			parent_rect = SceneTree::get_singleton()->get_root()->get_visible_rect();
+		} else {
+			parent_rect = p->get_anchorable_rect();
+		}
 	}
 
 	return parent_rect;
