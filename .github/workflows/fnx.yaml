@@ -47,6 +47,9 @@ jobs:
               scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
               cd platform/android/java/
               ./gradlew generateGodotTemplates
+          - os: ubuntu-20.04
+            token: linux.editor.headless
+            build: scons -j2 platform=server tool=yes target=release_debug verbose=yes
   
     steps:
       - name: Checkout Engine
