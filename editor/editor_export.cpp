@@ -995,7 +995,11 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, c
 	EditorProgress ep("savepack", TTR("Packing"), 102, true);
 
 	String tmppath = EditorSettings::get_singleton()->get_cache_dir().plus_file("packtmp");
+	print_line(String() + "Using temp path: " +  tmppath);
 	FileAccess *ftmp = FileAccess::open(tmppath, FileAccess::WRITE);
+	if (!ftmp) {
+		print_line(String() + "Can't create tmp file (" +  tmppath + ")");
+	}
 	ERR_FAIL_COND_V_MSG(!ftmp, ERR_CANT_CREATE, "Cannot create file '" + tmppath + "'.");
 
 	PackData pd;
@@ -1004,6 +1008,9 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, c
 	pd.so_files = p_so_files;
 
 	Error err = export_project_files(p_preset, _save_pack_file, &pd, p_debug, _add_shared_object);
+	if (err != OK) {
+		print_line(String() + "Error exporting project files: " + itos(err));
+	}
 
 	memdelete(ftmp); //close tmp file
 
