@@ -159,7 +159,7 @@
 				TargetAttributes = {
 					D0BCFE3318AEBDA2004A7AAE = {
 						DevelopmentTeam = $team_id;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.AccessWiFi = {
 								enabled = $access_wifi;
