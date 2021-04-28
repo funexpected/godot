@@ -1350,7 +1350,8 @@ Rect2 Control::get_parent_anchorable_rect() const {
 	} else {
 		Control *p = Object::cast_to<Control>(get_parent());
 		if (p == NULL) {
-			parent_rect = SceneTree::get_singleton()->get_root()->get_visible_rect();
+			if (SceneTree::get_singleton() && SceneTree::get_singleton()->get_root())
+				parent_rect = SceneTree::get_singleton()->get_root()->get_visible_rect();
 		} else {
 			parent_rect = p->get_anchorable_rect();
 		}
