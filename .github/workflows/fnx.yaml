@@ -41,7 +41,18 @@ jobs:
               rm -rf bin/*
               mv ios.release.zip bin/
           - os: ubuntu-20.04
-            token: android.template
+            token: android.template.debug
+            build: |
+              scons platform=android -j 8 target=debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
+              cd platform/android/java/
+              ./gradlew generateGodotTemplates
+              # Remove files that will not be needed for export
+              cd ../../..
+              rm bin/android_debug.apk
+              rm bin/android_source.zip
+          - os: ubuntu-20.04
+            token: android.template.release
             build: |
               scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
               scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no disable_3d=yes
@@ -49,7 +60,6 @@ jobs:
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
               cd ../../..
-              ls -la bin
               rm bin/android_release.apk
               rm bin/android_source.zip
               
