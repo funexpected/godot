@@ -48,6 +48,7 @@ jobs:
               cd platform/android/java/
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
+              ls -la bin
               rm bin/android_release.apk
               rm bin/android_source.zip
               
