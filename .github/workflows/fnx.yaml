@@ -77,13 +77,13 @@ jobs:
           sudo apt-get update
 
       - name: Set up Java 8
-        if: ${{matrix.token == 'android.template'}}
+        if: ${{startsWith(matrix.token, 'android.template')}}
         uses: actions/setup-java@v1
         with:
           java-version: 8
 
       - name: Install Android NDK r21
-        if: ${{matrix.token == 'android.template'}}
+        if: ${{startsWith(matrix.token, 'android.template')}}
         run: |
           sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
