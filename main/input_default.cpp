@@ -234,6 +234,10 @@ void InputDefault::keyboard_hidden() {
 	emit_signal("keyboard_hidden");
 }
 
+void InputDefault::keyboard_showing() {
+	emit_signal("keyboard_showing");
+}
+
 void InputDefault::virtual_keyboard_height_changed(int p_height) {
 	emit_signal("keyboard_height_changed", p_height);
 }

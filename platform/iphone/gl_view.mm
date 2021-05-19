@@ -622,6 +622,7 @@ static void clear_touches() {
 	CGRect keyboardFrame = [self convertRect:rawFrame fromView:nil];
 
 	OSIPhone::get_singleton()->set_virtual_keyboard_height(_points_to_pixels(keyboardFrame.size.height));
+	OSIPhone::get_singleton()->keybord_showing();
 }
 
 - (void)keyboardHidden:(NSNotification *)notification {
