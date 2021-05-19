@@ -605,6 +605,7 @@ void OS_Android::hide_virtual_keyboard() {
 	if (godot_io_java->has_vk()) {
 
 		godot_io_java->hide_vk();
+		input->keyboard_hidden();
 	} else {
 
 		ERR_PRINT("Virtual keyboard not available");
