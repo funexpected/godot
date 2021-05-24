@@ -39,7 +39,7 @@ void iOS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
 	ClassDB::bind_method(D_METHOD("get_interface_orientation"), &iOS::get_interface_orientation);
-	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
+	ClassDB::bind_method(D_METHOD("share_data", "text", "user_image_path"), &iOS::share_data, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("get_app_version"), &iOS::get_app_version);
 	
 };
@@ -110,13 +110,22 @@ String iOS::get_app_version()
 }
 
 
-void iOS::share_data(const String &title, const String &subject, const String &text)
+void iOS::share_data(const String &text, const String &user_image_path)
 {
 UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIApplication sharedApplication] delegate]).window.rootViewController;
     
     NSString * message = [NSString stringWithCString:text.utf8().get_data() encoding:NSUTF8StringEncoding];
     
-    NSArray * shareItems = @[message];
+	NSArray * shareItems;
+	if (user_image_path != String())
+	{
+		String img_path = OS::get_singleton()->get_user_data_dir() + "/" + user_image_path;
+		NSString * ns_img_path = [NSString stringWithCString:img_path.utf8().get_data() encoding:NSUTF8StringEncoding];
+		UIImage *shareImg = [UIImage imageWithContentsOfFile:ns_img_path]; 
+		shareItems = @[message, shareImg];
+	}
+	else
+		shareItems = @[message];
     
     UIActivityViewController * avc = [[UIActivityViewController alloc] initWithActivityItems:shareItems applicationActivities:nil];
     
@@ -125,7 +134,6 @@ UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIAppl
         avc.popoverPresentationController.sourceRect = CGRectMake(root_controller.view.bounds.size.width/2, root_controller.view.bounds.size.height/4, 0, 0); 
     }
     [root_controller presentViewController:avc animated:true completion:nil];
-
 }
 
 iOS::iOS(){};
