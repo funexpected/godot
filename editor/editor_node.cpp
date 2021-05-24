@@ -727,6 +727,7 @@ void EditorNode::_fs_changed() {
 				project_exported = true;
 				if (!export_error.empty())
 					ERR_PRINT(export_error);
+					break;
 				if (!export_all_presets)
 					break;
 			}
@@ -743,19 +744,18 @@ void EditorNode::_fs_changed() {
 }
 
 String EditorNode::export_project(const Ref<EditorExportPreset> &preset, const String &path){
-	String export_error;
 	String preset_name = export_defer.preset;
 	if (preset.is_null()) {
-		export_error = vformat(
-				"Invalid export preset name: %s. Make sure `export_presets.cfg` is present in the current directory.",
-				preset_name);
+		return vformat(
+			"Invalid export preset name: %s. Make sure `export_presets.cfg` is present in the current directory.",
+			preset_name);
 	} else {
 		Ref<EditorExportPlatform> platform = preset->get_platform();
 		const String export_path = export_defer.path.empty() ? preset->get_export_path() : export_defer.path;
 		if (export_path.empty()) {
-			export_error = vformat("Export preset '%s' doesn't have a default export path, and none was specified.", preset_name);
+			return vformat("Export preset '%s' doesn't have a default export path, and none was specified.", preset_name);
 		} else if (platform.is_null()) {
-			export_error = vformat("Export preset '%s' doesn't have a matching platform.", preset_name);
+			return vformat("Export preset '%s' doesn't have a matching platform.", preset_name);
 		} else {
 			Error err = OK;
 			if (export_defer.pack_only) { // Only export .pck or .zip data pack.
@@ -778,17 +778,15 @@ String EditorNode::export_project(const Ref<EditorExportPreset> &preset, const S
 				case OK:
 					break;
 				case ERR_FILE_NOT_FOUND:
-					export_error = vformat("Project export failed for preset '%s', the export template appears to be missing.", preset_name);
-					break;
+					return vformat("Project export failed for preset '%s', the export template appears to be missing.", preset_name);
 				case ERR_FILE_BAD_PATH:
-					export_error = vformat("Project export failed for preset '%s', the target path '%s' appears to be invalid.", preset_name, export_path);
-					break;
+					return vformat("Project export failed for preset '%s', the target path '%s' appears to be invalid.", preset_name, export_path);
 				default:
-					export_error = vformat("Project export failed with error code %d for preset '%s'.", (int)err, preset_name);
-					break;
+					return vformat("Project export failed with error code %d for preset '%s'.", (int)err, preset_name);
 			}
 		}
 	}
+	return String();
 }
 
 void EditorNode::_resources_reimported(const Vector<String> &p_resources) {
