@@ -4,6 +4,3 @@
 [submodule "modules/flash"]
 	path = modules/flash
 	url = git@github.com:funexpected/godot-flash-module.git
-[submodule "modules/ECMAScript"]
-	path = modules/ECMAScript
-	url = git@github.com:funexpected/ECMAScript.git
