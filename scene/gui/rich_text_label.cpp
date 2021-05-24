@@ -646,7 +646,8 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 					line_is_blank = false;
 
 				if (p_mode == PROCESS_DRAW && visible) {
-					img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - font->get_descent() - img->size.height), img->size));
+					Color ccolor = _find_color(img, Color(1, 1, 1));
+					img->image->draw_rect(ci, Rect2(p_ofs + Point2(align_ofs + wofs, y + lh - font->get_descent() - img->size.height), img->size), false, ccolor);
 				}
 				p_char_count++;
 
