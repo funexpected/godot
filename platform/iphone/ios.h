@@ -47,7 +47,7 @@ public:
 	String get_rate_url(int p_app_id) const;
 	String get_app_version();
 
-	void share_data(const String &title, const String &subject, const String &text);
+	void share_data(const String &text, const String &image_path);
 	int get_interface_orientation() const;
 	iOS();
 };
