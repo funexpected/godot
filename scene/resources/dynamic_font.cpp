@@ -128,76 +128,64 @@ Error DynamicFontAtSize::_load() {
 	ERR_FAIL_COND_V_MSG(error != 0, ERR_CANT_CREATE, "Error initializing FreeType.");
 
 	if (font->font_mem == NULL && font->font_name != String()) {
-		if (_fontdata.has(font->font_name)) {
-			font->set_font_ptr(_fontdata[font->font_name].ptr(), _fontdata[font->font_name].size());
-		} else {
-
 #ifdef __ANDROID__
-			print_verbose("Android system font loading!");
-			String font_path = "/system/fonts/";
-			int font_idx = 0; 
+		print_verbose("Android system font loading!");
+		String font_path = "/system/fonts/";
+		int font_idx = 0; 
 
-			if (font->font_name == "Noto Sans CJK JP") {
-				font_path += "NotoSansCJK-Regular";
-				font_idx = 0;
-			} else if (font->font_name == "Noto Sans CJK KR") {
-				font_path += "NotoSansCJK-Regular";
-				font_idx = 1;
-			} else if (font->font_name == "Noto Sans CJK SC") {
-				font_path += "NotoSansCJK-Regular";
-				font_idx = 2;
-			} else if (font->font_name == "Noto Sans CJK TC") {
-				font_path += "NotoSansCJK-Regular";
-				font_idx = 3;
-			} else if (font->font_name == "Noto Sans CJK HK") {
-				font_path += "NotoSansCJK-Regular";
-				font_idx = 4;
-			}
-			else {
-				font_path += font->font_name.replace(" ", "-");
-			}
+		if (font->font_name == "Noto Sans CJK JP") {
+			font_path += "NotoSansCJK-Regular";
+			font_idx = 0;
+		} else if (font->font_name == "Noto Sans CJK KR") {
+			font_path += "NotoSansCJK-Regular";
+			font_idx = 1;
+		} else if (font->font_name == "Noto Sans CJK SC") {
+			font_path += "NotoSansCJK-Regular";
+			font_idx = 2;
+		} else if (font->font_name == "Noto Sans CJK TC") {
+			font_path += "NotoSansCJK-Regular";
+			font_idx = 3;
+		} else if (font->font_name == "Noto Sans CJK HK") {
+			font_path += "NotoSansCJK-Regular";
+			font_idx = 4;
+		} else {
+			font_path += font->font_name.replace(" ", "-");
+		}
 
-			font->font_idx = font_idx;
+		font->font_idx = font_idx;
 
-			Vector<String> exts;
-			exts.push_back(".ttc");
-			exts.push_back(".otc");
-			exts.push_back(".ttf");
-			exts.push_back(".otf");
-			for (int i=0; i<exts.size(); i++) {
-				if (FileAccess::exists(font_path + exts[i])) {
+		Vector<String> exts;
+		exts.push_back(".ttc");
+		exts.push_back(".otc");
+		exts.push_back(".ttf");
+		exts.push_back(".otf");
+		for (int i=0; i<exts.size(); i++) {
+			if (FileAccess::exists(font_path + exts[i])) {
 				font_path += exts[i];
 				break;
-				}
 			}
-			print_verbose("Opening system font on Android: " + font_path);
-			FileAccess *f = FileAccess::open(font_path, FileAccess::READ);
-			if (!f) {
-				FT_Done_FreeType(library);
-				ERR_FAIL_V_MSG(ERR_CANT_OPEN, "Cannot open font file '" + font->font_path + "'.");
-			}
-
-			size_t len = f->get_len();
-			_fontdata[font->font_name] = Vector<uint8_t>();
-			Vector<uint8_t> &fontdata = _fontdata[font->font_name];
-			fontdata.resize(len);
-			f->get_buffer(fontdata.ptrw(), len);
-			font->set_font_ptr(fontdata.ptr(), len);
-			f->close();
-
-#elif __APPLE__
-			int font_data_size = 0;
-			unsigned char* font_data = apple_get_font_data_for_font(font->font_name.utf8().ptr(), &font_data_size);
-			_fontdata[font->font_name] = Vector<uint8_t>();
-			_fontdata[font->font_name].resize(font_data_size);
-			copymem(_fontdata[font->font_name].ptrw(), font_data, font_data_size);
-			free(font_data);
-			font->set_font_ptr(_fontdata[font->font_name].ptr(), _fontdata[font->font_name].size());
-#else
-			FT_Done_FreeType(library);
-			ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "System font supported only for iOS/OSX and Android");
-#endif
 		}
+		print_verbose("Opening system font on Android: " + font_path);
+		FileAccess *f = FileAccess::open(font_path, FileAccess::READ);
+		if (!f) {
+			FT_Done_FreeType(library);
+			ERR_FAIL_V_MSG(ERR_CANT_OPEN, "Cannot open font file '" + font->font_path + "'.");
+		}
+
+		size_t len = f->get_len();
+		Vector<uint8_t> fontdata;
+		fontdata.resize(len);
+		f->get_buffer(fontdata.ptrw(), len);
+		font->set_font_ptr(fontdata.ptr(), len);
+		f->close();
+#elif __APPLE__
+		int fontdata_size = 0;
+		unsigned char* fontdata = apple_get_font_data_for_font(font->font_name.utf8().ptr(), &fontdata_size);
+		font->set_font_ptr(fontdata, fontdata_size);
+#else
+		FT_Done_FreeType(library);
+		ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "System font supported only for iOS/OSX and Android");
+#endif
 
 		memset(&stream, 0, sizeof(FT_StreamRec));
 		stream.base = (unsigned char *)font->font_mem;
