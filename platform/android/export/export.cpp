@@ -2116,7 +2116,9 @@ public:
 				err += template_err;
 			}
 		} else {
-			r_missing_templates = !exists_export_template("android_source.zip", &err);
+			r_missing_templates = false; //!exists_export_template("android_source.zip", &err);
+			// Let engine think that android_source.zip is always in place, so we don't have to 
+			// support this in fnx operations
 
 			bool installed_android_build_template = FileAccess::exists("res://android/build/build.gradle");
 			if (!installed_android_build_template) {
@@ -2828,8 +2830,6 @@ public:
 		load_icon_refs(p_preset, main_image, foreground, background);
 
 		Vector<uint8_t> command_line_flags;
-		// Write command line flags into the command_line_flags variable.
-		get_command_line_flags(p_preset, p_path, p_flags, command_line_flags);
 
 		if (export_format == EXPORT_FORMAT_AAB) {
 			if (!p_path.ends_with(".aab")) {
@@ -2902,6 +2902,8 @@ public:
 				}
 			}
 			print_verbose("Storing command line flags..");
+			// Write command line flags into the command_line_flags variable.
+			get_command_line_flags(p_preset, p_path, p_flags, command_line_flags);
 			store_file_at_path("res://android/build/assets/_cl_", command_line_flags);
 
 			print_verbose("Updating ANDROID_HOME environment to " + sdk_path);
@@ -3226,6 +3228,7 @@ public:
 				NULL,
 				0, // No compress (little size gain and potentially slower startup)
 				Z_DEFAULT_COMPRESSION);
+		get_command_line_flags(p_preset, p_path, p_flags, command_line_flags);	
 		zipWriteInFileInZip(unaligned_apk, command_line_flags.ptr(), command_line_flags.size());
 		zipCloseFileInZip(unaligned_apk);
 
