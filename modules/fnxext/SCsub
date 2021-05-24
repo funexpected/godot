@@ -3,7 +3,6 @@ Import('env_modules')
 
 module_env = env_modules.Clone()
 module_env.add_source_files(env.modules_sources,"*.cpp")
-module_env.Append(CXXFLAGS=['-std=c++11'])
 
 Export('env_modules')
 Export('env')
