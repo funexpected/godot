@@ -473,7 +473,7 @@ void OSIPhone::set_keep_screen_on(bool p_enabled) {
 void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 	OS::set_screen_orientation(p_orientation);
 	NSNumber *value;
-	switch (p_orienation) {
+	switch (p_orientation) {
 		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
 			Vector3 acc = Input::get_singleton()->get_accelerometer();
 			if (acc[0] < 0.0) {
