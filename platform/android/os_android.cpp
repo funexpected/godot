@@ -462,13 +462,10 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 			ERR_FAIL_COND(touch.size() != p_points.size());
 
 			for (int i = 0; i < touch.size(); i++) {
-<<<<<<< HEAD
-=======
 
 				const OS_Android::TouchPos& current = touch[i];
 				int id = current.id;
 
->>>>>>> 133acff470 ([funexpected] Ignore small movements when new touch happens)
 				int idx = -1;
 				for (int j = 0; j < p_points.size(); j++) {
 					if (touch[i].id == p_points[j].id) {
@@ -543,13 +540,10 @@ void OS_Android::process_touch(int p_event, int p_pointer, const Vector<TouchPos
 		case AMOTION_EVENT_ACTION_POINTER_UP: { // remove touch
 			for (int i = 0; i < touch.size(); i++) {
 				if (touch[i].id == p_pointer) {
-<<<<<<< HEAD
-=======
 
 					touch_start.erase(p_pointer);
 					ignore_small_movements.erase(p_pointer);
 
->>>>>>> 133acff470 ([funexpected] Ignore small movements when new touch happens)
 					Ref<InputEventScreenTouch> ev;
 					ev.instance();
 					ev->set_index(touch[i].id);
