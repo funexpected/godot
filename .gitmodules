@@ -7,6 +7,3 @@
 [submodule "modules/ECMAScript"]
 	path = modules/ECMAScript
 	url = git@github.com:funexpected/ECMAScript.git
-[submodule "executables"]
-	path = executables
-	url = git@github.com:funexpected/godot.executables.git
