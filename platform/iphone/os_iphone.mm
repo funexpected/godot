@@ -492,7 +492,7 @@ void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 			value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
 	}
 	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-	UIViewController attemptRotationToDeviceOrientation];
+	[UIViewController attemptRotationToDeviceOrientation];
 }
 
 String OSIPhone::get_user_data_dir() const {
