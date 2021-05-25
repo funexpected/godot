@@ -48,8 +48,8 @@ jobs:
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
               cd ../../..
-              rm bin/android_debug.apk
-              rm bin/android_source.zip
+              # rm bin/android_debug.apk
+              # rm bin/android_source.zip
           - os: ubuntu-20.04
             token: android.template.release
             build: |
@@ -59,7 +59,7 @@ jobs:
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
               cd ../../..
-              rm bin/android_release.apk
+              # rm bin/android_release.apk
               rm bin/android_source.zip
               
   
