@@ -252,6 +252,6 @@ def configure(env):
     if env["execinfo"]:
         env.Append(LIBS=["execinfo"])
 
-    # Link those statically for portability
-    if env["use_static_cpp"]:
+    # Link those statically for portability (not supported on OSX)
+    if sys.platform != "darwin" and env["use_static_cpp"]:
         env.Append(LINKFLAGS=["-static-libgcc", "-static-libstdc++"])
