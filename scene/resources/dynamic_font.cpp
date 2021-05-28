@@ -173,10 +173,10 @@ Error DynamicFontAtSize::_load() {
 		}
 
 		size_t len = f->get_len();
-		Vector<uint8_t> fontdata;
-		fontdata.resize(len);
-		f->get_buffer(fontdata.ptrw(), len);
-		font->set_font_ptr(fontdata.ptr(), len);
+		font->_fontdata = Vector<uint8_t>();
+		font->_fontdata.resize(len);
+		f->get_buffer(font->_fontdata.ptrw(), len);
+		font->set_font_ptr(font->_fontdata.ptr(), len);
 		f->close();
 #elif __APPLE__
 		int fontdata_size = 0;
