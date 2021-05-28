@@ -121,38 +121,50 @@ DynamicFontData::~DynamicFontData() {
 
 ////////////////////
 
+void SystemFontData::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_apple_name", "p_name"), &SystemFontData::set_apple_name);
+	ClassDB::bind_method(D_METHOD("get_apple_name"), &SystemFontData::get_apple_name);
+	ClassDB::bind_method(D_METHOD("set_android_name", "p_name"), &SystemFontData::set_android_name);
+	ClassDB::bind_method(D_METHOD("get_android_name"), &SystemFontData::get_android_name);
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "apple_name"), "set_apple_name", "get_apple_name");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "android_name"), "set_android_name", "get_android_name");
+}
+
+////////////////////
+
 Error DynamicFontAtSize::_load() {
 
 	int error = FT_Init_FreeType(&library);
 
 	ERR_FAIL_COND_V_MSG(error != 0, ERR_CANT_CREATE, "Error initializing FreeType.");
 
-	if (font->font_mem == NULL && font->font_name != String()) {
+	SystemFontData *system_font = Object::cast_to<SystemFontData>(font.ptr());
+	if (font->font_mem == NULL && system_font != NULL) {
 #ifdef __ANDROID__
 		print_verbose("Android system font loading!");
 		String font_path = "/system/fonts/";
 		int font_idx = 0; 
 
-		if (font->font_name == "Noto Sans CJK JP") {
+		if (system_font->get_android_name() == "Noto Sans CJK JP") {
 			font_path += "NotoSansCJK-Regular";
 			font_idx = 0;
-		} else if (font->font_name == "Noto Sans CJK KR") {
+		} else if (system_font->get_android_name() == "Noto Sans CJK KR") {
 			font_path += "NotoSansCJK-Regular";
 			font_idx = 1;
-		} else if (font->font_name == "Noto Sans CJK SC") {
+		} else if (system_font->get_android_name() == "Noto Sans CJK SC") {
 			font_path += "NotoSansCJK-Regular";
 			font_idx = 2;
-		} else if (font->font_name == "Noto Sans CJK TC") {
+		} else if (system_font->get_android_name() == "Noto Sans CJK TC") {
 			font_path += "NotoSansCJK-Regular";
 			font_idx = 3;
-		} else if (font->font_name == "Noto Sans CJK HK") {
+		} else if (system_font->get_android_name() == "Noto Sans CJK HK") {
 			font_path += "NotoSansCJK-Regular";
 			font_idx = 4;
 		} else {
-			font_path += font->font_name.replace(" ", "-");
+			font_path += system_font->get_android_name().replace(" ", "-");
 		}
 
-		font->font_idx = font_idx;
+		system_font->font_idx = font_idx;
 
 		Vector<String> exts;
 		exts.push_back(".ttc");
@@ -169,36 +181,40 @@ Error DynamicFontAtSize::_load() {
 		FileAccess *f = FileAccess::open(font_path, FileAccess::READ);
 		if (!f) {
 			FT_Done_FreeType(library);
-			ERR_FAIL_V_MSG(ERR_CANT_OPEN, "Cannot open font file '" + font->font_path + "'.");
+			ERR_FAIL_V_MSG(ERR_CANT_OPEN, "Cannot open font file '" + font_path + "'.");
 		}
 
 		size_t len = f->get_len();
-		font->_fontdata = Vector<uint8_t>();
-		font->_fontdata.resize(len);
-		f->get_buffer(font->_fontdata.ptrw(), len);
-		font->set_font_ptr(font->_fontdata.ptr(), len);
+		system_font->_fontdata = Vector<uint8_t>();
+		system_font->_fontdata.resize(len);
+		f->get_buffer(system_font->_fontdata.ptrw(), len);
+		system_font->set_font_ptr(system_font->_fontdata.ptr(), len);
 		f->close();
 #elif __APPLE__
 		int fontdata_size = 0;
-		unsigned char* fontdata = apple_get_font_data_for_font(font->font_name.utf8().ptr(), &fontdata_size);
-		font->set_font_ptr(fontdata, fontdata_size);
+		unsigned char* fontdata = apple_get_font_data_for_font(system_font->get_apple_name().utf8().ptr(), &fontdata_size);
+		system_font->_fontdata = Vector<uint8_t>();
+		system_font->_fontdata.resize(fontdata_size);
+		memcpy(system_font->_fontdata.ptrw(), fontdata, fontdata_size);
+		free(fontdata);
+		system_font->set_font_ptr(system_font->_fontdata.ptr(), system_font->_fontdata.size());
 #else
 		FT_Done_FreeType(library);
 		ERR_FAIL_V_MSG(ERR_UNCONFIGURED, "System font supported only for iOS/OSX and Android");
 #endif
 
 		memset(&stream, 0, sizeof(FT_StreamRec));
-		stream.base = (unsigned char *)font->font_mem;
-		stream.size = font->font_mem_size;
+		stream.base = (unsigned char *)system_font->font_mem;
+		stream.size = system_font->font_mem_size;
 		stream.pos = 0;
 
 		FT_Open_Args fargs;
 		memset(&fargs, 0, sizeof(FT_Open_Args));
-		fargs.memory_base = (unsigned char *)font->font_mem;
-		fargs.memory_size = font->font_mem_size;
+		fargs.memory_base = (unsigned char *)system_font->font_mem;
+		fargs.memory_size = system_font->font_mem_size;
 		fargs.flags = FT_OPEN_MEMORY;
 		fargs.stream = &stream;
-		error = FT_Open_Face(library, &fargs, font->font_idx, &face);
+		error = FT_Open_Face(library, &fargs, system_font->font_idx, &face);
 	} else if (font->font_mem == NULL && font->font_path != String()) {
 		FileAccess *f = FileAccess::open(font->font_path, FileAccess::READ);
 		if (!f) {

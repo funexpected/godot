@@ -674,6 +674,7 @@ void register_scene_types() {
 	ClassDB::register_class<TextFile>();
 
 	ClassDB::register_class<DynamicFontData>();
+	ClassDB::register_class<SystemFontData>();
 	ClassDB::register_class<DynamicFont>();
 
 	DynamicFont::initialize_dynamic_fonts();

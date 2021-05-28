@@ -111,6 +111,21 @@ public:
 
 VARIANT_ENUM_CAST(DynamicFontData::Hinting);
 
+class SystemFontData: public DynamicFontData {
+	GDCLASS(SystemFontData, DynamicFontData);
+
+	String apple_name;
+	String android_name;
+
+protected:
+	static void _bind_methods();
+public:
+	String get_apple_name() const { return apple_name; }
+	void set_apple_name(const String &p_name) { apple_name = p_name; }
+	String get_android_name() const { return android_name; }
+	void set_android_name(const String &p_name) { android_name = p_name; }
+};
+
 class DynamicFontAtSize : public Reference {
 
 	GDCLASS(DynamicFontAtSize, Reference);
