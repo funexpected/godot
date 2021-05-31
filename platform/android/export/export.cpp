@@ -2713,6 +2713,8 @@ public:
 			}
 		}
 
+		keystore = ProjectSettings::get_singleton()->globalize_path(keystore);
+
 		if (!FileAccess::exists(keystore)) {
 			EditorNode::add_io_error("Could not find keystore, unable to export.");
 			return ERR_FILE_CANT_OPEN;
