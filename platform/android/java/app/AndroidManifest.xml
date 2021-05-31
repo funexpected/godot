@@ -60,6 +60,8 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+<!--CHUNK_ACTIVITY_BEGIN-->
+<!--CHUNK_ACTIVITY_END-->
         </activity>
 
 <!-- Custom application XML added by add-ons. -->

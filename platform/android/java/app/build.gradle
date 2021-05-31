@@ -22,6 +22,8 @@ buildscript {
 }
 
 apply plugin: 'com.android.application'
+//CHUNK_BUILDSCRIPT_DEPENDENCIES_BEGIN
+//CHUNK_BUILDSCRIPT_DEPENDENCIES_END
 
 allprojects {
     repositories {
