@@ -48,6 +48,9 @@ public:
 	String get_model() const;
 	String get_rate_url(int p_app_id) const;
 	String get_app_version();
+	void send_notification(const String &identifier_s, const String &title_s, const String &body_s, int time_offset);
+	void cancel_notifications(const Array &identifier_arr);
+
 
 	void share_data(const String &title, const String &subject, const String &text);
 	int get_interface_orientation() const;
