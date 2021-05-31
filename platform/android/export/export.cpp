@@ -2976,6 +2976,7 @@ public:
 					EditorNode::add_io_error("Could not find keystore, unable to export.");
 					return ERR_FILE_CANT_OPEN;
 				}
+				release_keystore = ProjectSettings::get_singleton()->globalize_path(release_keystore);
 
 				cmdline.push_back("-Prelease_keystore_file=" + release_keystore); // argument to specify the release keystore file.
 				cmdline.push_back("-Prelease_keystore_alias=" + release_username); // argument to specify the release keystore alias.
