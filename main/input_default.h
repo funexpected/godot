@@ -238,6 +238,7 @@ public:
 	void joy_connection_changed(int p_idx, bool p_connected, String p_name, String p_guid = "");
 	void parse_joypad_mapping(String p_mapping, bool p_update_existing);
 	void keyboard_hidden();
+	void keyboard_showing();
 	void virtual_keyboard_height_changed(int p_height);
 
 	virtual Vector3 get_gravity() const;

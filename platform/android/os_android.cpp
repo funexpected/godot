@@ -746,6 +746,7 @@ void OS_Android::show_virtual_keyboard(const String &p_existing_text, const Rect
 
 	if (godot_io_java->has_vk()) {
 		godot_io_java->show_vk(p_existing_text, p_multiline, p_max_input_length, p_cursor_start, p_cursor_end);
+		input->keyboard_showing();
 	} else {
 
 		ERR_PRINT("Virtual keyboard not available");
@@ -757,6 +758,7 @@ void OS_Android::hide_virtual_keyboard() {
 	if (godot_io_java->has_vk()) {
 
 		godot_io_java->hide_vk();
+		input->keyboard_hidden();
 	} else {
 
 		ERR_PRINT("Virtual keyboard not available");

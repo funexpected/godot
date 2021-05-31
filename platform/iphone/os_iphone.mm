@@ -442,6 +442,8 @@ void OSIPhone::set_virtual_keyboard_height(int p_height) {
 		input->virtual_keyboard_height_changed(p_height);
 		if (virtual_keyboard_height == 0) {
 			input->keyboard_hidden();
+		} else {
+			input->keyboard_showing();
 		}
 	}
 }
