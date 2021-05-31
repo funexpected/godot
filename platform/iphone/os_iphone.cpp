@@ -506,6 +506,10 @@ void OSIPhone::keyboard_hidden() {
 	input->keyboard_hidden();
 }
 
+void OSIPhone::keyboard_showing() {
+	input->keyboard_showing();
+}
+
 Error OSIPhone::shell_open(String p_uri) {
 	return _shell_open(p_uri);
 };
