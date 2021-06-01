@@ -41,7 +41,6 @@ void iOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
 	ClassDB::bind_method(D_METHOD("get_interface_orientation"), &iOS::get_interface_orientation);
 	ClassDB::bind_method(D_METHOD("share_data", "text", "image_path"), &iOS::share_data, DEFVAL(""));
-	ClassDB::bind_method(D_METHOD("get_app_version"), &iOS::get_app_version);
 	
 };
 
@@ -101,13 +100,6 @@ int iOS::get_interface_orientation() const {
 	} else {
 		return OS::SCREEN_SENSOR;
 	}
-}
-
-String iOS::get_app_version()
-{
-	NSString	*appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-	const char	*str = [appVersionString UTF8String];
-	return String(str != NULL ? str : "");
 }
 
 
