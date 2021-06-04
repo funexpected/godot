@@ -33,7 +33,6 @@
 
 #include "core/object.h"
 #include <wchar.h>
-#import "app_delegate.h"
 
 
 class iOS : public Object {
@@ -52,7 +51,7 @@ public:
 	void cancel_notifications(const Array &identifier_arr);
 
 
-	void share_data(const String &title, const String &subject, const String &text);
+	void share_data(const String &text, const String &image_path);
 	int get_interface_orientation() const;
 	iOS();
 };

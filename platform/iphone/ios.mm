@@ -133,7 +133,7 @@ void iOS::send_notification(const String &identifier_s, const String &title_s, c
 
 void iOS::cancel_notifications(const Array &identifier_arr)
 {
-	NSMutableArray *result = [[[NSMutableArray alloc] init] autorelease];
+	NSMutableArray *result = [[NSMutableArray alloc] init];
 	for (unsigned int i = 0; i < identifier_arr.size(); ++i) {
 		String indifiter = identifier_arr[i];
 		NSString *identifier = [NSString stringWithCString:indifiter.utf8().get_data() encoding:NSUTF8StringEncoding];
