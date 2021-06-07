@@ -281,6 +281,14 @@ public:
 	EditorExportPlatform();
 };
 
+struct SwiftPackage {
+	String name;	// Facebook
+	String url;		// "https://github.com/facebook/facebook-ios-sdk.git"
+	String revision;// "c3d367656ae8ced1149c2c6a5e6b5dd91ecad63c"
+	String version;	// "9.3.0"
+	Array package_frameworks; // [FacebookCore, FacebookLogin, FacebookShare]
+};
+
 class EditorExportPlugin : public Reference {
 	GDCLASS(EditorExportPlugin, Reference);
 
@@ -296,6 +304,8 @@ class EditorExportPlugin : public Reference {
 	};
 	Vector<ExtraFile> extra_files;
 	bool skipped;
+
+	Vector<SwiftPackage> swift_packages;
 
 	Vector<String> ios_frameworks;
 	Vector<String> ios_embedded_frameworks;
@@ -314,6 +324,7 @@ class EditorExportPlugin : public Reference {
 
 	_FORCE_INLINE_ void _export_end() {
 		ios_frameworks.clear();
+		swift_packages.clear();
 		ios_embedded_frameworks.clear();
 		ios_bundle_files.clear();
 		ios_plist_content = "";
@@ -333,6 +344,7 @@ protected:
 	void add_file(const String &p_path, const Vector<uint8_t> &p_file, bool p_remap);
 	void add_shared_object(const String &p_path, const Vector<String> &tags);
 
+	void add_ios_swift_package(const String &p_name, const String &p_url, const String &p_revision, const String &p_version, const Array &p_package_frameworks);
 	void add_ios_framework(const String &p_path);
 	void add_ios_embedded_framework(const String &p_path);
 	void add_ios_project_static_lib(const String &p_path);
@@ -350,6 +362,7 @@ protected:
 	static void _bind_methods();
 
 public:
+	Vector<SwiftPackage> get_ios_swift_packages() const;
 	Vector<String> get_ios_frameworks() const;
 	Vector<String> get_ios_embedded_frameworks() const;
 	Vector<String> get_ios_project_static_libs() const;
