@@ -570,6 +570,22 @@ void EditorExportPlugin::add_ios_embedded_framework(const String &p_path) {
 	ios_embedded_frameworks.push_back(p_path);
 }
 
+void EditorExportPlugin::add_ios_swift_package(const String &p_name, const String &p_url, const String &p_revision, const String &p_version, const Array &p_package_frameworks)
+{
+	SwiftPackage pack;
+	pack.name = p_name;
+	pack.url = p_url;
+	pack.revision = p_revision;
+	pack.version = p_version;
+	pack.package_frameworks = p_package_frameworks;
+	swift_packages.push_back(pack);
+}
+
+Vector<SwiftPackage> EditorExportPlugin::get_ios_swift_packages() const {
+	return swift_packages;
+}
+
+
 Vector<String> EditorExportPlugin::get_ios_frameworks() const {
 	return ios_frameworks;
 }
@@ -667,6 +683,7 @@ void EditorExportPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("add_ios_project_static_lib", "path"), &EditorExportPlugin::add_ios_project_static_lib);
 	ClassDB::bind_method(D_METHOD("add_file", "path", "file", "remap"), &EditorExportPlugin::add_file);
 	ClassDB::bind_method(D_METHOD("add_ios_framework", "path"), &EditorExportPlugin::add_ios_framework);
+	ClassDB::bind_method(D_METHOD("add_ios_swift_package", "name", "url", "revision", "version", "packages"), &EditorExportPlugin::add_ios_swift_package);
 	ClassDB::bind_method(D_METHOD("add_ios_embedded_framework", "path"), &EditorExportPlugin::add_ios_embedded_framework);
 	ClassDB::bind_method(D_METHOD("add_ios_plist_content", "plist_content"), &EditorExportPlugin::add_ios_plist_content);
 	ClassDB::bind_method(D_METHOD("add_ios_linker_flags", "flags"), &EditorExportPlugin::add_ios_linker_flags);

@@ -144,6 +144,7 @@
 			dependencies = (
 			);
 			name = "$binary";
+			$pbx_package_product_dependencies
 			productName = "$name";
 			productReference = D0BCFE3418AEBDA2004A7AAE /* $binary.app */;
 			productType = "com.apple.product-type.application";
@@ -263,6 +264,7 @@
 				tr,
 			);
 			mainGroup = D0BCFE2B18AEBDA2004A7AAE;
+			$pbx_package_references
 			productRefGroup = D0BCFE3518AEBDA2004A7AAE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

@@ -104,9 +104,11 @@ class EditorExportPlatformIOS : public EditorExportPlatform {
 	Vector<ExportArchitecture> _get_supported_architectures();
 	Vector<String> _get_preset_architectures(const Ref<EditorExportPreset> &p_preset);
 
-	void _add_assets_to_project(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &p_project_data, const Vector<IOSExportAsset> &p_additional_assets);
+	void _add_assets_to_project(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &p_project_data, const Vector<IOSExportAsset> &p_additional_assets, const Vector<SwiftPackage> &p_swift_packages);
 	Error _export_additional_assets(const String &p_out_dir, const Vector<String> &p_assets, bool p_is_framework, bool p_should_embed, Vector<IOSExportAsset> &r_exported_assets);
-	Error _export_additional_assets(const String &p_out_dir, const Vector<SharedObject> &p_libraries, Vector<IOSExportAsset> &r_exported_assets);
+	Error _export_additional_assets(const String &p_out_dir, const Vector<SharedObject> &p_libraries, Vector<IOSExportAsset> &r_exported_assets, Vector<SwiftPackage> &r_swift_packages);
+	void _create_swift_packages_file(const Vector<SwiftPackage> &swift_packages, const String &project_path);
+
 
 	bool is_package_name_valid(const String &p_package, String *r_error = NULL) const {
 
@@ -804,7 +806,7 @@ struct ExportLibsData {
 	String dest_dir;
 };
 
-void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &p_project_data, const Vector<IOSExportAsset> &p_additional_assets) {
+void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPreset> &p_preset, Vector<uint8_t> &p_project_data, const Vector<IOSExportAsset> &p_additional_assets, const Vector<SwiftPackage> &p_swift_packages) {
 	// that is just a random number, we just need Godot IDs not to clash with
 	// existing IDs in the project.
 	PbxId current_id = { 0x58938401, 0, 0 };
@@ -814,6 +816,8 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 	String pbx_resources_build;
 	String pbx_resources_refs;
 	String pbx_embeded_frameworks;
+	String pbx_package_references;
+	String pbx_package_product_dependencies;
 
 	const String file_info_format = String("$build_id = {isa = PBXBuildFile; fileRef = $ref_id; };\n") +
 									"$ref_id = {isa = PBXFileReference; lastKnownFileType = $file_type; name = \"$name\"; path = \"$file_path\"; sourceTree = \"<group>\"; };\n";
@@ -874,6 +878,48 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 		pbx_files += additional_asset_info_format.format(format_dict, "$_");
 	}
 
+	for (int i = 0; i < p_swift_packages.size(); ++i) {
+		SwiftPackage swift_package = p_swift_packages[i];
+		String package_id = (++current_id).str();
+
+		String package_format = String("$package_id = {isa = XCRemoteSwiftPackageReference; repositoryURL = $url; requirement = { kind = upToNextMajorVersion; minimumVersion = $version;};};");
+		Dictionary format_dict;
+		format_dict["package_id"] = package_id;
+		format_dict["url"] = swift_package.url;
+		format_dict["version"] = swift_package.version;
+		pbx_files += package_format.format(format_dict, "$_");
+
+		if (pbx_package_references.length() > 0) {
+			pbx_package_references += ",\n";
+		}
+		pbx_package_references += package_id;
+
+		for (int pack_id = 0; pack_id < swift_package.package_frameworks.size(); ++pack_id)
+		{
+			String package_product = swift_package.package_frameworks[pack_id];
+			String build_id = (++current_id).str();
+			String ref_id = (++current_id).str();
+			String package_format = String("$build_id = {isa = PBXBuildFile; productRef = $ref_id; };\n") + 
+											"$ref_id = {isa = XCSwiftPackageProductDependency; package = $package_id; productName = $package_product;};";	
+
+			if (pbx_frameworks_build.length() > 0) {
+				pbx_frameworks_build += ",\n";
+			}
+			pbx_frameworks_build += build_id;
+
+			if (pbx_package_product_dependencies.length() > 0) {
+				pbx_package_product_dependencies += ",\n";
+			}
+			pbx_package_product_dependencies += ref_id;
+			
+			Dictionary format_dict;
+			format_dict["build_id"] = build_id;
+			format_dict["ref_id"] = ref_id;
+			format_dict["package_id"] = package_id;
+			format_dict["package_product"] = package_product;
+			pbx_files += package_format.format(format_dict, "$_");
+		}
+	}
 	// Note, frameworks like gamekit are always included in our project.pbxprof file
 	// even if turned off in capabilities.
 
@@ -906,11 +952,55 @@ void EditorExportPlatformIOS::_add_assets_to_project(const Ref<EditorExportPrese
 	str = str.replace("$additional_pbx_resources_build", pbx_resources_build);
 	str = str.replace("$additional_pbx_resources_refs", pbx_resources_refs);
 	str = str.replace("$pbx_embeded_frameworks", pbx_embeded_frameworks);
+	if (pbx_package_product_dependencies.length() > 0) {
+		pbx_package_product_dependencies = String("packageProductDependencies = (\n") + pbx_package_product_dependencies + "\n);\n";
+	}
+	str = str.replace("$pbx_package_product_dependencies", pbx_package_product_dependencies);
+	if (pbx_package_references.length() > 0) {
+		pbx_package_references = String("packageReferences = (\n") + pbx_package_references + "\n);\n";
+	}
+	str = str.replace("$pbx_package_references", pbx_package_references);
 
 	CharString cs = str.utf8();
 	p_project_data.resize(cs.size() - 1);
 	for (int i = 0; i < cs.size() - 1; i++) {
 		p_project_data.write[i] = cs[i];
+	}
+}
+
+void EditorExportPlatformIOS::_create_swift_packages_file(const Vector<SwiftPackage> &swift_packages, const String &project_path)
+{
+	if (swift_packages.empty())
+		return ;
+	String start = String("{\n  \"object\": {\n    \"pins\": [");
+	String end = String("    ]\n  },\n  \"version\": 1\n}\n");
+	String modules_info;
+
+	for (int i = 0; i < swift_packages.size(); ++i) {
+		SwiftPackage swift_package = swift_packages[i];
+		String package_format = String("{\n\"package\": \"Facebook\",\n\"repositoryURL\": \"$url\",\n\"state\": {\n\"branch\": null,\n\"revision\": \"$revision\",\n\"version\": \"$version\"\n}\n}");
+		Dictionary format_dict;
+		format_dict["revision"] = swift_package.revision;
+		format_dict["url"] = swift_package.url;
+		format_dict["version"] = swift_package.version;
+		if (modules_info.length())
+			modules_info += ",\n";
+		modules_info += package_format.format(format_dict, "$_");
+	}
+	String result = start + modules_info + end;
+	DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
+	String file_dir = project_path + "project.xcworkspace/xcshareddata/swiftpm";
+	if (da) {
+		da->make_dir_recursive(file_dir + "/");
+		FileAccess *f = FileAccess::open(file_dir + "/Package.resolved", FileAccess::WRITE);
+		if (!f) {
+			ERR_PRINTS("Can't write '" + file_dir + "/Package.resolved"+ "'.");
+			return ;
+		};
+		f->store_string(result);
+		f->close();
+		memdelete(f);
+		memdelete(da);
 	}
 }
 
@@ -1050,12 +1140,18 @@ Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir
 	return OK;
 }
 
-Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir, const Vector<SharedObject> &p_libraries, Vector<IOSExportAsset> &r_exported_assets) {
+Error EditorExportPlatformIOS::_export_additional_assets(const String &p_out_dir, const Vector<SharedObject> &p_libraries, Vector<IOSExportAsset> &r_exported_assets, Vector<SwiftPackage> &r_swift_packages) {
 	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
 	for (int i = 0; i < export_plugins.size(); i++) {
 		Vector<String> linked_frameworks = export_plugins[i]->get_ios_frameworks();
 		Error err = _export_additional_assets(p_out_dir, linked_frameworks, true, false, r_exported_assets);
 		ERR_FAIL_COND_V(err, err);
+
+		Vector<SwiftPackage> swift_packages = export_plugins[i]->get_ios_swift_packages();
+		for (int f_idx = 0; f_idx < swift_packages.size(); ++f_idx) {
+			SwiftPackage package = swift_packages[f_idx];
+			r_swift_packages.push_back(package);
+		}
 
 		Vector<String> embedded_frameworks = export_plugins[i]->get_ios_embedded_frameworks();
 		err = _export_additional_assets(p_out_dir, embedded_frameworks, true, true, r_exported_assets);
@@ -1420,8 +1516,10 @@ Error EditorExportPlatformIOS::export_project(const Ref<EditorExportPreset> &p_p
 
 	print_line("Exporting additional assets");
 	Vector<IOSExportAsset> assets;
-	_export_additional_assets(dest_dir + binary_name, libraries, assets);
-	_add_assets_to_project(p_preset, project_file_data, assets);
+	Vector<SwiftPackage> swift_packages;
+	_export_additional_assets(dest_dir + binary_name, libraries, assets, swift_packages);
+	_add_assets_to_project(p_preset, project_file_data, assets, swift_packages);
+	_create_swift_packages_file(swift_packages, dest_dir + binary_name + ".xcodeproj/");
 	String project_file_name = dest_dir + binary_name + ".xcodeproj/project.pbxproj";
 	FileAccess *f = FileAccess::open(project_file_name, FileAccess::WRITE);
 	if (!f) {
