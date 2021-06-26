@@ -416,8 +416,9 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 			}
 		}
 	} else {
-		float priority_best = 1e20;
-		int auto_advance_to = -1;
+		int priority_best = 1;
+		Vector<int> auto_advance_to;// = -1;
+		//Vector<int> auto_advan;
 		for (int i = 0; i < p_state_machine->transitions.size(); i++) {
 
 			bool auto_advance = false;
@@ -430,18 +431,22 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 			}
 
 			if (p_state_machine->transitions[i].from == current && auto_advance) {
-
-				if (p_state_machine->transitions[i].transition->get_priority() <= priority_best) {
-					priority_best = p_state_machine->transitions[i].transition->get_priority();
-					auto_advance_to = i;
+				int transtion_priority = p_state_machine->transitions[i].transition->get_priority();
+				if (transtion_priority < priority_best) {
+					priority_best = transtion_priority;
+					auto_advance_to.clear();
+					auto_advance_to.push_back(i);
+				} else if (transtion_priority == priority_best) {
+					auto_advance_to.push_back(i);
 				}
 			}
 		}
 
-		if (auto_advance_to != -1) {
-			next = p_state_machine->transitions[auto_advance_to].to;
-			next_xfade = p_state_machine->transitions[auto_advance_to].transition->get_xfade_time();
-			switch_mode = p_state_machine->transitions[auto_advance_to].transition->get_switch_mode();
+		if (auto_advance_to.size() > 0) {
+			int auto_advance_idx = auto_advance_to.get(Math::rand() % auto_advance_to.size());
+			next = p_state_machine->transitions[auto_advance_idx].to;
+			next_xfade = p_state_machine->transitions[auto_advance_idx].transition->get_xfade_time();
+			switch_mode = p_state_machine->transitions[auto_advance_idx].transition->get_switch_mode();
 		}
 	}
 

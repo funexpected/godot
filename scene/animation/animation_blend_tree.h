@@ -62,6 +62,8 @@ public:
 	AnimationNodeAnimation();
 };
 
+
+
 class AnimationNodeOneShot : public AnimationNode {
 	GDCLASS(AnimationNodeOneShot, AnimationNode);
 
