@@ -209,9 +209,9 @@ void _change_orientation(OS::ScreenOrientation p_orienation) {
 				}
 			} else {
 				if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeLeft) {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
-				} else {
 					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+				} else {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
 				}
 			}
 			break;
