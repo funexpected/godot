@@ -199,14 +199,22 @@ void _change_orientation(OS::ScreenOrientation p_orienation) {
 	switch (p_orienation) {
 		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
 			Vector3 acc = Input::get_singleton()->get_accelerometer();
-			if (acc[0] < 0) {
-				value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
-				break;
+			print_line(String() + "Accelerometer: " + (Variant)acc);
+			if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
+				if (acc[0] < 0) {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+				}
+				else {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+				}
+			} else {
+				if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeLeft) {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+				} else {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+				}
 			}
-			else {
-				value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
-				break;
-			}
+			break;
 		}
 		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
 			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
