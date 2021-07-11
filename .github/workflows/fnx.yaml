@@ -61,7 +61,9 @@ jobs:
               cd ../../..
               rm bin/android_release.apk
               rm bin/android_source.zip
-              
+          - os: ubuntu-20.04
+            token: linux.editor.headless
+            build: scons -j2 platform=server tool=yes target=release_debug verbose=yes
   
     steps:
       - name: Checkout Engine
