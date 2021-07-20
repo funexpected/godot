@@ -146,10 +146,10 @@ jobs:
         uses: actions/download-artifact@v2
       - name: Join artifacts
         run: |
-          tree -d .
-          find . -type f -maxdepth 2 -mindepth 2
+          tree .
+          find . -type f -maxdepth 4 -mindepth 2
           mkdir fnx.godot
-          find . -type f -maxdepth 2 -mindepth 2 | xargs -I{} cp "{}" fnx.godot
+          find . -type f -maxdepth 4 -mindepth 2 | xargs -I{} cp "{}" fnx.godot
           find fnx.godot
       - name: Prepare assets
         run: |
