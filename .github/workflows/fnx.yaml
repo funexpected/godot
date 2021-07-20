@@ -54,7 +54,7 @@ jobs:
               rm bin/godot-lib.debug.aar
               # copy unstripped binaries (for crashlytics)
               mkdir -p bin/unstripped/debug
-              cp platform/android/java/lib/libs/debug/ bin/unstripped/debug
+              cp -r platform/android/java/lib/libs/debug/ bin/unstripped/debug
           - os: ubuntu-20.04
             token: android.template.release
             build: |
@@ -69,7 +69,7 @@ jobs:
               rm bin/godot-lib.release.aar
               # copy unstripped binaries (for crashlytics)
               mkdir -p bin/unstripped/release
-              cp platform/android/java/lib/libs/release/ bin/unstripped/release
+              cp -r platform/android/java/lib/libs/release/ bin/unstripped/release
   
     steps:
 
