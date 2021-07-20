@@ -70,9 +70,11 @@ jobs:
               rm bin/android_release.apk
               rm bin/godot-lib.release.aar
               # copy unstripped binaries (for crashlytics)
-              # mkdir -p bin/android.libs.unstripped/release
-              # cp -r platform/android/java/lib/libs/release/ bin/android.native_libs.unstripped/release
-              zip -r bin/android.native_libs.unstripped.release.zip platform/android/java/lib/libs/release/
+              cd platform/android/java/lib/libs/release/;
+              zip -r android.native_libs.unstripped.release.zip ./
+              tree .
+              cd -;
+              cp platform/android/java/lib/libs/release/android.native_libs.unstripped.release.zip bin
               tree ./bin
     steps:
 
