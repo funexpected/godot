@@ -53,9 +53,11 @@ jobs:
               rm bin/android_debug.apk
               rm bin/godot-lib.debug.aar
               # copy unstripped binaries (for crashlytics)
-              # mkdir -p bin/android.native_libs.unstripped/debug
-              # cp -r platform/android/java/lib/libs/debug/ bin/android.native_libs.unstripped/debug
-              zip -r bin/android.native_libs.unstripped.debug.zip platform/android/java/lib/libs/debug/
+              cd platform/android/java/lib/libs/debug/;
+              zip -r android.native_libs.unstripped.debug.zip ./
+              tree .
+              cd -;
+              cp platform/android/java/lib/libs/debug/android.native_libs.unstripped.debug.zip bin
               tree ./bin
           - os: ubuntu-20.04
             token: android.template.release
@@ -149,9 +151,9 @@ jobs:
       - name: Join artifacts
         run: |
           tree .
-          find . -type f -maxdepth 4 -mindepth 2
+          find . -type f -maxdepth 2 -mindepth 2
           mkdir fnx.godot
-          find . -type f -maxdepth 4 -mindepth 2 | xargs -I{} cp "{}" fnx.godot
+          find . -type f -maxdepth 2 -mindepth 2 | xargs -I{} cp "{}" fnx.godot
           find fnx.godot
       - name: Prepare assets
         run: |
