@@ -52,6 +52,9 @@ jobs:
               mv bin/android_source.zip bin/android_source.debug.zip
               rm bin/android_debug.apk
               rm bin/godot-lib.debug.aar
+              # copy unstripped binaries (for crashlytics)
+              mkdir -p bin/unstripped/debug
+              cp platform/android/java/lib/libs/debug/ bin/unstripped/debug
           - os: ubuntu-20.04
             token: android.template.release
             build: |
@@ -64,7 +67,9 @@ jobs:
               mv bin/android_source.zip bin/android_source.release.zip
               rm bin/android_release.apk
               rm bin/godot-lib.release.aar
-              
+              # copy unstripped binaries (for crashlytics)
+              mkdir -p bin/unstripped/release
+              cp platform/android/java/lib/libs/release/ bin/unstripped/release
   
     steps:
 
