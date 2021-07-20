@@ -55,6 +55,8 @@ jobs:
               # copy unstripped binaries (for crashlytics)
               mkdir -p bin/unstripped/debug
               cp -r platform/android/java/lib/libs/debug/ bin/unstripped/debug
+              zip -r unstripped.debug.zip bin/unstripped/debug
+              ls -la
           - os: ubuntu-20.04
             token: android.template.release
             build: |
@@ -70,7 +72,8 @@ jobs:
               # copy unstripped binaries (for crashlytics)
               mkdir -p bin/unstripped/release
               cp -r platform/android/java/lib/libs/release/ bin/unstripped/release
-  
+              zip -r unstripped.release.zip bin/unstripped/release
+              ls -la
     steps:
 
       - name: Checkout Engine
