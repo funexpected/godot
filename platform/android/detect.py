@@ -210,6 +210,9 @@ def configure(env):
         env.Append(CPPDEFINES=["_DEBUG", "DEBUG_ENABLED", "DEBUG_MEMORY_ENABLED"])
         env.Append(CPPFLAGS=["-UNDEBUG"])
 
+    # Crashlytics uses this to match a binary with its debug symbols
+    env.Append(LINKFLAGS=["-Wl,--build-id"])
+
     # Compiler configuration
 
     env["SHLIBSUFFIX"] = ".so"
