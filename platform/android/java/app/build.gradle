@@ -151,6 +151,8 @@ android {
             } else {
                 signingConfig null
             }
+//CHUNK_BUILDTYPE_DEBUG_BEGIN
+//CHUNK_BUILDTYPE_DEBUG_END
         }
 
         release {
@@ -162,6 +164,8 @@ android {
             } else {
                 signingConfig null
             }
+//CHUNK_BUILDTYPE_RELEASE_BEGIN
+//CHUNK_BUILDTYPE_RELEASE_END
         }
     }
 

@@ -52,6 +52,11 @@ jobs:
               mv bin/android_source.zip bin/android_source.debug.zip
               rm bin/android_debug.apk
               rm bin/godot-lib.debug.aar
+              # copy unstripped binaries (for crashlytics)
+              cd platform/android/java/lib/libs/debug/
+              zip -r android.native_libs.unstripped.debug.zip ./
+              cd -
+              cp platform/android/java/lib/libs/debug/android.native_libs.unstripped.debug.zip bin
           - os: ubuntu-20.04
             token: android.template.release
             build: |
@@ -64,8 +69,11 @@ jobs:
               mv bin/android_source.zip bin/android_source.release.zip
               rm bin/android_release.apk
               rm bin/godot-lib.release.aar
-              
-  
+              # copy unstripped binaries (for crashlytics)
+              cd platform/android/java/lib/libs/release/
+              zip -r android.native_libs.unstripped.release.zip ./
+              cd -
+              cp platform/android/java/lib/libs/release/android.native_libs.unstripped.release.zip bin
     steps:
 
       - name: Checkout Engine
