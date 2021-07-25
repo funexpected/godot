@@ -478,10 +478,18 @@ void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 	switch (p_orientation) {
 		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
 			Vector3 acc = Input::get_singleton()->get_accelerometer();
-			if (acc[0] < 0.0) {
-				value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+			if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
+				if (acc[0] < 0.0) {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+				} else {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+				}
 			} else {
-				value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+				if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeLeft) {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+				} else {
+					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+				}
 			}
 		} break;
 		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
