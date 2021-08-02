@@ -303,6 +303,14 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 // MARK: Remote Notification
 
 // Moved to the iOS Plugin
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken; {
+	for (ApplicationDelegateService *service in services) {
+		if (![service respondsToSelector:_cmd]) {
+			continue;
+		}
+		[service application:application didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
+	}
+}
 
 // MARK: User Activity and Handling Quick Actions
 
