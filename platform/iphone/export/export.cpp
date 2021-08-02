@@ -1360,7 +1360,7 @@ Error EditorExportPlatformIOS::_export_ios_plugins(const Ref<EditorExportPreset>
 				continue;
 			}
 
-			p_config_data.plist_content += "<key>" + key + "</key><string>" + value + "</string>\n";
+			p_config_data.plist_content += "<key>" + key + "</key>" + value + "\n";
 		}
 	}
 
