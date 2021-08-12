@@ -70,6 +70,7 @@ struct PluginConfigIOS {
 	static const char *DEPENDENCIES_LINKER_FLAGS;
 
 	static const char *PLIST_SECTION;
+	static const char *ENTITELEMENTS_SECTION;
 
 	// Set to true when the config file is properly loaded.
 	bool valid_config = false;
@@ -96,6 +97,9 @@ struct PluginConfigIOS {
 	// Optional plist section
 	// Supports only string types for now
 	HashMap<String, String> plist;
+
+	// Optional entitlements section
+	HashMap<String, String> entitlements;
 };
 
 const char *PluginConfigIOS::PLUGIN_CONFIG_EXT = ".gdip";
@@ -115,6 +119,7 @@ const char *PluginConfigIOS::DEPENDENCIES_LINKER_FLAGS = "linker_flags";
 const char *PluginConfigIOS::DEPENDENCIES_FILES_KEY = "files";
 
 const char *PluginConfigIOS::PLIST_SECTION = "plist";
+const char *PluginConfigIOS::ENTITELEMENTS_SECTION = "entitlements";
 
 static inline String resolve_local_dependency_path(String plugin_config_dir, String dependency_path) {
 	String absolute_path;
@@ -299,6 +304,21 @@ static inline PluginConfigIOS load_plugin_config(Ref<ConfigFile> config_file, co
 			}
 
 			plugin_config.plist[keys[i]] = value;
+		}
+	}
+
+	if (config_file->has_section(PluginConfigIOS::ENTITELEMENTS_SECTION)) {
+		List<String> keys;
+		config_file->get_section_keys(PluginConfigIOS::ENTITELEMENTS_SECTION, &keys);
+
+		for (int i = 0; i < keys.size(); i++) {
+			String value = config_file->get_value(PluginConfigIOS::ENTITELEMENTS_SECTION, keys[i], String());
+
+			if (value.empty()) {
+				continue;
+			}
+
+			plugin_config.entitlements[keys[i]] = value;
 		}
 	}
 

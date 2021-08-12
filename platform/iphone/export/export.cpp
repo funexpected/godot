@@ -1245,6 +1245,7 @@ Error EditorExportPlatformIOS::_export_ios_plugins(const Ref<EditorExportPreset>
 	Vector<String> added_linked_dependenciy_names;
 	Vector<String> added_embedded_dependenciy_names;
 	HashMap<String, String> plist_values;
+	HashMap<String, String> entitlements;
 
 	Set<String> plugin_linker_flags;
 
@@ -1336,6 +1337,21 @@ Error EditorExportPlatformIOS::_export_ios_plugins(const Ref<EditorExportPreset>
 			plist_values[key] = value;
 		}
 
+		// Entitelments
+		// Using hash map container to remove duplicates
+		const String *K = nullptr;
+
+		while ((K = plugin.entitlements.next(K))) {
+			String key = *K;
+			String value = plugin.entitlements[key];
+
+			if (key.empty() || value.empty()) {
+				continue;
+			}
+
+			entitlements[key] = value;
+		}
+
 		// CPP Code
 		String definition_comment = "// Plugin: " + plugin.name + "\n";
 		String initialization_method = plugin.initialization_method + "();\n";
@@ -1362,6 +1378,22 @@ Error EditorExportPlatformIOS::_export_ios_plugins(const Ref<EditorExportPreset>
 
 			p_config_data.plist_content += "<key>" + key + "</key>" + value + "\n";
 		}
+	}
+
+	// Update entitlements
+	{
+		const String *K = nullptr;
+		while ((K = entitlements.next(K))) {
+			String key = *K;
+			String value = entitlements[key];
+
+			if (key.empty() || value.empty()) {
+				continue;
+			}
+
+			p_config_data.ios_entitlements += "<key>" + key + "</key>" + value + "\n";
+		}
+
 	}
 
 	// Export files
