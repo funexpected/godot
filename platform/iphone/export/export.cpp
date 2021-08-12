@@ -1339,8 +1339,6 @@ Error EditorExportPlatformIOS::_export_ios_plugins(const Ref<EditorExportPreset>
 
 		// Entitelments
 		// Using hash map container to remove duplicates
-		const String *K = nullptr;
-
 		while ((K = plugin.entitlements.next(K))) {
 			String key = *K;
 			String value = plugin.entitlements[key];
