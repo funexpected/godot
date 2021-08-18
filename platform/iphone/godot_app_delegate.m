@@ -395,17 +395,18 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 // MARK: Opening an URL
 
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options {
+	BOOL result = NO;
 	for (ApplicationDelegateService *service in services) {
 		if (![service respondsToSelector:_cmd]) {
 			continue;
 		}
 
 		if ([service application:app openURL:url options:options]) {
-			return YES;
+			result = YES;
 		}
 	}
 
-	return NO;
+	return result;
 }
 
 // MARK: Disallowing Specified App Extension Types
