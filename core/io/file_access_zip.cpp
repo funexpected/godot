@@ -247,7 +247,7 @@ ZipArchive::~ZipArchive() {
 
 		FileAccess *f = (FileAccess *)unzGetOpaque(packages[i].zfile);
 		unzClose(packages[i].zfile);
-		memdelete(f);
+		if (f != NULL) memdelete(f);
 	}
 
 	packages.clear();
