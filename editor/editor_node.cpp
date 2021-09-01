@@ -719,7 +719,7 @@ void EditorNode::_fs_changed() {
 		Ref<EditorExportPreset> preset;
 		for (int i = 0; i < EditorExport::get_singleton()->get_export_preset_count(); ++i) {
 			preset = EditorExport::get_singleton()->get_export_preset(i);
-			printf("Processing preset  -------------------- ");
+			ERR_PRINT("Processing preset  -------------------- ");
 			if (preset->get_name() == preset_name || export_all_presets) {
 				String export_path = export_defer.path;
 				if (export_path == "")
@@ -730,6 +730,8 @@ void EditorNode::_fs_changed() {
 					ERR_PRINT(export_error);
 					break;
 				if (!export_all_presets)
+					ERR_PRINT("Breaking cause !export_all_presets  -------------------- ");
+					ERR_PRINT(preset_name);
 					break;
 			}
 		}
