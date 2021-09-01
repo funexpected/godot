@@ -731,7 +731,6 @@ void EditorNode::_fs_changed() {
 					break;
 				if (!export_all_presets)
 					ERR_PRINT("Breaking cause !export_all_presets  -------------------- ");
-					ERR_PRINT(preset_name);
 					break;
 			}
 		}
