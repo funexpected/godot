@@ -28,6 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
+#include <iostream>
+using namespace std;
 #include "editor_node.h"
 
 #include "core/bind/core_bind.h"
@@ -718,7 +720,9 @@ void EditorNode::_fs_changed() {
 		bool project_exported = false;
 		Ref<EditorExportPreset> preset;
 		int presets_num = EditorExport::get_singleton()->get_export_preset_count();
-		printf("Number of presets: %d", presets_num );
+		printf("Number of presets: ");
+		cout<<presets_num;
+		cout<<endl;
 		for (int i = 0; i < EditorExport::get_singleton()->get_export_preset_count(); ++i) {
 			preset = EditorExport::get_singleton()->get_export_preset(i);
 			printf("Processing preset  -------------------- \n");
