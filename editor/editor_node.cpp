@@ -717,9 +717,11 @@ void EditorNode::_fs_changed() {
 		export_defer.all_presets = false;
 		bool project_exported = false;
 		Ref<EditorExportPreset> preset;
+		int presets_num = EditorExport::get_singleton()->get_export_preset_count();
+		printf("Number of presets: %d", presets_num );
 		for (int i = 0; i < EditorExport::get_singleton()->get_export_preset_count(); ++i) {
 			preset = EditorExport::get_singleton()->get_export_preset(i);
-			ERR_PRINT("Processing preset  -------------------- ");
+			printf("Processing preset  -------------------- \n");
 			if (preset->get_name() == preset_name || export_all_presets) {
 				String export_path = export_defer.path;
 				if (export_path == "")
@@ -730,7 +732,7 @@ void EditorNode::_fs_changed() {
 					ERR_PRINT(export_error);
 					break;
 				if (!export_all_presets)
-					ERR_PRINT("Breaking cause !export_all_presets  -------------------- ");
+					printf("Breaking cause !export_all_presets  -------------------- \n");
 					break;
 			}
 		}
