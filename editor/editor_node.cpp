@@ -726,8 +726,10 @@ void EditorNode::_fs_changed() {
 				export_error = export_project(preset, export_path);
 				project_exported = true;
 				if (!export_error.empty())
+				{
 					ERR_PRINT(export_error);
 					break;
+				}
 				if (!export_all_presets)
 					break;
 			}
