@@ -249,7 +249,9 @@ void OSIPhone::touch_drag(int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_
 }
 
 void OSIPhone::perform_event(const Ref<InputEvent> &p_event) {
-	input->parse_input_event(p_event);
+	if (input != NULL) {
+		input->parse_input_event(p_event);
+	}
 }
 
 void OSIPhone::touches_cancelled(int p_idx) {
@@ -688,6 +690,7 @@ void add_ios_init_callback(init_callback cb) {
 }
 
 OSIPhone::OSIPhone(String p_data_dir) {
+	input = NULL;
 	for (int i = 0; i < ios_init_callbacks_count; ++i) {
 		ios_init_callbacks[i]();
 	}
