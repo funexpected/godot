@@ -38,9 +38,9 @@ class AnimationNodeStateMachineTransition : public Resource {
 
 public:
 	enum SwitchMode {
+		SWITCH_MODE_AT_END,
 		SWITCH_MODE_IMMEDIATE,
 		SWITCH_MODE_SYNC,
-		SWITCH_MODE_AT_END,
 	};
 
 private:

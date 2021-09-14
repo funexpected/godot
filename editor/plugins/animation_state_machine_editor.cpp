@@ -521,12 +521,12 @@ void AnimationNodeStateMachineEditor::_connection_draw(const Vector2 &p_from, co
 	}
 
 	Ref<Texture> icons[6] = {
+		get_icon("TransitionEndBig", "EditorIcons"),
 		get_icon("TransitionImmediateBig", "EditorIcons"),
 		get_icon("TransitionSyncBig", "EditorIcons"),
-		get_icon("TransitionEndBig", "EditorIcons"),
+		get_icon("TransitionEndAutoBig", "EditorIcons"),
 		get_icon("TransitionImmediateAutoBig", "EditorIcons"),
 		get_icon("TransitionSyncAutoBig", "EditorIcons"),
-		get_icon("TransitionEndAutoBig", "EditorIcons")
 	};
 
 	if (p_selected) {
@@ -920,9 +920,9 @@ void AnimationNodeStateMachineEditor::_notification(int p_what) {
 		tool_connect->set_icon(get_icon("ToolConnect", "EditorIcons"));
 
 		transition_mode->clear();
+		transition_mode->add_icon_item(get_icon("TransitionEnd", "EditorIcons"), TTR("At End"));
 		transition_mode->add_icon_item(get_icon("TransitionImmediate", "EditorIcons"), TTR("Immediate"));
 		transition_mode->add_icon_item(get_icon("TransitionSync", "EditorIcons"), TTR("Sync"));
-		transition_mode->add_icon_item(get_icon("TransitionEnd", "EditorIcons"), TTR("At End"));
 
 		//force filter on those, so they deform better
 		get_icon("TransitionImmediateBig", "EditorIcons")->set_flags(Texture::FLAG_FILTER);
@@ -1291,6 +1291,7 @@ AnimationNodeStateMachineEditor::AnimationNodeStateMachineEditor() {
 	tool_select->set_pressed(true);
 	tool_select->set_tooltip(TTR("Select and move nodes.\nRMB to add new nodes.\nShift+LMB to create connections."));
 	tool_select->connect("pressed", this, "_update_mode", varray(), CONNECT_DEFERRED);
+	tool_select->set_shortcut(ED_SHORTCUT("animation_tree_editor/tool_select", TTR("Select Tool"), KEY_Z));
 
 	tool_create = memnew(ToolButton);
 	top_hb->add_child(tool_create);
@@ -1298,6 +1299,7 @@ AnimationNodeStateMachineEditor::AnimationNodeStateMachineEditor() {
 	tool_create->set_button_group(bg);
 	tool_create->set_tooltip(TTR("Create new nodes."));
 	tool_create->connect("pressed", this, "_update_mode", varray(), CONNECT_DEFERRED);
+	tool_create->set_shortcut(ED_SHORTCUT("animation_tree_editor/tool_create", TTR("Create Tool"), KEY_X));
 
 	tool_connect = memnew(ToolButton);
 	top_hb->add_child(tool_connect);
@@ -1305,6 +1307,7 @@ AnimationNodeStateMachineEditor::AnimationNodeStateMachineEditor() {
 	tool_connect->set_button_group(bg);
 	tool_connect->set_tooltip(TTR("Connect nodes."));
 	tool_connect->connect("pressed", this, "_update_mode", varray(), CONNECT_DEFERRED);
+	tool_connect->set_shortcut(ED_SHORTCUT("animation_tree_editor/tool_connect", TTR("Connect Tool"), KEY_C));
 
 	tool_erase_hb = memnew(HBoxContainer);
 	top_hb->add_child(tool_erase_hb);
@@ -1314,6 +1317,7 @@ AnimationNodeStateMachineEditor::AnimationNodeStateMachineEditor() {
 	tool_erase_hb->add_child(tool_erase);
 	tool_erase->connect("pressed", this, "_erase_selected");
 	tool_erase->set_disabled(true);
+	tool_erase->set_shortcut(ED_SHORTCUT("animation_tree_editor/tool_erase", TTR("Erase Tool"), KEY_V));
 
 	tool_erase_hb->add_child(memnew(VSeparator));
 
