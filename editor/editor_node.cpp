@@ -1324,6 +1324,9 @@ void EditorNode::_find_node_types(Node *p_node, int &count_2d, int &count_3d) {
 }
 
 void EditorNode::_save_scene_with_preview(String p_file, int p_idx) {
+	if (!bool(EDITOR_GET("interface/editor/generate_thumbnails"))) {
+		return _save_scene(p_file, p_idx);
+	}
 
 	EditorProgress save("save", TTR("Saving Scene"), 4);
 
@@ -6073,6 +6076,7 @@ EditorNode::EditorNode() {
 	EDITOR_DEF("interface/editor/quit_confirmation", true);
 	EDITOR_DEF("interface/editor/show_update_spinner", false);
 	EDITOR_DEF("interface/editor/update_continuously", false);
+	EDITOR_DEF("interface/editor/generate_thumbnails", false);
 	EDITOR_DEF_RST("interface/scene_tabs/restore_scenes_on_load", false);
 	EDITOR_DEF_RST("interface/scene_tabs/show_thumbnail_on_hover", true);
 	EDITOR_DEF_RST("interface/inspector/capitalize_properties", true);

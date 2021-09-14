@@ -357,6 +357,9 @@ void EditorResourcePreview::queue_edited_resource_preview(const Ref<Resource> &p
 
 	ERR_FAIL_NULL(p_receiver);
 	ERR_FAIL_COND(!p_res.is_valid());
+	if (!bool(EDITOR_GET("interface/editor/generate_thumbnails"))) {
+		return;
+	}
 
 	preview_mutex.lock();
 
