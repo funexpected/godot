@@ -906,7 +906,7 @@ StreamTexture::StreamTexture() {
 }
 
 StreamTexture::~StreamTexture() {
-
+	if (VS::get_singleton() != NULL)
 	VS::get_singleton()->free(texture);
 }
 
