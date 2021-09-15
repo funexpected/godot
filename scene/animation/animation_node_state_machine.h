@@ -94,6 +94,7 @@ class AnimationNodeStateMachinePlayback : public Resource {
 	};
 
 	float len_total;
+	bool at_exit_state;
 
 	float len_current;
 	float pos_current;
@@ -129,6 +130,7 @@ public:
 	Vector<StringName> get_travel_path() const;
 	float get_current_play_pos() const;
 	float get_current_length() const;
+	bool can_exit() const;
 
 	AnimationNodeStateMachinePlayback();
 };

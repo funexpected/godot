@@ -422,10 +422,10 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 		for (int i = 0; i < p_state_machine->transitions.size(); i++) {
 
 			bool auto_advance = false;
-			if (p_state_machine->transitions[i].transition->has_auto_advance()) {
+			StringName advance_condition_name = p_state_machine->transitions[i].transition->get_advance_condition_name();
+			if (advance_condition_name == StringName() || p_state_machine->transitions[i].transition->has_auto_advance()) {
 				auto_advance = true;
 			}
-			StringName advance_condition_name = p_state_machine->transitions[i].transition->get_advance_condition_name();
 			if (advance_condition_name != StringName() && bool(p_state_machine->get_parameter(advance_condition_name))) {
 				auto_advance = true;
 			}
@@ -501,7 +501,13 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 		rem = p_state_machine->blend_node(p_state_machine->end_node, p_state_machine->states[p_state_machine->end_node].node, 0, true, 0, AnimationNode::FILTER_IGNORE, false);
 	}
 
+	at_exit_state = p_state_machine->end_node == StringName() || p_state_machine->end_node == current;
+
 	return rem;
+}
+
+bool AnimationNodeStateMachinePlayback::can_exit() const {
+	return at_exit_state;
 }
 
 void AnimationNodeStateMachinePlayback::_bind_methods() {
@@ -834,7 +840,12 @@ float AnimationNodeStateMachine::process(float p_time, bool p_seek) {
 	Ref<AnimationNodeStateMachinePlayback> playback = get_parameter(this->playback);
 	ERR_FAIL_COND_V(playback.is_null(), 0.0);
 
-	return playback->process(this, p_time, p_seek);
+	float tr = playback->process(this, p_time, p_seek);
+	if (playback->can_exit()) {
+		return 0.0;
+	} else {
+		return MAX(0.01, tr);
+	}
 }
 
 String AnimationNodeStateMachine::get_caption() const {
