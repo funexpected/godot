@@ -43,8 +43,23 @@ public:
 		SWITCH_MODE_SYNC,
 	};
 
+	enum EasingMode {
+        EASE_LINEAR,
+        EASE_QUAD_IN,        EASE_QUAD_OUT,         EASE_QUAD_INOUT,
+        EASE_CUBIC_IN,       EASE_CUBIC_OUT,        EASE_CUBIC_INOUT,
+        EASE_QUART_IN,       EASE_QUART_OUT,        EASE_QUART_INOUT,
+        EASE_QUINT_IN,       EASE_QUINT_OUT,        EASE_QUINT_INOUT,
+        EASE_SINE_IN,        EASE_SINE_OUT,         EASE_SINE_INOUT,
+        EASE_BACK_IN,        EASE_BACK_OUT,         EASE_BACK_INOUT,
+        EASE_CIRC_IN,        EASE_CIRC_OUT,         EASE_CIRC_INOUT,
+        EASE_BOUNCE_IN,      EASE_BOUNCE_OUT,       EASE_BOUNCE_INOUT,
+        EASE_ELASTIC_IN,     EASE_ELASTIC_OUT,      EASE_ELASTIC_INOUT,
+        EASE_CUSTOM
+    };
+
 private:
 	SwitchMode switch_mode;
+	EasingMode easing_mode;
 	bool auto_advance;
 	StringName advance_condition;
 	StringName advance_condition_name;
@@ -53,11 +68,15 @@ private:
 	int priority;
 
 protected:
+	virtual void _validate_property(PropertyInfo &prop) const;
 	static void _bind_methods();
 
 public:
 	void set_switch_mode(SwitchMode p_mode);
 	SwitchMode get_switch_mode() const;
+
+	void set_easing_mode(EasingMode p_mode);
+	EasingMode get_easing_mode() const;
 
 	void set_auto_advance(bool p_enable);
 	bool has_auto_advance() const;
@@ -80,6 +99,7 @@ public:
 };
 
 VARIANT_ENUM_CAST(AnimationNodeStateMachineTransition::SwitchMode)
+VARIANT_ENUM_CAST(AnimationNodeStateMachineTransition::EasingMode)
 
 class AnimationNodeStateMachine;
 
@@ -105,6 +125,7 @@ class AnimationNodeStateMachinePlayback : public Resource {
 	StringName fading_from;
 	float fading_time;
 	float fading_pos;
+	AnimationNodeStateMachineTransition::EasingMode fading_easing;
 
 	Vector<StringName> path;
 	bool playing;
@@ -113,6 +134,7 @@ class AnimationNodeStateMachinePlayback : public Resource {
 	bool start_request_travel;
 	bool stop_request;
 
+	float _ease_fade(float p_fade) const;
 	bool _travel(AnimationNodeStateMachine *p_state_machine, const StringName &p_travel);
 
 	float process(AnimationNodeStateMachine *p_state_machine, float p_time, bool p_seek);

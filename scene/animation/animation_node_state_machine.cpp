@@ -42,6 +42,16 @@ AnimationNodeStateMachineTransition::SwitchMode AnimationNodeStateMachineTransit
 	return switch_mode;
 }
 
+void AnimationNodeStateMachineTransition::set_easing_mode(EasingMode p_mode) {
+
+	easing_mode = p_mode;
+}
+
+AnimationNodeStateMachineTransition::EasingMode AnimationNodeStateMachineTransition::get_easing_mode() const {
+
+	return easing_mode;
+}
+
 void AnimationNodeStateMachineTransition::set_auto_advance(bool p_enable) {
 	auto_advance = p_enable;
 }
@@ -73,7 +83,11 @@ StringName AnimationNodeStateMachineTransition::get_advance_condition_name() con
 void AnimationNodeStateMachineTransition::set_xfade_time(float p_xfade) {
 
 	ERR_FAIL_COND(p_xfade < 0);
+	bool change_list = p_xfade < CMP_EPSILON && xfade > CMP_EPSILON || p_xfade > CMP_EPSILON && xfade < CMP_EPSILON;
 	xfade = p_xfade;
+	if (change_list) {
+		property_list_changed_notify();
+	}
 	emit_changed();
 }
 
@@ -99,9 +113,22 @@ int AnimationNodeStateMachineTransition::get_priority() const {
 	return priority;
 }
 
+void AnimationNodeStateMachineTransition::_validate_property(PropertyInfo &prop) const {
+	if (prop.name == "easing_mode"){
+		if (xfade > 0) {
+			prop.usage = PROPERTY_USAGE_DEFAULT;
+		} else {
+			prop.usage = PROPERTY_USAGE_NOEDITOR;
+		}
+	}
+}
+
 void AnimationNodeStateMachineTransition::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_switch_mode", "mode"), &AnimationNodeStateMachineTransition::set_switch_mode);
 	ClassDB::bind_method(D_METHOD("get_switch_mode"), &AnimationNodeStateMachineTransition::get_switch_mode);
+
+	ClassDB::bind_method(D_METHOD("set_easing_mode", "mode"), &AnimationNodeStateMachineTransition::set_easing_mode);
+	ClassDB::bind_method(D_METHOD("get_easing_mode"), &AnimationNodeStateMachineTransition::get_easing_mode);
 
 	ClassDB::bind_method(D_METHOD("set_auto_advance", "auto_advance"), &AnimationNodeStateMachineTransition::set_auto_advance);
 	ClassDB::bind_method(D_METHOD("has_auto_advance"), &AnimationNodeStateMachineTransition::has_auto_advance);
@@ -122,6 +149,37 @@ void AnimationNodeStateMachineTransition::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_advance"), "set_auto_advance", "has_auto_advance");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "advance_condition"), "set_advance_condition", "get_advance_condition");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "xfade_time", PROPERTY_HINT_RANGE, "0,240,0.01"), "set_xfade_time", "get_xfade_time");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "easing_mode", PROPERTY_HINT_ENUM, 
+		"Linear,"
+        "Quad in,"
+		"Quad out,"
+		"Quad in-out,"
+        "Cubic in,"
+		"Cubic out,"
+		"Cubic in-out,"
+        "Quart in,"
+		"Quart out,"
+		"Quart in-out,"
+        "Quint in,"
+		"Quint out,"
+		"Quint in-out,"
+        "Sine in,"
+		"Sine out,"
+		"Sine in-out,"
+        "Back in,"
+		"Back out,"
+		"Back in-out,"
+        "Circ in,"
+		"Circ out,"
+		"Circ in-out,"
+        "Bounce in,"
+		"Bounce out,"
+		"Bounce in-out,"
+        "Elastic in,"
+		"Elastic out,"
+		"Elastic in-out,"
+        "Custom"
+	), "set_easing_mode", "get_easing_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "priority", PROPERTY_HINT_RANGE, "0,32,1"), "set_priority", "get_priority");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disabled"), "set_disabled", "is_disabled");
 
@@ -129,12 +187,43 @@ void AnimationNodeStateMachineTransition::_bind_methods() {
 	BIND_ENUM_CONSTANT(SWITCH_MODE_SYNC);
 	BIND_ENUM_CONSTANT(SWITCH_MODE_AT_END);
 
+	BIND_ENUM_CONSTANT(EASE_LINEAR);
+	BIND_ENUM_CONSTANT(EASE_QUAD_IN);
+	BIND_ENUM_CONSTANT(EASE_QUAD_OUT);
+	BIND_ENUM_CONSTANT(EASE_QUAD_INOUT);
+	BIND_ENUM_CONSTANT(EASE_CUBIC_IN);
+	BIND_ENUM_CONSTANT(EASE_CUBIC_OUT);
+	BIND_ENUM_CONSTANT(EASE_CUBIC_INOUT);
+	BIND_ENUM_CONSTANT(EASE_QUART_IN);
+	BIND_ENUM_CONSTANT(EASE_QUART_OUT);
+	BIND_ENUM_CONSTANT(EASE_QUART_INOUT);
+	BIND_ENUM_CONSTANT(EASE_QUINT_IN);
+	BIND_ENUM_CONSTANT(EASE_QUINT_OUT);
+	BIND_ENUM_CONSTANT(EASE_QUINT_INOUT);
+	BIND_ENUM_CONSTANT(EASE_SINE_IN);
+	BIND_ENUM_CONSTANT(EASE_SINE_OUT);
+	BIND_ENUM_CONSTANT(EASE_SINE_INOUT);
+	BIND_ENUM_CONSTANT(EASE_BACK_IN);
+	BIND_ENUM_CONSTANT(EASE_BACK_OUT);
+	BIND_ENUM_CONSTANT(EASE_BACK_INOUT);
+	BIND_ENUM_CONSTANT(EASE_CIRC_IN);
+	BIND_ENUM_CONSTANT(EASE_CIRC_OUT);
+	BIND_ENUM_CONSTANT(EASE_CIRC_INOUT);
+	BIND_ENUM_CONSTANT(EASE_BOUNCE_IN);
+	BIND_ENUM_CONSTANT(EASE_BOUNCE_OUT);
+	BIND_ENUM_CONSTANT(EASE_BOUNCE_INOUT);
+	BIND_ENUM_CONSTANT(EASE_ELASTIC_IN);
+	BIND_ENUM_CONSTANT(EASE_ELASTIC_OUT);
+	BIND_ENUM_CONSTANT(EASE_ELASTIC_INOUT);
+	BIND_ENUM_CONSTANT(EASE_CUSTOM);
+
 	ADD_SIGNAL(MethodInfo("advance_condition_changed"));
 }
 
 AnimationNodeStateMachineTransition::AnimationNodeStateMachineTransition() {
 
 	switch_mode = SWITCH_MODE_AT_END;
+	easing_mode = EASE_LINEAR;
 	auto_advance = true;
 	xfade = 0;
 	disabled = false;
@@ -176,6 +265,89 @@ float AnimationNodeStateMachinePlayback::get_current_play_pos() const {
 }
 float AnimationNodeStateMachinePlayback::get_current_length() const {
 	return len_current;
+}
+
+inline float __smp_ease_out_bounce(float x) {
+    const float n1 = 7.5625;
+    const float d1 = 2.75;
+    if (x < 1 / d1) {
+        return n1 * x * x;
+    } else if (x < 2 / d1) {
+        return n1 * pow(x - 1.5 / d1, 2) + 0.75;
+    } else if (x < 2.5 / d1) {
+        return n1 * pow(x - 2.25 / d1, 2) + 0.9375;
+    } else {
+        return n1 * pow(x - 2.625 / d1, 2) + 0.984375;
+    }
+}
+
+float AnimationNodeStateMachinePlayback::_ease_fade(float time) const {
+	switch (fading_easing) {
+        case AnimationNodeStateMachineTransition::EASE_QUAD_IN: return time * time;
+        case AnimationNodeStateMachineTransition::EASE_QUAD_OUT: return 1 - (1 - time) * (1 - time);
+        case AnimationNodeStateMachineTransition::EASE_QUAD_INOUT: return time < 0.5 ? 2 * time * time : 1 - pow(-2 * time + 2, 2) / 2;
+        case AnimationNodeStateMachineTransition::EASE_CUBIC_IN: return time * time * time;
+        case AnimationNodeStateMachineTransition::EASE_CUBIC_OUT: return 1 - pow(1 - time, 3);
+        case AnimationNodeStateMachineTransition::EASE_CUBIC_INOUT: return time < 0.5 ? 4 * time * time * time : 1 - pow(-2 * time + 2, 3) / 2;
+        case AnimationNodeStateMachineTransition::EASE_QUART_IN: return pow(time, 4);
+        case AnimationNodeStateMachineTransition::EASE_QUART_OUT: return 1 - pow(1 - time, 4);
+        case AnimationNodeStateMachineTransition::EASE_QUART_INOUT: return time < 0.5 ? 8 * pow(time, 4) : 1 - pow(-2 * time + 2, 4) / 2;
+        case AnimationNodeStateMachineTransition::EASE_QUINT_IN: return pow(time, 5);
+        case AnimationNodeStateMachineTransition::EASE_QUINT_OUT: return 1 - pow(1 - time, 5);
+        case AnimationNodeStateMachineTransition::EASE_QUINT_INOUT: return time < 0.5 ? 16 * pow(time, 5) : 1 - pow(-2 * time + 2, 5) / 2;
+        case AnimationNodeStateMachineTransition::EASE_SINE_IN: return 1 - cos((time * Math_PI) / 2);
+        case AnimationNodeStateMachineTransition::EASE_SINE_OUT: return sin((time * Math_PI) / 2);
+        case AnimationNodeStateMachineTransition::EASE_SINE_INOUT: return -(cos(Math_PI * time) - 1) / 2;
+        case AnimationNodeStateMachineTransition::EASE_BACK_IN: {
+            const float c1 = 1.70158;
+            const float c3 = c1 + 1;
+            return c3 * time * time * time - c1 * time * time;
+        };
+        case AnimationNodeStateMachineTransition::EASE_BACK_OUT: {
+            const float c1 = 1.70158;
+            const float c3 = c1 + 1;
+            return 1 + c3 * pow(time - 1, 3) + c1 * pow(time - 1, 2);
+        };
+        case AnimationNodeStateMachineTransition::EASE_BACK_INOUT: {
+            const float c1 = 1.70158;
+            const float c2 = c1 * 1.525;
+            return time < 0.5
+                ? (pow(2 * time, 2) * ((c2 + 1) * 2 * time - c2)) / 2
+                : (pow(2 * time - 2, 2) * ((c2 + 1) * (time * 2 - 2) + c2) + 2) / 2;
+        };
+        case AnimationNodeStateMachineTransition::EASE_CIRC_IN: return 1 - sqrt(1 - pow(time, 2));
+        case AnimationNodeStateMachineTransition::EASE_CIRC_OUT: return sqrt(1 - pow(time - 1, 2));
+        case AnimationNodeStateMachineTransition::EASE_CIRC_INOUT: return time < 0.5
+            ? (1 - sqrt(1 - pow(2 * time, 2))) / 2
+            : (sqrt(1 - pow(-2 * time + 2, 2)) + 1) / 2;
+        case AnimationNodeStateMachineTransition::EASE_ELASTIC_IN: {
+            const float c4 = (2 * Math_PI) / 3;
+            return time == 0 ? 0
+                 : time == 1 ? 1
+                 : -pow(2, 10 * time - 10) * sin((time * 10 - 10.75) * c4);
+        }
+        case AnimationNodeStateMachineTransition::EASE_ELASTIC_OUT: {
+            const float c4 = (2 * Math_PI) / 3;
+            return time == 0 ? 0
+                 : time == 1 ? 1
+                 : pow(2, -10 * time) * sin((time * 10 - 0.75) * c4) + 1;
+        };
+        case AnimationNodeStateMachineTransition::EASE_ELASTIC_INOUT: {
+            const float c5 = (2 * Math_PI) / 4.5;
+            return time == 0 ? 0
+                 : time == 1 ? 1
+                 : time < 0.5
+                 ? -(pow(2, 20 * time - 10) * sin((20 * time - 11.125) * c5)) / 2
+                 : (pow(2, -20 * time + 10) * sin((20 * time - 11.125) * c5)) / 2 + 1;
+        };                                   \
+        case AnimationNodeStateMachineTransition::EASE_BOUNCE_IN: return 1 - __smp_ease_out_bounce(1 - time);
+        case AnimationNodeStateMachineTransition::EASE_BOUNCE_OUT: return __smp_ease_out_bounce(time);
+        case AnimationNodeStateMachineTransition::EASE_BOUNCE_INOUT: return time < 0.5
+            ? (1 - __smp_ease_out_bounce(1 - 2 * time)) / 2
+            : (1 + __smp_ease_out_bounce(2 * time - 1)) / 2;
+		default:
+			return time;
+	}
 }
 
 bool AnimationNodeStateMachinePlayback::_travel(AnimationNodeStateMachine *p_state_machine, const StringName &p_travel) {
@@ -379,6 +551,15 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 		}
 	}
 
+	fade_blend = _ease_fade(fade_blend);
+	// fade_blend = fade_blend < 0.5 ? 4 * fade_blend * fade_blend * fade_blend : 1 - pow(-2 * fade_blend + 2, 3) / 2;
+	
+	// const float c1 = 1.70158;
+	// const float c2 = c1 * 1.525;
+	// fade_blend = fade_blend < 0.5
+	// 	? (pow(2 * fade_blend, 2) * ((c2 + 1) * 2 * fade_blend - c2)) / 2
+	// 	: (pow(2 * fade_blend - 2, 2) * ((c2 + 1) * (fade_blend * 2 - 2) + c2) + 2) / 2;
+
 	float rem = p_state_machine->blend_node(current, p_state_machine->states[current].node, p_time, p_seek, fade_blend, AnimationNode::FILTER_IGNORE, false);
 
 	if (fading_from != StringName()) {
@@ -404,6 +585,7 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 	//find next
 	StringName next;
 	float next_xfade = 0;
+	AnimationNodeStateMachineTransition::EasingMode next_ease = AnimationNodeStateMachineTransition::EASE_LINEAR;
 	AnimationNodeStateMachineTransition::SwitchMode switch_mode = AnimationNodeStateMachineTransition::SWITCH_MODE_IMMEDIATE;
 
 	if (path.size()) {
@@ -411,6 +593,7 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 		for (int i = 0; i < p_state_machine->transitions.size(); i++) {
 			if (p_state_machine->transitions[i].from == current && p_state_machine->transitions[i].to == path[0]) {
 				next_xfade = p_state_machine->transitions[i].transition->get_xfade_time();
+				next_ease = p_state_machine->transitions[i].transition->get_easing_mode();
 				switch_mode = p_state_machine->transitions[i].transition->get_switch_mode();
 				next = path[0];
 			}
@@ -447,6 +630,7 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 			next = p_state_machine->transitions[auto_advance_idx].to;
 			next_xfade = p_state_machine->transitions[auto_advance_idx].transition->get_xfade_time();
 			switch_mode = p_state_machine->transitions[auto_advance_idx].transition->get_switch_mode();
+			next_ease = p_state_machine->transitions[auto_advance_idx].transition->get_easing_mode();
 		}
 	}
 
@@ -470,10 +654,12 @@ float AnimationNodeStateMachinePlayback::process(AnimationNodeStateMachine *p_st
 				//time to fade, baby
 				fading_from = current;
 				fading_time = next_xfade;
+				fading_easing = next_ease;
 				fading_pos = 0;
 			} else {
 				fading_from = StringName();
 				fading_pos = 0;
+				fading_easing = AnimationNodeStateMachineTransition::EASE_LINEAR;
 			}
 
 			if (path.size()) { //if it came from path, remove path
@@ -528,6 +714,7 @@ AnimationNodeStateMachinePlayback::AnimationNodeStateMachinePlayback() {
 	playing = false;
 	len_current = 0;
 	fading_time = 0;
+	fading_easing = AnimationNodeStateMachineTransition::EASE_LINEAR;
 	stop_request = false;
 }
 
