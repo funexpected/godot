@@ -221,7 +221,7 @@ float AnimationNode::_blend_node(const StringName &p_subpath, const Vector<Strin
 						continue;
 
 					blendw[i] = blendr[i] * p_blend;
-					if (blendw[i] > CMP_EPSILON) {
+					if (abs(blendw[i]) > CMP_EPSILON) {
 						any_valid = true;
 					}
 				}
@@ -236,7 +236,7 @@ float AnimationNode::_blend_node(const StringName &p_subpath, const Vector<Strin
 						continue;
 
 					blendw[i] = blendr[i] * p_blend;
-					if (blendw[i] > CMP_EPSILON) {
+					if (abs(blendw[i]) > CMP_EPSILON) {
 						any_valid = true;
 					}
 				}
@@ -253,7 +253,7 @@ float AnimationNode::_blend_node(const StringName &p_subpath, const Vector<Strin
 						blendw[i] = blendr[i]; //not filtered, do not blend
 					}
 
-					if (blendw[i] > CMP_EPSILON) {
+					if (abs(blendw[i]) > CMP_EPSILON) {
 						any_valid = true;
 					}
 				}
@@ -265,7 +265,7 @@ float AnimationNode::_blend_node(const StringName &p_subpath, const Vector<Strin
 
 			//regular blend
 			blendw[i] = blendr[i] * p_blend;
-			if (blendw[i] > CMP_EPSILON) {
+			if (abs(blendw[i]) > CMP_EPSILON) {
 				any_valid = true;
 			}
 		}
@@ -875,7 +875,7 @@ void AnimationTree::_process_graph(float p_delta) {
 
 				float blend = (*as.track_blends)[blend_idx] * weight;
 
-				if (blend < CMP_EPSILON)
+				if (abs(blend) < CMP_EPSILON)
 					continue; //nothing to blend
 
 				switch (track->type) {
