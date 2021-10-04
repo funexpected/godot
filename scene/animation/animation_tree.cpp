@@ -35,6 +35,7 @@
 #include "core/method_bind_ext.gen.inc"
 #include "scene/scene_string_names.h"
 #include "servers/audio/audio_stream.h"
+#include "scene/gui/control.h"
 
 void AnimationNode::get_parameter_list(List<PropertyInfo> *r_list) const {
 	if (get_script_instance()) {
@@ -400,6 +401,16 @@ Ref<AnimationNode> AnimationNode::get_child_by_name(const StringName &p_name) {
 		return get_script_instance()->call("get_child_by_name", p_name);
 	}
 	return Ref<AnimationNode>();
+}
+
+Ref<StyleBox> AnimationNode::get_stylebox_for_state_machine_frame(Control* editor, bool selected) const {
+	return selected ?
+		(editor->has_stylebox("state_machine_selectedframe", get_class_name()) ?
+			editor->get_stylebox("state_machine_selectedframe", get_class_name()) :
+			editor->get_stylebox("state_machine_selectedframe", "GraphNode")) :
+		(editor->has_stylebox("state_machine_frame", get_class_name()) ?
+			editor->get_stylebox("state_machine_frame", get_class_name()) :
+			editor->get_stylebox("state_machine_frame", "GraphNode"));
 }
 
 void AnimationNode::_bind_methods() {

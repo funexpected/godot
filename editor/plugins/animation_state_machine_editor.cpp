@@ -579,9 +579,6 @@ void AnimationNodeStateMachineEditor::_state_machine_draw() {
 
 	Ref<AnimationNodeStateMachinePlayback> playback = AnimationTreeEditor::get_singleton()->get_tree()->get(AnimationTreeEditor::get_singleton()->get_base_path() + "playback");
 
-	Ref<StyleBox> style = get_stylebox("state_machine_frame", "GraphNode");
-	Ref<StyleBox> style_selected = get_stylebox("state_machine_selectedframe", "GraphNode");
-
 	Ref<Font> font = get_font("title_font", "GraphNode");
 	Color font_color = get_color("title_color", "GraphNode");
 	Ref<Texture> play = get_icon("Play", "EditorIcons");
@@ -635,7 +632,7 @@ void AnimationNodeStateMachineEditor::_state_machine_draw() {
 		Ref<AnimationNode> anode = state_machine->get_node(E->get());
 		String name = E->get();
 		bool needs_editor = EditorNode::get_singleton()->item_has_editor(anode.ptr());
-		Ref<StyleBox> sb = E->get() == selected_node ? style_selected : style;
+		Ref<StyleBox> sb = anode->get_stylebox_for_state_machine_frame(this, E->get() == selected_node);
 
 		Size2 s = sb->get_minimum_size();
 		int strsize = font->get_string_size(name).width;
@@ -769,7 +766,7 @@ void AnimationNodeStateMachineEditor::_state_machine_draw() {
 		String name = node_rects[i].node_name;
 		Ref<AnimationNode> anode = state_machine->get_node(name);
 		bool needs_editor = AnimationTreeEditor::get_singleton()->can_edit(anode);
-		Ref<StyleBox> sb = name == selected_node ? style_selected : style;
+		Ref<StyleBox> sb = anode->get_stylebox_for_state_machine_frame(this, name == selected_node);
 		int strsize = font->get_string_size(name).width;
 
 		NodeRect &nr = node_rects.write[i];

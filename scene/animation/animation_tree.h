@@ -115,9 +115,11 @@ protected:
 
 	void _set_parent(Object *p_parent);
 
+
 public:
 	virtual void get_parameter_list(List<PropertyInfo> *r_list) const;
 	virtual Variant get_parameter_default_value(const StringName &p_parameter) const;
+	Ref<StyleBox> get_stylebox_for_state_machine_frame(Control* editor, bool selected) const;
 
 	void set_parameter(const StringName &p_name, const Variant &p_value);
 	Variant get_parameter(const StringName &p_name) const;
