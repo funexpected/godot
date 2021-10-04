@@ -83,7 +83,9 @@ StringName AnimationNodeStateMachineTransition::get_advance_condition_name() con
 void AnimationNodeStateMachineTransition::set_xfade_time(float p_xfade) {
 
 	ERR_FAIL_COND(p_xfade < 0);
-	bool change_list = p_xfade < CMP_EPSILON && xfade > CMP_EPSILON || p_xfade > CMP_EPSILON && xfade < CMP_EPSILON;
+	bool change_list = 
+		(p_xfade < CMP_EPSILON && xfade > CMP_EPSILON) ||
+		(p_xfade > CMP_EPSILON && xfade < CMP_EPSILON);
 	xfade = p_xfade;
 	if (change_list) {
 		property_list_changed_notify();
