@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="16"
+   viewBox="0 0 16 16"
+   width="16"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="icon_spine.svg"
+   inkscape:version="1.1 (c4e8f9e, 2021-05-24)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     id="namedview6"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="17.40133"
+     inkscape:cx="8.1890291"
+     inkscape:cy="8.4188965"
+     inkscape:window-width="1280"
+     inkscape:window-height="747"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg4" />
+  <g
+     aria-label="S"
+     id="text3831"
+     style="font-weight:bold;font-size:10.6667px;line-height:1.25;font-family:Monoid;-inkscape-font-specification:'Monoid Bold'">
+    <path
+       id="path22945"
+       style="fill:#a5b7f3;fill-opacity:1"
+       d="m 8.125551,13.048612 q -1.1388925,0 -2.5694526,-0.222223 V 11.13194 q 1.6736164,0.25 2.5694526,0.25 1.236115,0 1.236115,-1.319448 0,-0.3680568 -0.1805561,-0.6944468 Q 9.0074982,9.0347108 8.6880527,8.9097105 8.4866632,8.8333213 8.1324954,8.7847101 7.7783277,8.7360988 7.4033265,8.6458207 7.0352697,8.5485982 6.6949909,8.3472087 5.3894312,7.5694284 5.3894312,5.8888676 q 0,-1.2013927 0.7638913,-2.0208397 0.7708358,-0.8194471 1.9722285,-0.8194471 0.9375029,0 2.569453,0.1736117 V 4.8958089 Q 9.0074982,4.7152528 8.125551,4.7152528 q -0.2638898,0 -0.4652793,0.1180559 -0.194445,0.1180559 -0.298612,0.3055565 -0.104167,0.1875006 -0.1527783,0.3819457 -0.041667,0.194445 -0.041667,0.3819456 0,0.819447 0.5555573,1.0694478 0.1805561,0.083334 0.8194471,0.1875006 0.6458353,0.097223 1.0416699,0.3055565 0.5555573,0.2847232 0.9166693,0.7361135 0.361113,0.4513903 0.500002,0.9097251 0.138889,0.4583348 0.138889,0.951392 0,1.347226 -0.833336,2.166673 -0.8333358,0.819447 -2.180562,0.819447 z M 5,1 C 2.784,1 1,2.784 1,5 v 6 c 0,2.216 1.784,4 4,4 h 6 c 2.216,0 4,-1.784 4,-4 V 5 C 15,2.784 13.216,1 11,1 Z" />
+  </g>
+</svg>
