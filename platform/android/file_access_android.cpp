@@ -49,7 +49,7 @@ Error FileAccessAndroid::_open(const String &p_path, int p_mode_flags) {
 	AAssetDir* assetDir = AAssetManager_openDir(asset_manager, "");
 	const char* filename = (const char*)NULL;
 	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-		print_line("file_name: " + String(filename))
+		print_line("file_name: " + String(filename));
 		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
 		
 		AAsset_close(asset);
