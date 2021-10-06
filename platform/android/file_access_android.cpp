@@ -51,7 +51,7 @@ Error FileAccessAndroid::_open(const String &p_path, int p_mode_flags) {
 	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
 		print_line("file_name: " + String(filename))
 		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
-		print_line()
+		
 		AAsset_close(asset);
 	}
 	AAssetDir_close(assetDir);
