@@ -44,6 +44,19 @@ FileAccess *FileAccessAndroid::create_android() {
 }
 
 Error FileAccessAndroid::_open(const String &p_path, int p_mode_flags) {
+	print_line("Opening: " + p_path);
+
+	AAssetDir* assetDir = AAssetManager_openDir(asset_manager, "");
+	const char* filename = (const char*)NULL;
+	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+		print_line("file_name: " + String(filename))
+		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+		print_line()
+		AAsset_close(asset);
+	}
+	AAssetDir_close(assetDir);
+
+
 
 	String path = fix_path(p_path).simplify_path();
 	if (path.begins_with("/"))
