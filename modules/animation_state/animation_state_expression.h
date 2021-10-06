@@ -256,6 +256,40 @@ private:
 
 		ENode *nodes[2];
 
+		int priority() const {
+			switch (op) {
+				case Variant::OP_NEGATE: return 1;
+				case Variant::OP_MULTIPLY: return 2;
+				case Variant::OP_DIVIDE: return 2;
+				case Variant::OP_MODULE: return 2;
+
+				case Variant::OP_ADD: return 3;
+				case Variant::OP_SUBTRACT: return 3;
+
+				case Variant::OP_SHIFT_LEFT: return 4;
+				case Variant::OP_SHIFT_RIGHT: return 4;
+
+				case Variant::OP_BIT_AND: return 5;
+				case Variant::OP_BIT_XOR: return 6;
+				case Variant::OP_BIT_OR: return 7;
+
+				case Variant::OP_LESS: return 8;
+				case Variant::OP_LESS_EQUAL: return 8;
+				case Variant::OP_GREATER: return 8;
+				case Variant::OP_GREATER_EQUAL: return 8;
+
+				case Variant::OP_EQUAL: return 8;
+				case Variant::OP_NOT_EQUAL: return 8;
+
+				case Variant::OP_IN: return 10;
+
+				case Variant::OP_NOT: return 11;
+				case Variant::OP_AND: return 12;
+				case Variant::OP_OR: return 13;
+				default: return -1;
+			}
+		}
+
 		OperatorNode() {
 			type = TYPE_OPERATOR;
 		}
@@ -343,6 +377,7 @@ private:
 
 	bool execution_error;
 	bool _execute(const Array &p_inputs, Object *p_instance, AnimationStateExpression::ENode *p_node, Variant &r_ret, String &r_error_str);
+	Error _build_expression(const AnimationStateExpression::ENode *p_node, String &r_ret) const;
 
 protected:
 	static void _bind_methods();
@@ -354,6 +389,7 @@ public:
 	bool has_execute_failed() const;
 	String get_error_text() const;
 	Dictionary get_inputs() const;
+	String rename_input(const String &p_from, const String &p_to);
 	bool _fetch_input_types();
 
 	AnimationStateExpression();

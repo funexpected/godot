@@ -2232,6 +2232,176 @@ Dictionary AnimationStateExpression::get_inputs() const {
 	return inputs;
 }
 
+Error AnimationStateExpression::_build_expression(const AnimationStateExpression::ENode *p_node, String &r_ret) const {
+	Error err;
+	switch (p_node->type)
+	{
+	case ENode::TYPE_INPUT: {
+		const AnimationStateExpression::InputNode *input = static_cast<const AnimationStateExpression::InputNode *>(p_node);
+		r_ret = input_names[input->index];
+		return OK;
+	};
+	case ENode::TYPE_CONSTANT: {
+		const AnimationStateExpression::ConstantNode *constant = static_cast<const AnimationStateExpression::ConstantNode *>(p_node);
+		return VariantWriter::write_to_string(constant->value, r_ret);
+	};
+	case ENode::TYPE_SELF: {
+		r_ret = String("self");
+		return OK;
+	};
+	case ENode::TYPE_OPERATOR: {
+		const AnimationStateExpression::OperatorNode *op = static_cast<const AnimationStateExpression::OperatorNode *>(p_node);
+		const AnimationStateExpression::ENode *left = op->nodes[0];
+		const AnimationStateExpression::ENode *right = op->nodes[1];
+		bool left_parenthis = false;
+		bool right_parenthis = false;
+		if (left && left->type == ENode::TYPE_OPERATOR) {
+			const AnimationStateExpression::OperatorNode *op_left = static_cast<const AnimationStateExpression::OperatorNode *>(left);
+			left_parenthis = op_left->priority() >= 0 && op->priority() < op_left->priority();
+		}
+		if (right && right->type == ENode::TYPE_OPERATOR) {
+			const AnimationStateExpression::OperatorNode *op_right = static_cast<const AnimationStateExpression::OperatorNode *>(right);
+			right_parenthis = op_right->priority() >= 0 && op->priority() < op_right->priority();
+		}
+		String left_value;
+		String right_value;
+		if (left) {
+			err = _build_expression(left, left_value);
+			if (err) return err;
+			if (left_parenthis) left_value = String("(") + left_value + ")";
+		}
+		if (right) {
+			err = _build_expression(right, right_value);
+			if (right_parenthis) right_value = String("(") + right_value + ")";
+		}
+		String op_value = "";
+		switch (op->op) {
+			case Variant::OP_NEGATE: op_value = "-"; break;
+			case Variant::OP_MULTIPLY: op_value = " * "; break;
+			case Variant::OP_DIVIDE: op_value = " / "; break;
+			case Variant::OP_MODULE: op_value = " % "; break;
+
+			case Variant::OP_ADD: op_value = " + "; break;
+			case Variant::OP_SUBTRACT: op_value = " - "; break;
+
+			case Variant::OP_SHIFT_LEFT: op_value = " << "; break;
+			case Variant::OP_SHIFT_RIGHT: op_value = " >> "; break;
+
+			case Variant::OP_BIT_AND: op_value = " & "; break;
+			case Variant::OP_BIT_XOR: op_value = " ^ "; break;
+			case Variant::OP_BIT_OR: op_value = " | "; break;
+
+			case Variant::OP_LESS: op_value = " < "; break;
+			case Variant::OP_LESS_EQUAL: op_value = " <= "; break;
+			case Variant::OP_GREATER: op_value = " > "; break;
+			case Variant::OP_GREATER_EQUAL: op_value = " >= "; break;
+
+			case Variant::OP_EQUAL: op_value = " = "; break;
+			case Variant::OP_NOT_EQUAL: op_value = " != "; break;
+
+			case Variant::OP_IN: op_value = " @ "; break;
+
+			case Variant::OP_NOT: op_value = "!"; break;
+			case Variant::OP_AND: op_value = " & "; break;
+			case Variant::OP_OR: op_value = " | "; break;
+			default: op_value = " ";
+		}
+
+		if (right == NULL) {
+			r_ret = op_value + left_value;
+		} else {
+			r_ret = left_value + op_value + right_value;
+		}
+		return OK;
+	};
+	case ENode::TYPE_INDEX: {
+		const AnimationStateExpression::IndexNode *index = static_cast<const AnimationStateExpression::IndexNode *>(p_node);
+		String base_value;
+		String index_value;
+		err = _build_expression(index->base, base_value);
+		if (err) return err;
+		err = _build_expression(index->index, index_value);
+		if (err) return err;
+		r_ret = base_value + "[" + index_value + "]";
+		return OK;
+	};
+	case ENode::TYPE_NAMED_INDEX: {
+		const AnimationStateExpression::NamedIndexNode *index = static_cast<const AnimationStateExpression::NamedIndexNode *>(p_node);
+		String base_value;
+		err = _build_expression(index->base, base_value);
+		if (err) return err;
+		r_ret = base_value + "." + index->name;
+		return OK;
+	} case ENode::TYPE_CONSTRUCTOR: {
+		const AnimationStateExpression::ConstructorNode *constructor = static_cast<const AnimationStateExpression::ConstructorNode *>(p_node);
+		Vector<String> values;
+		for (int i=0; i<constructor->arguments.size(); i++) {
+			String value;
+			err = _build_expression(constructor->arguments[i], value);
+			if (err) return err;
+			values.push_back(value);
+		}
+		r_ret = Variant::get_type_name(constructor->data_type) + "(" + String(", ").join(values) + ")";
+		return OK;
+	} case ENode::TYPE_ARRAY: {
+		const AnimationStateExpression::ArrayNode *array = static_cast<const AnimationStateExpression::ArrayNode *>(p_node);
+		Vector<String> values;
+		for (int i=0; i<array->array.size(); i++) {
+			String value;
+			err = _build_expression(array->array[i], value);
+			if (err) return err;
+			values.push_back(value);
+		}
+		r_ret = String("[") + String(", ").join(values) + "]";
+		return OK;
+	}
+	default: return ERR_INVALID_DATA;
+	}
+}
+
+String AnimationStateExpression::rename_input(const String &p_from, const String &p_to) {
+	int from_idx = input_names.find(p_from);
+	if (p_from == p_to) {
+		error_str = "Nothing to rename";
+		error_set = true;
+		return "";
+	}
+	if (from_idx < 0) {
+		error_str = "Input name not found";
+		error_set = true;
+		return "";
+	}
+	int to_idx = input_names.find(p_to);
+
+	if (to_idx < 0) { // rename existed index to new one
+		input_names.set(from_idx, p_to);
+	} else { // rename existed index to another existed
+		input_names.erase(p_from);
+		ENode* node = nodes;
+		while (node != NULL) {
+			if (node->type == ENode::TYPE_INPUT) {
+				AnimationStateExpression::InputNode *input = static_cast<AnimationStateExpression::InputNode *>(node);
+				if (input->index > from_idx) {
+					input->index -= 1;
+				}
+			}
+			node = node->next;
+		}
+	}
+	_fetch_input_types();
+	String result;
+	Error err = _build_expression(root, result);
+	if (err == OK) {
+		error_str = "";
+		error_set = false;
+		return result;
+	} else {
+		error_str = "Can't build expression";
+		error_set = true;
+		return "";
+	}
+}
+
 bool AnimationStateExpression::_fetch_input_types() {
 	input_types.clear();
 	input_types.resize(input_names.size());
@@ -2313,6 +2483,7 @@ void AnimationStateExpression::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("has_execute_failed"), &AnimationStateExpression::has_execute_failed);
 	ClassDB::bind_method(D_METHOD("get_error_text"), &AnimationStateExpression::get_error_text);
 	ClassDB::bind_method(D_METHOD("get_inputs"), &AnimationStateExpression::get_inputs);
+	ClassDB::bind_method(D_METHOD("rename_input", "from", "to"), &AnimationStateExpression::rename_input);
 }
 
 AnimationStateExpression::AnimationStateExpression() :
