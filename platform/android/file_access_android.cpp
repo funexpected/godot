@@ -46,16 +46,18 @@ FileAccess *FileAccessAndroid::create_android() {
 Error FileAccessAndroid::_open(const String &p_path, int p_mode_flags) {
 	print_line("Opening: " + p_path);
 
-	AAssetDir* assetDir = AAssetManager_openDir(asset_manager, "");
-	const char* filename = (const char*)NULL;
-	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-		print_line("file_name: " + String(filename));
-		AAsset* asset = AAssetManager_open(asset_manager, filename, AASSET_MODE_STREAMING);
-		
-		AAsset_close(asset);
-	}
-	AAssetDir_close(assetDir);
+	if (p_path == "res://asset_pack_japan.zip") {
 
+		AAssetDir* assetDir = AAssetManager_openDir(asset_manager, "");
+		const char* filename = (const char*)NULL;
+		while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+			print_line("file_name: " + String(filename));
+			AAsset* asset = AAssetManager_open(asset_manager, filename, AASSET_MODE_STREAMING);
+			
+			AAsset_close(asset);
+		}
+		AAssetDir_close(assetDir);
+	}
 
 
 	String path = fix_path(p_path).simplify_path();
@@ -63,6 +65,8 @@ Error FileAccessAndroid::_open(const String &p_path, int p_mode_flags) {
 		path = path.substr(1, path.length());
 	else if (path.begins_with("res://"))
 		path = path.substr(6, path.length());
+
+	print_line("Fixed path: " + path);
 
 	ERR_FAIL_COND_V(p_mode_flags & FileAccess::WRITE, ERR_UNAVAILABLE); //can't write on android..
 	a = AAssetManager_open(asset_manager, path.utf8().get_data(), AASSET_MODE_STREAMING);
