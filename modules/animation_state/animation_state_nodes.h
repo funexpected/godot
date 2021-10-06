@@ -71,6 +71,7 @@ public:
 	Variant get_default_property_value() const;
 
 	void get_parameter_list(List<PropertyInfo> *r_list) const;
+    void rename_state_property(const String &p_from, const String &p_to);
 
 	virtual String get_caption() const;
 	virtual float process(float p_time, bool p_seek);

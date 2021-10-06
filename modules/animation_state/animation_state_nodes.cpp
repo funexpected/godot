@@ -101,12 +101,13 @@ AnimationNodeDelay::AnimationNodeDelay() {
 
 bool AnimationNodeStateUpdate::_set(const StringName &p_name, const Variant &p_value) {
     String name = p_name;
-    if (p_name == "action/add") {
-        state_update[p_value] = Variant();
-        property_list_changed_notify();
-        return true;
-    } else if (p_name == "action/remove") {
-        state_update.erase(p_value);
+    if (p_name == "action/edit") {
+        String value = p_value;
+        if (value.begins_with("Add ")) {
+            state_update[value.replace_first("Add ", "")] = Variant();
+        } else if (value.begins_with("Remove ")) {
+            state_update.erase(value.replace_first("Remove ", ""));
+        }
         property_list_changed_notify();
         return true;
     } else if (name.begins_with("update/")) {
@@ -143,7 +144,7 @@ void AnimationNodeStateUpdate::_get_property_list(List<PropertyInfo> *p_list) co
     Node* target;
 #ifdef TOOLS_ENABLED
     AnimationTreeEditor *editor = AnimationTreeEditor::get_singleton();
-    if (!editor) return _default_property_list(p_list);
+    if (!editor || !editor->is_visible()) return _default_property_list(p_list);
 
     AnimationTree *tree = Object::cast_to<AnimationTree>(editor->get_tree());
     if (!tree || !tree->has_node(tree->get_animation_player())) return _default_property_list(p_list);
@@ -190,8 +191,7 @@ void AnimationNodeStateUpdate::_get_property_list(List<PropertyInfo> *p_list) co
         p_list->push_back(PropertyInfo(prop_info.type, String("update/") + prop_name, prop_info.hint, prop_info.hint_string));
     }
 
-    String add_props_hint = "[select]";
-    String remove_props_hint = "[select]";
+    Vector<String> actions;
     for (List<PropertyInfo>::Element *E = state_props_list.front(); E; E = E->next()) {
         if (!E->get().name.begins_with("state/")) {
             continue;
@@ -201,22 +201,22 @@ void AnimationNodeStateUpdate::_get_property_list(List<PropertyInfo> *p_list) co
             continue;
         }
         if (defined_prop_names.has(prop_name)) {
-            remove_props_hint += "," + prop_name;
+            actions.push_back(String("Remove ") + prop_name);
         } else {
-            add_props_hint += "," + prop_name;
+            actions.push_back(String("Add ") + prop_name);
         }
     }
-    if (add_props_hint != "[select]") {
-        p_list->push_back(PropertyInfo(Variant::STRING, "action/add", PROPERTY_HINT_ENUM, add_props_hint));
-    }
-    if (remove_props_hint != "[select]") {
-        p_list->push_back(PropertyInfo(Variant::STRING, "action/remove", PROPERTY_HINT_ENUM, remove_props_hint));
+    actions.sort();
+    if (actions.size() > 0) {
+        String hint = String("[select],") + String(",").join(actions);
+        p_list->push_back(PropertyInfo(Variant::STRING, "action/edit", PROPERTY_HINT_ENUM, hint, PROPERTY_USAGE_EDITOR));
     }
 
     MessageQueue::get_singleton()->push_call(get_instance_id(), "_set_default_property_values", default_values);
 }
 
 void AnimationNodeStateUpdate::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("rename_state_property", "from", "to"), &AnimationNodeStateUpdate::rename_state_property);
     ClassDB::bind_method(D_METHOD("_set_default_property_values"), &AnimationNodeStateUpdate::_set_default_property_values);
 }
 
@@ -235,7 +235,15 @@ void AnimationNodeStateUpdate::_set_default_property_values(Dictionary default_v
 }
 
 void AnimationNodeStateUpdate::get_parameter_list(List<PropertyInfo> *r_list) const {
-	r_list->push_back(PropertyInfo(Variant::REAL, time, PROPERTY_HINT_NONE, "", 0));
+
+}
+
+void AnimationNodeStateUpdate::rename_state_property(const String &p_from, const String &p_to) {
+    if (state_update.has(p_from)) {
+        Variant value = state_update[p_from];
+        state_update.erase(p_from);
+        state_update[p_to] = value;
+    }
 }
 
 String AnimationNodeStateUpdate::get_caption() const {
