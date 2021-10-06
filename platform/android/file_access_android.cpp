@@ -50,7 +50,7 @@ Error FileAccessAndroid::_open(const String &p_path, int p_mode_flags) {
 	const char* filename = (const char*)NULL;
 	while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
 		print_line("file_name: " + String(filename));
-		AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_STREAMING);
+		AAsset* asset = AAssetManager_open(asset_manager, filename, AASSET_MODE_STREAMING);
 		
 		AAsset_close(asset);
 	}
