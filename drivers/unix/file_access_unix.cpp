@@ -48,6 +48,12 @@
 #include <sys/statvfs.h>
 #endif
 
+#ifdef ANDROID_ENABLED
+#ifndef AT_FDCWD
+#define AT_FDCWD -100
+#endif
+#endif
+
 #ifdef MSVC
 #define S_ISREG(m) ((m)&_S_IFREG)
 #include <io.h>
@@ -308,6 +314,32 @@ bool FileAccessUnix::file_exists(const String &p_path) {
 		default:
 			return false;
 	}
+}
+
+Dictionary FileAccessUnix::_get_file_statistics(const String &p_file) {
+
+	String file = fix_path(p_file);
+	struct stat flags;
+	int err = stat(file.utf8().get_data(), &flags);
+
+	if (!err) {
+		Dictionary file_stat = Dictionary();
+		file_stat["mode"] = Variant(flags.st_mode);
+		file_stat["atime"] = Variant((int64_t)flags.st_atime);
+		file_stat["mtime"] = Variant((int64_t)flags.st_mtime);
+		file_stat["size"] = Variant(flags.st_size);
+		return file_stat;
+	} else {
+		ERR_FAIL_V_MSG(Dictionary(), "Failed to get stat flags for: " + p_file + ".");
+	};
+}
+
+void FileAccessUnix::_update_access_time(const String &p_file) {
+	String file = fix_path(p_file);
+	struct timespec times[2];
+	times[0].tv_nsec = UTIME_NOW; // atime - update to now
+	times[1].tv_nsec = UTIME_OMIT; // mtime - no changes
+	utimensat(AT_FDCWD, file.utf8().get_data(), times, 0);
 }
 
 uint64_t FileAccessUnix::_get_modified_time(const String &p_file) {

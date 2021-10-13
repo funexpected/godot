@@ -576,6 +576,9 @@ public:
 	bool file_exists(const String &p_name) const; // Return true if a file exists.
 
 	uint64_t get_modified_time(const String &p_file) const;
+	Dictionary get_file_statistics(const String &p_file) const;
+	void update_access_time(const String &p_file) const;
+	
 
 	_File();
 	virtual ~_File();
