@@ -2331,6 +2331,17 @@ uint64_t _File::get_modified_time(const String &p_file) const {
 	return FileAccess::get_modified_time(p_file);
 }
 
+
+void _File::update_access_time(const String &p_file) const {
+	FileAccess::update_access_time(p_file);
+}
+
+
+Dictionary _File::get_file_statistics(const String &p_file) const {
+
+	return FileAccess::get_file_statistics(p_file);
+}
+
 void _File::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("open_encrypted", "path", "mode_flags", "key"), &_File::open_encrypted);
@@ -2384,6 +2395,8 @@ void _File::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("file_exists", "path"), &_File::file_exists);
 	ClassDB::bind_method(D_METHOD("get_modified_time", "file"), &_File::get_modified_time);
+	ClassDB::bind_method(D_METHOD("get_file_statistics", "file"), &_File::get_file_statistics);
+	ClassDB::bind_method(D_METHOD("update_access_time", "file"), &_File::update_access_time);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "endian_swap"), "set_endian_swap", "get_endian_swap");
 
