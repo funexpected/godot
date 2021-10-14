@@ -269,16 +269,35 @@ changes are marked with `// -- GODOT --` comments.
 
 File extracted from upstream release tarball:
 
-- All `*.h` from `include/mbedtls/` to `thirdparty/mbedtls/include/mbedtls/`
-- All `*.c` from `library/` to `thirdparty/mbedtls/library/`
-- LICENSE and apache-2.0.txt files
-- Applied the patch in `thirdparty/mbedtls/patches/1453.diff` (PR 1453).
-  Soon to be merged upstream. Check it out at next update.
-- Applied the patch in `thirdparty/mbedtls/patches/padlock.diff`. This disables
-  VIA padlock support which defines a symbol `unsupported` which clashes with
-  a pre-defined symbol.
-- Added 2 files `godot_core_mbedtls_platform.{c,h}` providing configuration
-  for light bundling with core.
+- All `*.h` from `include/mbedtls/` to `thirdparty/mbedtls/include/mbedtls/`.
+- All `*.c` from `library/` to `thirdparty/mbedtls/library/`.
+- `LICENSE` and `apache-2.0.txt` files.
+- Applied the patch in `patches/1453.diff` (upstream PR:
+  https://github.com/ARMmbed/mbedtls/pull/1453).
+- Applied the patch in `patches/padlock.diff`. This disables VIA padlock
+  support which defines a symbol `unsupported` which clashes with a
+  pre-defined symbol.
+- Applied the patch in `patches/pr4948-fix-clang12-opt.patch`. Upstream bugfix
+  from PR 4948 to fix a bug caused by Clang 12 optimizations.
+- Added 2 files `godot_core_mbedtls_platform.c` and `godot_core_mbedtls_config.h`
+  providing configuration for light bundling with core.
+
+
+## meshoptimizer
+
+- Upstream: https://github.com/zeux/meshoptimizer
+- Version: git (f5d83e879c48f8664783a69b4f50711d27549b66, 2021)
+- License: MIT
+
+Files extracted from upstream repository:
+
+- All files in `src/`.
+- `LICENSE.md`.
+
+An [experimental upstream feature](https://github.com/zeux/meshoptimizer/tree/simplify-attr),
+has been backported. On top of that, it was modified to report only distance error metrics 
+instead of a combination of distance and attribute errors. Patches for both changes can be
+found in the `patches` directory.
 
 
 ## miniupnpc
