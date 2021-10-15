@@ -1146,6 +1146,38 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 							//_draw_polygon(numpoints*3,indices,points,NULL,&circle->color,RID(),true);
 							//canvas_draw_circle(circle->indices.size(),circle->indices.ptr(),circle->points.ptr(),circle->uvs.ptr(),circle->colors.ptr(),circle->texture,circle->colors.size()==1);
 						} break;
+						case Item::Command::TYPE_MULTICIRCLE: {
+
+							_set_texture_rect_mode(false);
+
+							Item::CommandMultiCircle *circles = static_cast<Item::CommandMultiCircle *>(c);
+							static const int numpoints = 32;
+							static const int n = circles->centers.size();
+
+							Vector2 points[(numpoints + 1) * n];
+							int indices[numpoints * 3 * n];
+							
+							for (int i = 0; i < n; ++i) {
+								int start_points = (numpoints + 1)*i;
+								int start_indices = numpoints*3*i;
+
+								points[start_points + numpoints] = circles->centers[i];
+
+								for (int j = 0; j < numpoints; j++) {
+
+									points[start_points + j] = circles->centers[i] + Vector2(Math::sin(j * Math_PI * 2.0 / numpoints), Math::cos(j * Math_PI * 2.0 / numpoints)) * circles->radii[i];
+									indices[start_indices + j * 3 + 0] = start_indices + j;
+									indices[start_indices + j * 3 + 1] = start_indices + (j + 1) % numpoints;
+									indices[start_indices + j * 3 + 2] = start_indices + numpoints;
+								}
+							}
+
+							_bind_canvas_texture(RID(), RID());
+							_draw_polygon(indices, numpoints * 3 * n, (numpoints + 1) * n, points, NULL, &circles->color, true, NULL, NULL);
+
+							//_draw_polygon(numpoints*3,indices,points,NULL,&circle->color,RID(),true);
+							//canvas_draw_circle(circle->indices.size(),circle->indices.ptr(),circle->points.ptr(),circle->uvs.ptr(),circle->colors.ptr(),circle->texture,circle->colors.size()==1);
+						} break;
 						case Item::Command::TYPE_TRANSFORM: {
 
 							Item::CommandTransform *transform = static_cast<Item::CommandTransform *>(c);
