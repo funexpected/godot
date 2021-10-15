@@ -77,6 +77,19 @@
 				Draws a colored circle.
 			</description>
 		</method>
+		<method name="draw_multicircle">
+			<return type="void">
+			</return>
+			<argument index="0" name="centers" type="PoolVector2Array">
+			</argument>
+			<argument index="1" name="radii" type="PoolRealArray">
+			</argument>
+			<argument index="2" name="color" type="Color">
+			</argument>
+			<description>
+				Draws colored circles.
+			</description>
+		</method>
 		<method name="draw_colored_polygon">
 			<return type="void">
 			</return>
