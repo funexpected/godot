@@ -1166,9 +1166,9 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 								for (int j = 0; j < numpoints; j++) {
 
 									points[start_points + j] = circles->centers[i] + Vector2(Math::sin(j * Math_PI * 2.0 / numpoints), Math::cos(j * Math_PI * 2.0 / numpoints)) * circles->radii[i];
-									indices[start_indices + j * 3 + 0] = start_indices + j;
-									indices[start_indices + j * 3 + 1] = start_indices + (j + 1) % numpoints;
-									indices[start_indices + j * 3 + 2] = start_indices + numpoints;
+									indices[start_indices + j * 3 + 0] = start_points + j;
+									indices[start_indices + j * 3 + 1] = start_points + (j + 1) % numpoints;
+									indices[start_indices + j * 3 + 2] = start_points + numpoints;
 								}
 							}
 
