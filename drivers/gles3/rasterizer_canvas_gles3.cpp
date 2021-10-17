@@ -1152,7 +1152,7 @@ void RasterizerCanvasGLES3::render_batches(Item *p_current_clip, bool &r_reclip,
 
 							Item::CommandMultiCircle *circles = static_cast<Item::CommandMultiCircle *>(c);
 							static const int numpoints = 32;
-							static const int n = circles->centers.size();
+							int n = circles->centers.size();
 
 							Vector2 points[(numpoints + 1) * n];
 							int indices[numpoints * 3 * n];
