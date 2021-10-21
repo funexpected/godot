@@ -125,6 +125,7 @@ public class GodotEditText extends EditText {
 					if (edit.isMultiline()) {
 						inputType |= InputType.TYPE_TEXT_FLAG_MULTI_LINE;
 					}
+					inputType |= InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
 					edit.setInputType(inputType);
 
 					edit.mInputWrapper.setOriginText(text);
