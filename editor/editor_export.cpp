@@ -720,7 +720,12 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 	if (p_preset->get_export_filter() == EditorExportPreset::EXPORT_ALL_RESOURCES) {
 		//find stuff
 		_export_find_resources(EditorFileSystem::get_singleton()->get_filesystem(), paths);
-	} else {
+	} else if (p_preset->get_export_filter() == EditorExportPreset::EXPORT_SELECTED_RESOURCES_WITHOUT_DEPS) {
+		Vector<String> files = p_preset->get_files_to_export();
+		for (int i = 0; i < files.size(); i++)
+			paths.insert(files[i]);
+	}
+	else {
 		bool scenes_only = p_preset->get_export_filter() == EditorExportPreset::EXPORT_SELECTED_SCENES;
 
 		Vector<String> files = p_preset->get_files_to_export();
@@ -755,14 +760,22 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 	}
 
 	//add native icons to non-resource include list
-	_edit_filter_list(paths, String("*.icns"), false);
-	_edit_filter_list(paths, String("*.ico"), false);
-
+	if (p_preset->get_export_non_resource_files()) {
+		_edit_filter_list(paths, String("*.icns"), false);
+		_edit_filter_list(paths, String("*.ico"), false);
+	}
+	
 	_edit_filter_list(paths, p_preset->get_include_filter(), false);
 	_edit_filter_list(paths, p_preset->get_exclude_filter(), true);
 
 	// Ignore import files, since these are automatically added to the jar later with the resources
-	_edit_filter_list(paths, String("*.import"), true);
+	// _edit_filter_list(paths, String("*.import"), true);
+	Set<String> copyed_paths = paths; //deepcopy
+	for (Set<String>::Element *E = copyed_paths.front(); E; E = E->next()) {
+		String path = E->get();
+		if (path.ends_with(".import"))
+			paths.erase(path);
+	}
 
 	Error err = OK;
 	Vector<Ref<EditorExportPlugin> > export_plugins = EditorExport::get_singleton()->get_export_plugins();
@@ -1298,6 +1311,10 @@ void EditorExport::_save() {
 				config->set_value(section, "export_filter", "resources");
 				save_files = true;
 			} break;
+			case EditorExportPreset::EXPORT_SELECTED_RESOURCES_WITHOUT_DEPS: {
+				config->set_value(section, "export_filter", "resources_without_deps");
+				save_files = true;
+			} break;
 		}
 
 		if (save_files) {
@@ -1510,6 +1527,9 @@ void EditorExport::load_config() {
 			get_files = true;
 		} else if (export_filter == "resources") {
 			preset->set_export_filter(EditorExportPreset::EXPORT_SELECTED_RESOURCES);
+			get_files = true;
+		} else if (export_filter == "resources_without_deps") {
+			preset->set_export_filter(EditorExportPreset::EXPORT_SELECTED_RESOURCES_WITHOUT_DEPS);
 			get_files = true;
 		}
 
