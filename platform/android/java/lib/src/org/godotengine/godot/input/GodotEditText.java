@@ -128,21 +128,21 @@ public class GodotEditText extends EditText {
 					}
 
 					switch(mKeyboardType) {
-						case KeyboardType.Default:
+						case Default:
 							break;
-						case KeyboardType.EmailAddress:
+						case EmailAddress:
 							inputType |= InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_CLASS_TEXT;
 							break;
-						case KeyboardType.Numeric:
+						case Numeric:
 							inputType |= InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED;
 							break;
-						case KeyboardType.PhonePad:
+						case PhonePad:
 							inputType |= InputType.TYPE_CLASS_PHONE;
 							break;
-						case KeyboardType.NumberPad:
+						case NumberPad:
 							inputType |= InputType.TYPE_CLASS_NUMBER;
 							break;
-						case KeyboardType.DecimalPad:
+						case DecimalPad:
 							inputType |= InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL;
 							break;
 						default:
