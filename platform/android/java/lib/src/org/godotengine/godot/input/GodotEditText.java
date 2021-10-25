@@ -42,6 +42,8 @@ import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.util.Log;
+
 
 import java.lang.ref.WeakReference;
 
@@ -237,6 +239,7 @@ public class GodotEditText extends EditText {
 		this.mMultiline = p_multiline;
 
 		this.mKeyboardType = KeyboardType.values()[p_keyboard_type];
+		Log.d("GodotEditText", this.mKeyboardType.toString());
 
 		final Message msg = new Message();
 		msg.what = HANDLER_OPEN_IME_KEYBOARD;

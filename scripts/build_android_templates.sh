@@ -9,9 +9,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. >/dev/null 2>&1 && pwd )"
 export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
 
 # Clean existing templates
-cd $DIR/platform/android/java/
-./gradlew cleanGodotTemplates
-cd ../../..
+#cd $DIR/platform/android/java/
+#./gradlew cleanGodotTemplates
+#cd ../../..
 
 
 # Build export template(s) for platforms:
