@@ -103,6 +103,9 @@
 
 	self.keyboardType = type;
 
+	if (type == UIKeyboardTypeEmailAddress)
+		self.textContentType = UITextContentTypeEmailAddress;
+
 	return [self becomeFirstResponder];
 }
 
