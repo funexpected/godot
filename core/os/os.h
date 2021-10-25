@@ -405,8 +405,17 @@ public:
 		CURSOR_MAX
 	};
 
+	enum VirtualKeyboardType {
+		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
+		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
+		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
+		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
+		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
+		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
+	};
+
 	virtual bool has_virtual_keyboard() const;
-	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), bool p_multiline = false, int p_max_input_length = -1, int p_cursor_start = -1, int p_cursor_end = -1);
+	virtual void show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect = Rect2(), bool p_multiline = false, int p_max_input_length = -1, int p_cursor_start = -1, int p_cursor_end = -1, VirtualKeyboardType p_virtual_keyboard_type = VIRTUAL_KEYBOARD_TYPE_DEFAULT);
 	virtual void hide_virtual_keyboard();
 
 	// returns height of the currently shown virtual keyboard (0 if keyboard is hidden)

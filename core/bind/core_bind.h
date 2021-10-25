@@ -153,6 +153,15 @@ public:
 		OPENGL_CONTEXT, // HGLRC, X11::GLXContext, NSOpenGLContext*, EGLContext* ...
 	};
 
+	enum VirtualKeyboardType {
+		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
+		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
+		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
+		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
+		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
+		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
+	};
+
 	void global_menu_add_item(const String &p_menu, const String &p_label, const Variant &p_signal, const Variant &p_meta);
 	void global_menu_add_separator(const String &p_menu);
 	void global_menu_remove_item(const String &p_menu, int p_idx);
@@ -270,7 +279,7 @@ public:
 	void dump_resources_to_file(const String &p_file);
 
 	bool has_virtual_keyboard() const;
-	void show_virtual_keyboard(const String &p_existing_text = "", bool p_multiline = false);
+	void show_virtual_keyboard(const String &p_existing_text = "", bool p_multiline = false, VirtualKeyboardType p_keyboard_type = VIRTUAL_KEYBOARD_TYPE_DEFAULT);
 	void hide_virtual_keyboard();
 	int get_virtual_keyboard_height();
 
@@ -398,6 +407,7 @@ VARIANT_ENUM_CAST(_OS::Month);
 VARIANT_ENUM_CAST(_OS::SystemDir);
 VARIANT_ENUM_CAST(_OS::ScreenOrientation);
 VARIANT_ENUM_CAST(_OS::HandleType);
+VARIANT_ENUM_CAST(_OS::VirtualKeyboardType);
 
 class _Geometry : public Object {
 

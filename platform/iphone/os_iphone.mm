@@ -423,14 +423,39 @@ bool OSIPhone::has_virtual_keyboard() const {
 	return true;
 };
 
-void OSIPhone::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
+void OSIPhone::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end, VirtualKeyboardType p_virtual_keyboard_type) {
 	NSString *existingString = [[NSString alloc] initWithUTF8String:p_existing_text.utf8().get_data()];
+
+	NSInteger keyboard_type;
+	switch (p_virtual_keyboard_type) {
+		case VirtualKeyboardType::Default:
+			keyboard_type = UIKeyboardTypeDefault;
+			break;
+		case VirtualKeyboardType::EmailAddress:
+			keyboard_type = UIKeyboardTypeEmailAddress;
+			break;
+		case VirtualKeyboardType::Numeric:
+			keyboard_type = UIKeyboardTypeDecimalPad;
+			break;
+		case VirtualKeyboardType::PhonePad:
+			keyboard_type = UIKeyboardTypePhonePad;
+			break;
+		case VirtualKeyboardType::NumberPad:
+			keyboard_type = UIKeyboardTypeNumberPad;
+			break;
+		case VirtualKeyboardType::DecimalPad:
+			keyboard_type = UIKeyboardTypeDecimalPad;
+			break;
+		default:
+			keyboard_type = UIKeyboardTypeDefault;
+	 }
 
 	[AppDelegate.viewController.keyboardView
 			becomeFirstResponderWithString:existingString
 								 multiline:p_multiline
 							   cursorStart:p_cursor_start
-								 cursorEnd:p_cursor_end];
+								 cursorEnd:p_cursor_end
+							  keyboardType:keyboard_type];
 };
 
 void OSIPhone::hide_virtual_keyboard() {

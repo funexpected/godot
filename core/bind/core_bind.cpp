@@ -1092,8 +1092,8 @@ bool _OS::has_virtual_keyboard() const {
 	return OS::get_singleton()->has_virtual_keyboard();
 }
 
-void _OS::show_virtual_keyboard(const String &p_existing_text, bool p_multiline) {
-	OS::get_singleton()->show_virtual_keyboard(p_existing_text, Rect2(), p_multiline);
+void _OS::show_virtual_keyboard(const String &p_existing_text, bool p_multiline, VirtualKeyboardType p_keyboard_type) {
+	OS::get_singleton()->show_virtual_keyboard(p_existing_text, Rect2(), p_multiline, p_keyboard_type);
 }
 
 void _OS::hide_virtual_keyboard() {
@@ -1405,7 +1405,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("dump_memory_to_file", "file"), &_OS::dump_memory_to_file);
 	ClassDB::bind_method(D_METHOD("dump_resources_to_file", "file"), &_OS::dump_resources_to_file);
 	ClassDB::bind_method(D_METHOD("has_virtual_keyboard"), &_OS::has_virtual_keyboard);
-	ClassDB::bind_method(D_METHOD("show_virtual_keyboard", "existing_text", "multiline"), &_OS::show_virtual_keyboard, DEFVAL(""), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("show_virtual_keyboard", "existing_text", "multiline", "keyboard_type"), &_OS::show_virtual_keyboard, DEFVAL(""), DEFVAL(false), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("hide_virtual_keyboard"), &_OS::hide_virtual_keyboard);
 	ClassDB::bind_method(D_METHOD("get_virtual_keyboard_height"), &_OS::get_virtual_keyboard_height);
 	ClassDB::bind_method(D_METHOD("print_resources_in_use", "short"), &_OS::print_resources_in_use, DEFVAL(false));
@@ -1559,6 +1559,13 @@ void _OS::_bind_methods() {
 	BIND_ENUM_CONSTANT(POWERSTATE_NO_BATTERY);
 	BIND_ENUM_CONSTANT(POWERSTATE_CHARGING);
 	BIND_ENUM_CONSTANT(POWERSTATE_CHARGED);
+
+	BIND_ENUM_CONSTANT(VIRTUAL_KEYBOARD_TYPE_DEFAULT);
+	BIND_ENUM_CONSTANT(VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS);
+	BIND_ENUM_CONSTANT(VIRTUAL_KEYBOARD_TYPE_NUMERIC);
+	BIND_ENUM_CONSTANT(VIRTUAL_KEYBOARD_TYPE_PHONE_PAD);
+	BIND_ENUM_CONSTANT(VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD);
+	BIND_ENUM_CONSTANT(VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD);
 }
 
 _OS::_OS() {

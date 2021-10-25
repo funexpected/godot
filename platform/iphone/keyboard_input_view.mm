@@ -83,7 +83,7 @@
 	return YES;
 }
 
-- (BOOL)becomeFirstResponderWithString:(NSString *)existingString multiline:(BOOL)flag cursorStart:(NSInteger)start cursorEnd:(NSInteger)end {
+- (BOOL)becomeFirstResponderWithString:(NSString *)existingString multiline:(BOOL)flag cursorStart:(NSInteger)start cursorEnd:(NSInteger)end keyboardType:(NSInteger)type {
 	self.text = existingString;
 	self.previousText = existingString;
 
@@ -100,6 +100,8 @@
 
 	self.selectedRange = textRange;
 	self.previousSelectedRange = textRange;
+
+	self.keyboardType = type;
 
 	return [self becomeFirstResponder];
 }

@@ -1057,6 +1057,8 @@
 			</argument>
 			<argument index="1" name="multiline" type="bool" default="false">
 			</argument>
+			<argument index="2" name="keyboard_type" type="int" default="0">
+			</argument>
 			<description>
 				Shows the virtual keyboard if the platform has one.
 				The [code]existing_text[/code] parameter is useful for implementing your own [LineEdit] or [TextEdit], as it tells the virtual keyboard what text has already been typed (the virtual keyboard uses it for auto-correct and predictions).
@@ -1285,6 +1287,12 @@
 		</constant>
 		<constant name="POWERSTATE_CHARGED" value="4" enum="PowerState">
 			Plugged in, battery fully charged.
+		</constant>
+		<constant name="VIRTUAL_KEYBOARD_TYPE_TEXT" value="0" enum="VirtualKeyboardType">
+			Basic virtual keyboard.
+		</constant>
+		<constant name="VIRTUAL_KEYBOARD_TYPE_EMAIL" value="1" enum="VirtualKeyboardType">
+			Virtual keyboard with specific layout for entering e-mail addresses.
 		</constant>
 	</constants>
 </class>
