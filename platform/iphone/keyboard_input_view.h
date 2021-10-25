@@ -32,6 +32,6 @@
 
 @interface GodotKeyboardInputView : UITextView
 
-- (BOOL)becomeFirstResponderWithString:(NSString *)existingString multiline:(BOOL)flag cursorStart:(NSInteger)start cursorEnd:(NSInteger)end keyboardType:(NSInteger)type;
+- (BOOL)becomeFirstResponderWithString:(NSString *)existingString multiline:(BOOL)flag cursorStart:(NSInteger)start cursorEnd:(NSInteger)end keyboardType:(UIKeyboardType)type;
 
 @end

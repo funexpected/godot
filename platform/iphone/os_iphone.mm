@@ -426,24 +426,24 @@ bool OSIPhone::has_virtual_keyboard() const {
 void OSIPhone::show_virtual_keyboard(const String &p_existing_text, const Rect2 &p_screen_rect, bool p_multiline, int p_max_input_length, int p_cursor_start, int p_cursor_end, VirtualKeyboardType p_virtual_keyboard_type) {
 	NSString *existingString = [[NSString alloc] initWithUTF8String:p_existing_text.utf8().get_data()];
 
-	NSInteger keyboard_type;
+	UIKeyboardType keyboard_type;
 	switch (p_virtual_keyboard_type) {
-		case VirtualKeyboardType::Default:
+		case VirtualKeyboardType::VIRTUAL_KEYBOARD_TYPE_DEFAULT:
 			keyboard_type = UIKeyboardTypeDefault;
 			break;
-		case VirtualKeyboardType::EmailAddress:
+		case VirtualKeyboardType::VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS:
 			keyboard_type = UIKeyboardTypeEmailAddress;
 			break;
-		case VirtualKeyboardType::Numeric:
+		case VirtualKeyboardType::VIRTUAL_KEYBOARD_TYPE_NUMERIC:
 			keyboard_type = UIKeyboardTypeDecimalPad;
 			break;
-		case VirtualKeyboardType::PhonePad:
+		case VirtualKeyboardType::VIRTUAL_KEYBOARD_TYPE_PHONE_PAD:
 			keyboard_type = UIKeyboardTypePhonePad;
 			break;
-		case VirtualKeyboardType::NumberPad:
+		case VirtualKeyboardType::VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD:
 			keyboard_type = UIKeyboardTypeNumberPad;
 			break;
-		case VirtualKeyboardType::DecimalPad:
+		case VirtualKeyboardType::VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD:
 			keyboard_type = UIKeyboardTypeDecimalPad;
 			break;
 		default:
