@@ -152,6 +152,15 @@ public:
 		Text() { indent_size = 4; }
 	};
 
+	enum VirtualKeyboardType {
+		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
+		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
+		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
+		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
+		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
+		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
+	};
+
 private:
 	struct Cursor {
 		int last_fit_x;
@@ -436,15 +445,6 @@ private:
 	bool shortcut_keys_enabled;
 
 	bool virtual_keyboard_enabled = true;
-
-	enum VirtualKeyboardType {
-		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
-		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
-		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
-		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
-		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
-		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
-	};
 
 	VirtualKeyboardType virtual_keyboard_type = VIRTUAL_KEYBOARD_TYPE_DEFAULT;
 
@@ -850,6 +850,8 @@ public:
 VARIANT_ENUM_CAST(TextEdit::MenuItems);
 VARIANT_ENUM_CAST(TextEdit::SearchFlags);
 VARIANT_ENUM_CAST(TextEdit::SearchResult);
+VARIANT_ENUM_CAST(TextEdit::VirtualKeyboardType);
+
 
 class SyntaxHighlighter {
 protected:

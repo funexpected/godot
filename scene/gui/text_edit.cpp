@@ -7140,6 +7140,8 @@ void TextEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_shortcut_keys_enabled"), &TextEdit::is_shortcut_keys_enabled);
 	ClassDB::bind_method(D_METHOD("set_virtual_keyboard_enabled", "enable"), &TextEdit::set_virtual_keyboard_enabled);
 	ClassDB::bind_method(D_METHOD("is_virtual_keyboard_enabled"), &TextEdit::is_virtual_keyboard_enabled);
+	ClassDB::bind_method(D_METHOD("get_virtual_keyboard_type"), &TextEdit::get_virtual_keyboard_type);
+	ClassDB::bind_method(D_METHOD("set_virtual_keyboard_type"), &TextEdit::set_virtual_keyboard_type);
 	ClassDB::bind_method(D_METHOD("set_selecting_enabled", "enable"), &TextEdit::set_selecting_enabled);
 	ClassDB::bind_method(D_METHOD("is_selecting_enabled"), &TextEdit::is_selecting_enabled);
 	ClassDB::bind_method(D_METHOD("is_line_set_as_safe", "line"), &TextEdit::is_line_set_as_safe);
