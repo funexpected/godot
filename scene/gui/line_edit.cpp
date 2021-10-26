@@ -1720,7 +1720,6 @@ LineEdit::VirtualKeyboardType LineEdit::get_virtual_keyboard_type() const {
 	return virtual_keyboard_type;
 }
 
-
 void LineEdit::set_selecting_enabled(bool p_enabled) {
 	selecting_enabled = p_enabled;
 

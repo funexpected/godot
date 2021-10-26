@@ -437,6 +437,17 @@ private:
 
 	bool virtual_keyboard_enabled = true;
 
+	enum VirtualKeyboardType {
+		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
+		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
+		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
+		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
+		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
+		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
+	};
+
+	VirtualKeyboardType virtual_keyboard_type = VIRTUAL_KEYBOARD_TYPE_DEFAULT;
+
 	int executing_line;
 
 	void _generate_context_menu();
@@ -822,6 +833,9 @@ public:
 
 	void set_virtual_keyboard_enabled(bool p_enable);
 	bool is_virtual_keyboard_enabled() const;
+
+	void set_virtual_keyboard_type(VirtualKeyboardType p_type);
+	VirtualKeyboardType get_virtual_keyboard_type() const;
 
 	PopupMenu *get_menu() const;
 
