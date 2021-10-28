@@ -636,24 +636,6 @@
 		<constant name="MENU_MAX" value="7" enum="MenuItems">
 			Represents the size of the [enum MenuItems] enum.
 		</constant>
-		<constant name="VIRTUAL_KEYBOARD_TYPE_DEFAULT" value="0" enum="VirtualKeyboardType">
-			Basic virtual keyboard.
-		</constant>
-		<constant name="VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS" value="1" enum="VirtualKeyboardType">
-			Virtual keyboard with specific layout for entering e-mail addresses.
-		</constant>
-		<constant name="VIRTUAL_KEYBOARD_TYPE_NUMERIC" value="2" enum="VirtualKeyboardType">
-			Virtual keyboard for entering numbers.
-		</constant>
-		<constant name="VIRTUAL_KEYBOARD_TYPE_PHONE_PAD" value="3" enum="VirtualKeyboardType">
-			Virtual keyboard for entering phone numbers.
-		</constant>
-		<constant name="VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD" value="4" enum="VirtualKeyboardType">
-			Virtual keyboard for entering numbers.
-		</constant>
-		<constant name="VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD" value="5" enum="VirtualKeyboardType">
-			Virtual keyboard for entering (decimal) numbers.
-		</constant>
 	</constants>
 	<theme_items>
 		<theme_item name="background_color" type="Color" default="Color( 0, 0, 0, 0 )">
