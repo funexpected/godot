@@ -151,16 +151,7 @@ public:
 		_FORCE_INLINE_ const String &operator[](int p_line) const { return text[p_line].data; }
 		Text() { indent_size = 4; }
 	};
-	/*
-	enum VirtualKeyboardType {
-		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
-		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
-		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
-		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
-		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
-		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
-	};
-	*/
+
 private:
 	struct Cursor {
 		int last_fit_x;
@@ -850,7 +841,6 @@ public:
 VARIANT_ENUM_CAST(TextEdit::MenuItems);
 VARIANT_ENUM_CAST(TextEdit::SearchFlags);
 VARIANT_ENUM_CAST(TextEdit::SearchResult);
-
 
 class SyntaxHighlighter {
 protected:
