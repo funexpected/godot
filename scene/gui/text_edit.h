@@ -151,7 +151,7 @@ public:
 		_FORCE_INLINE_ const String &operator[](int p_line) const { return text[p_line].data; }
 		Text() { indent_size = 4; }
 	};
-
+	/*
 	enum VirtualKeyboardType {
 		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
 		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
@@ -160,7 +160,7 @@ public:
 		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
 		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
 	};
-
+	*/
 private:
 	struct Cursor {
 		int last_fit_x;
@@ -446,7 +446,7 @@ private:
 
 	bool virtual_keyboard_enabled = true;
 
-	VirtualKeyboardType virtual_keyboard_type = VIRTUAL_KEYBOARD_TYPE_DEFAULT;
+	int virtual_keyboard_type = 0; //OS::VIRTUAL_KEYBOARD_TYPE_DEFAULT
 
 	int executing_line;
 
@@ -834,8 +834,8 @@ public:
 	void set_virtual_keyboard_enabled(bool p_enable);
 	bool is_virtual_keyboard_enabled() const;
 
-	void set_virtual_keyboard_type(VirtualKeyboardType p_type);
-	VirtualKeyboardType get_virtual_keyboard_type() const;
+	void set_virtual_keyboard_type(int p_type);
+	int get_virtual_keyboard_type() const;
 
 	PopupMenu *get_menu() const;
 
@@ -850,7 +850,6 @@ public:
 VARIANT_ENUM_CAST(TextEdit::MenuItems);
 VARIANT_ENUM_CAST(TextEdit::SearchFlags);
 VARIANT_ENUM_CAST(TextEdit::SearchResult);
-VARIANT_ENUM_CAST(TextEdit::VirtualKeyboardType);
 
 
 class SyntaxHighlighter {

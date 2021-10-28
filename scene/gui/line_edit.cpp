@@ -1712,11 +1712,11 @@ bool LineEdit::is_virtual_keyboard_enabled() const {
 	return virtual_keyboard_enabled;
 }
 
-void LineEdit::set_virtual_keyboard_type(VirtualKeyboardType p_type) {
+void LineEdit::set_virtual_keyboard_type(int p_type) {
 	virtual_keyboard_type = p_type;
 }
 
-LineEdit::VirtualKeyboardType LineEdit::get_virtual_keyboard_type() const {
+int LineEdit::get_virtual_keyboard_type() const {
 	return virtual_keyboard_type;
 }
 

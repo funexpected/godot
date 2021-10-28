@@ -59,14 +59,6 @@ public:
 
 	};
 
-	enum VirtualKeyboardType {
-		VIRTUAL_KEYBOARD_TYPE_DEFAULT,
-		VIRTUAL_KEYBOARD_TYPE_EMAIL_ADDRESS,
-		VIRTUAL_KEYBOARD_TYPE_NUMERIC,
-		VIRTUAL_KEYBOARD_TYPE_PHONE_PAD,
-		VIRTUAL_KEYBOARD_TYPE_NUMBER_PAD,
-		VIRTUAL_KEYBOARD_TYPE_DECIMAL_PAD,
-	};
 
 private:
 	Align align;
@@ -102,7 +94,7 @@ private:
 
 	bool virtual_keyboard_enabled = true;
 
-	VirtualKeyboardType virtual_keyboard_type = VIRTUAL_KEYBOARD_TYPE_DEFAULT;
+	int virtual_keyboard_type = 0; // OS::VIRTUAL_KEYBOARD_TYPE_DEFAULT
 
 	Ref<Texture> right_icon;
 
@@ -247,8 +239,8 @@ public:
 	void set_virtual_keyboard_enabled(bool p_enable);
 	bool is_virtual_keyboard_enabled() const;
 
-	void set_virtual_keyboard_type(VirtualKeyboardType p_type);
-	VirtualKeyboardType get_virtual_keyboard_type() const;
+	void set_virtual_keyboard_type(int p_type);
+	int get_virtual_keyboard_type() const;
 
 	void set_selecting_enabled(bool p_enabled);
 	bool is_selecting_enabled() const;
@@ -266,6 +258,5 @@ public:
 
 VARIANT_ENUM_CAST(LineEdit::Align);
 VARIANT_ENUM_CAST(LineEdit::MenuItems);
-VARIANT_ENUM_CAST(LineEdit::VirtualKeyboardType);
 
 #endif

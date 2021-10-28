@@ -7069,11 +7069,11 @@ bool TextEdit::is_virtual_keyboard_enabled() const {
 	return virtual_keyboard_enabled;
 }
 
-void TextEdit::set_virtual_keyboard_type(VirtualKeyboardType p_type) {
+void TextEdit::set_virtual_keyboard_type(int p_type) {
 	virtual_keyboard_type = p_type;
 }
 
-TextEdit::VirtualKeyboardType TextEdit::get_virtual_keyboard_type() const {
+int TextEdit::get_virtual_keyboard_type() const {
 	return virtual_keyboard_type;
 }
 

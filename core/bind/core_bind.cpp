@@ -1093,7 +1093,7 @@ bool _OS::has_virtual_keyboard() const {
 }
 
 void _OS::show_virtual_keyboard(const String &p_existing_text, bool p_multiline, VirtualKeyboardType p_keyboard_type) {
-	OS::get_singleton()->show_virtual_keyboard(p_existing_text, Rect2(), p_multiline, p_keyboard_type);
+	OS::get_singleton()->show_virtual_keyboard(p_existing_text, Rect2(), p_multiline, OS::VirtualKeyboardType(p_keyboard_type));
 }
 
 void _OS::hide_virtual_keyboard() {
