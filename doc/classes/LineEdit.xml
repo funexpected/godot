@@ -175,6 +175,9 @@
 		<member name="virtual_keyboard_enabled" type="bool" setter="set_virtual_keyboard_enabled" getter="is_virtual_keyboard_enabled" default="true">
 			If [code]true[/code], the native virtual keyboard is shown when focused on platforms that support it.
 		</member>
+		<member name="virtual_keyboard_type" type="int" setter="set_virtual_keyboard_type" getter="get_virtual_keyboard_type" enum="OS.VirtualKeyboardType" default="0">
+			Virtual keyboard type. See [enum OS.VirtualKeyboardType] for possible values.
+		</member>
 	</members>
 	<signals>
 		<signal name="text_change_rejected">

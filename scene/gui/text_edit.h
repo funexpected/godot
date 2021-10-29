@@ -437,6 +437,8 @@ private:
 
 	bool virtual_keyboard_enabled = true;
 
+	int virtual_keyboard_type = 0; //OS::VIRTUAL_KEYBOARD_TYPE_DEFAULT
+
 	int executing_line;
 
 	void _generate_context_menu();
@@ -822,6 +824,9 @@ public:
 
 	void set_virtual_keyboard_enabled(bool p_enable);
 	bool is_virtual_keyboard_enabled() const;
+
+	void set_virtual_keyboard_type(int p_type);
+	int get_virtual_keyboard_type() const;
 
 	PopupMenu *get_menu() const;
 

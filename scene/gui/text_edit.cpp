@@ -1811,7 +1811,7 @@ void TextEdit::_notification(int p_what) {
 					cursor_end = cursor_start + post_text.length();
 				}
 
-				OS::get_singleton()->show_virtual_keyboard(get_text(), get_global_rect(), true, -1, cursor_start, cursor_end);
+				OS::get_singleton()->show_virtual_keyboard(get_text(), get_global_rect(), true, -1, cursor_start, cursor_end, (OS::VirtualKeyboardType)virtual_keyboard_type);
 			}
 		} break;
 		case NOTIFICATION_FOCUS_EXIT: {
@@ -7069,6 +7069,14 @@ bool TextEdit::is_virtual_keyboard_enabled() const {
 	return virtual_keyboard_enabled;
 }
 
+void TextEdit::set_virtual_keyboard_type(int p_type) {
+	virtual_keyboard_type = p_type;
+}
+
+int TextEdit::get_virtual_keyboard_type() const {
+	return virtual_keyboard_type;
+}
+
 PopupMenu *TextEdit::get_menu() const {
 	return menu;
 }
@@ -7132,6 +7140,8 @@ void TextEdit::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_shortcut_keys_enabled"), &TextEdit::is_shortcut_keys_enabled);
 	ClassDB::bind_method(D_METHOD("set_virtual_keyboard_enabled", "enable"), &TextEdit::set_virtual_keyboard_enabled);
 	ClassDB::bind_method(D_METHOD("is_virtual_keyboard_enabled"), &TextEdit::is_virtual_keyboard_enabled);
+	ClassDB::bind_method(D_METHOD("get_virtual_keyboard_type"), &TextEdit::get_virtual_keyboard_type);
+	ClassDB::bind_method(D_METHOD("set_virtual_keyboard_type"), &TextEdit::set_virtual_keyboard_type);
 	ClassDB::bind_method(D_METHOD("set_selecting_enabled", "enable"), &TextEdit::set_selecting_enabled);
 	ClassDB::bind_method(D_METHOD("is_selecting_enabled"), &TextEdit::is_selecting_enabled);
 	ClassDB::bind_method(D_METHOD("is_line_set_as_safe", "line"), &TextEdit::is_line_set_as_safe);
@@ -7236,6 +7246,7 @@ void TextEdit::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "context_menu_enabled"), "set_context_menu_enabled", "is_context_menu_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "shortcut_keys_enabled"), "set_shortcut_keys_enabled", "is_shortcut_keys_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "virtual_keyboard_enabled"), "set_virtual_keyboard_enabled", "is_virtual_keyboard_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "virtual_keyboard_type", PROPERTY_HINT_ENUM, "Default,Email,Numeric,PhonePad,NumberPad,DecimalPad"), "set_virtual_keyboard_type", "get_virtual_keyboard_type");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "selecting_enabled"), "set_selecting_enabled", "is_selecting_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "smooth_scrolling"), "set_smooth_scroll_enable", "is_smooth_scroll_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "v_scroll_speed"), "set_v_scroll_speed", "get_v_scroll_speed");

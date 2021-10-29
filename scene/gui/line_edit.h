@@ -59,6 +59,7 @@ public:
 
 	};
 
+
 private:
 	Align align;
 
@@ -92,6 +93,8 @@ private:
 	bool shortcut_keys_enabled;
 
 	bool virtual_keyboard_enabled = true;
+
+	int virtual_keyboard_type = 0; // OS::VIRTUAL_KEYBOARD_TYPE_DEFAULT
 
 	Ref<Texture> right_icon;
 
@@ -235,6 +238,9 @@ public:
 
 	void set_virtual_keyboard_enabled(bool p_enable);
 	bool is_virtual_keyboard_enabled() const;
+
+	void set_virtual_keyboard_type(int p_type);
+	int get_virtual_keyboard_type() const;
 
 	void set_selecting_enabled(bool p_enabled);
 	bool is_selecting_enabled() const;

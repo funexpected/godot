@@ -83,7 +83,7 @@
 	return YES;
 }
 
-- (BOOL)becomeFirstResponderWithString:(NSString *)existingString multiline:(BOOL)flag cursorStart:(NSInteger)start cursorEnd:(NSInteger)end {
+- (BOOL)becomeFirstResponderWithString:(NSString *)existingString multiline:(BOOL)flag cursorStart:(NSInteger)start cursorEnd:(NSInteger)end keyboardType:(UIKeyboardType)type {
 	self.text = existingString;
 	self.previousText = existingString;
 
@@ -100,6 +100,11 @@
 
 	self.selectedRange = textRange;
 	self.previousSelectedRange = textRange;
+
+	self.keyboardType = type;
+
+	if (type == UIKeyboardTypeEmailAddress)
+		self.textContentType = UITextContentTypeEmailAddress;
 
 	return [self becomeFirstResponder];
 }
