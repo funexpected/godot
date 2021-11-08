@@ -16,5 +16,7 @@
 
     <key>compileBitcode</key>
     <false/>
+    <key>manageAppVersionAndBuildNumber</key>
+    <false/>
 </dict>
 </plist>
