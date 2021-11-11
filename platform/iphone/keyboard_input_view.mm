@@ -102,6 +102,8 @@
 	self.previousSelectedRange = textRange;
 
 	self.keyboardType = type;
+	self.autocapitalizationType = UITextAutocapitalizationTypeNone;
+
 
 	if (type == UIKeyboardTypeEmailAddress)
 		self.textContentType = UITextContentTypeEmailAddress;
