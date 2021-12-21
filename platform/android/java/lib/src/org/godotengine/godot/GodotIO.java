@@ -467,6 +467,9 @@ public class GodotIO {
 			intent.setAction(Intent.ACTION_VIEW);
 			if (!type.equals("")) {
 				intent.setDataAndType(Uri.parse(path), type);
+			} else if (p_uri.startsWith("message://")) {
+				intent.setAction(Intent.ACTION_MAIN);
+				intent.addCategory(Intent.CATEGORY_APP_EMAIL);
 			} else {
 				intent.setData(Uri.parse(path));
 			}
