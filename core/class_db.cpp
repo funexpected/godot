@@ -344,8 +344,11 @@ StringName ClassDB::get_parent_class_nocheck(const StringName &p_class) {
 StringName ClassDB::_get_parent_class(const StringName &p_class) {
 
 	ClassInfo *ti = classes.getptr(p_class);
-	ERR_FAIL_COND_V_MSG(!ti, StringName(), "Cannot get class '" + String(p_class) + "'.");
-	return ti->inherits;
+	if (ti) {
+		return ti->inherits;
+	} else {
+		return StringName();
+	}
 }
 
 StringName ClassDB::get_parent_class(const StringName &p_class) {
