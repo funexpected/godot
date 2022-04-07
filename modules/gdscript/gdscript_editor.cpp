@@ -629,6 +629,20 @@ static GDScriptCompletionIdentifier _type_from_property(const PropertyInfo &p_pr
 	if (p_property.type == Variant::OBJECT) {
 		ci.type.kind = GDScriptParser::DataType::NATIVE;
 		ci.type.native_type = p_property.class_name == StringName() ? "Object" : p_property.class_name;
+		if (p_property.hint == PROPERTY_HINT_RESOURCE_TYPE) {
+			Ref<Script> scr = ResourceLoader::load(p_property.hint_string);
+			if (scr.is_valid()) {
+				ci.type.is_meta_type = p_property.usage & PROPERTY_USAGE_TYPING_TYPE;
+				ci.type.script_type = scr;
+				Ref<GDScript> gds = scr;
+				if (gds.is_valid()) {
+					ci.type.kind = GDScriptParser::DataType::GDSCRIPT;
+				} else {
+					ci.type.kind = GDScriptParser::DataType::SCRIPT;
+				}
+				ci.type.native_type = scr->get_instance_base_type();
+			}
+		}
 	} else {
 		ci.type.kind = GDScriptParser::DataType::BUILTIN;
 	}
@@ -1463,6 +1477,21 @@ static bool _guess_identifier_type_from_base(GDScriptCompletionContext &p_contex
 						if (m) {
 							r_type = _type_from_gdtype(gds->get_member_type(p_identifier));
 							return true;
+						}
+						Object *obj = p_base.value.operator Object *();
+						if (obj) {
+							List<PropertyInfo> props;
+							obj->get_property_list(&props);
+							for (const List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
+								PropertyInfo prop = E->get();
+								if (prop.name == p_identifier) {
+									r_type = _type_from_property(prop);
+									if (prop.usage & PROPERTY_USAGE_TYPING_PRELOAD) {
+										r_type.value = obj->get(prop.name);
+									}
+									return true;
+								}
+							}
 						}
 					}
 					Ref<GDScript> parent = gds->get_base_script();
@@ -3532,8 +3561,24 @@ Error GDScriptLanguage::lookup_code(const String &p_code, const String &p_symbol
 				break;
 			}
 
+			Object *obj = base.value.operator Object *();
 			if (_lookup_symbol_from_base(base.type, p_symbol, is_function, r_result) == OK) {
 				return OK;
+			} else if (obj != NULL) {
+				List<PropertyInfo> props;
+				obj->get_property_list(&props);
+				for (const List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
+					PropertyInfo prop = E->get();
+					if (prop.name == p_symbol && prop.hint == PROPERTY_HINT_RESOURCE_TYPE) {
+						Ref<Script> scr = ResourceLoader::load(prop.hint_string);
+						if (scr.is_valid()) {
+							r_result.type = LookupResult::RESULT_SCRIPT_LOCATION;
+							r_result.script = scr;
+							r_result.location = 0;
+							return OK;
+						}
+					}
+				}
 			}
 		} break;
 		case GDScriptParser::COMPLETION_VIRTUAL_FUNC: {
