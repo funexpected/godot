@@ -206,10 +206,10 @@ public:
 struct ScriptCodeCompletionOption {
 	enum Kind {
 		KIND_CLASS,
-		KIND_FUNCTION,
 		KIND_SIGNAL,
 		KIND_VARIABLE,
 		KIND_MEMBER,
+		KIND_FUNCTION,
 		KIND_ENUM,
 		KIND_CONSTANT,
 		KIND_NODE_PATH,
@@ -221,6 +221,8 @@ struct ScriptCodeCompletionOption {
 	String insert_text;
 	RES icon;
 	Variant default_value;
+	int gen;
+	static int max_gen;
 
 	ScriptCodeCompletionOption() {
 		kind = KIND_PLAIN_TEXT;
@@ -230,6 +232,22 @@ struct ScriptCodeCompletionOption {
 		display = p_text;
 		insert_text = p_text;
 		kind = p_kind;
+		gen = max_gen++;
+	}
+
+	_FORCE_INLINE_ bool operator<(const ScriptCodeCompletionOption p_opt) const {
+		if (display.begins_with("_") && !p_opt.display.begins_with("_")) {
+			return false;
+		} else if (!display.begins_with("_") && p_opt.display.begins_with("_")) {
+			return true;
+		}
+		if (kind < KIND_ENUM && p_opt.kind < KIND_ENUM) {
+			return gen < p_opt.gen;
+		}
+		if (kind == p_opt.kind) {
+			return display < p_opt.display;
+		}
+		return kind < p_opt.kind;
 	}
 };
 

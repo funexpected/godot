@@ -3032,6 +3032,7 @@ Error GDScriptLanguage::complete_code(const String &p_code, const String &p_path
 	for (Map<String, ScriptCodeCompletionOption>::Element *E = options.front(); E; E = E->next()) {
 		r_options->push_back(E->get());
 	}
+	r_options->sort();
 
 	return OK;
 }

@@ -40,6 +40,7 @@ bool ScriptServer::scripting_enabled = true;
 bool ScriptServer::reload_scripts_on_save = false;
 bool ScriptServer::languages_finished = false;
 ScriptEditRequestFunction ScriptServer::edit_request_func = NULL;
+int ScriptCodeCompletionOption::max_gen = 0;
 
 void Script::_notification(int p_what) {
 
