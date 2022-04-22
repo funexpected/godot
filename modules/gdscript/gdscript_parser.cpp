@@ -5823,11 +5823,18 @@ GDScriptParser::DataType GDScriptParser::_resolve_type(const DataType &p_source,
 	if (!p_source.has_type) return p_source;
 	if (p_source.kind != DataType::UNRESOLVED) return p_source;
 
-	Vector<String> full_name = p_source.native_type.operator String().split(".", false);
+	String tn = p_source.native_type;
+	Vector<String> full_name = tn.split(".", false);
 	int name_part = 0;
 
 	DataType result;
 	result.has_type = true;
+
+	if (tn == "Self") {
+		result.kind = DataType::CLASS;
+		result.class_type = static_cast<ClassNode *>(head);
+		return result;
+	}
 
 	while (name_part < full_name.size()) {
 
