@@ -30,12 +30,16 @@
 
 #import <UIKit/UIKit.h>
 
-typedef NSObject<UIApplicationDelegate> ApplicationDelegateService;
+ typedef NSObject<UIApplicationDelegate> ApplicationDelegateService;
 
-@interface GodotApplicalitionDelegate : NSObject <UIApplicationDelegate>
+@interface GodotApplicalitionDelegate : UIResponder <UIApplicationDelegate>
 
 @property(class, readonly, strong) NSArray<ApplicationDelegateService *> *services;
 
 + (void)addService:(ApplicationDelegateService *)service;
 
+@end
+
+API_AVAILABLE(ios(13.0))
+@interface GodotSceneDelegate : UIResponder <UIWindowSceneDelegate>
 @end
