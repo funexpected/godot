@@ -112,16 +112,6 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 	return result;
 }
 
-/* Can be handled by Info.plist. Not yet supported by Godot.
-
-// MARK: Scene
-
-- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {}
-
-- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions {}
-
-*/
-
 // MARK: Life-Cycle
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -405,7 +395,6 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 			result = YES;
 		}
 	}
-
 	return result;
 }
 
@@ -464,5 +453,108 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 - (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {}
 
 */
+
+// MARK: Scene
+
+- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options API_AVAILABLE(ios(13.0)) {
+	UISceneConfiguration *configuration = [UISceneConfiguration configurationWithName:@"main"
+																		  sessionRole:UIWindowSceneSessionRoleApplication];
+
+    configuration.delegateClass = GodotSceneDelegate.class;
+
+    return configuration;
+}
+
+//- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions {}
+
+/* */
+
+@end
+
+API_AVAILABLE(ios(13.0))
+@implementation GodotSceneDelegate
+
+
+@synthesize window = _window;
+
+- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions API_AVAILABLE(ios(13.0)) {
+	UIApplication *app = [UIApplication sharedApplication];
+    self.window = app.delegate.window;
+	self.window.windowScene = scene;
+
+	for (NSUserActivity *acticity in connectionOptions.userActivities) {
+		NSURL *url = acticity.webpageURL;
+		if (url != nil) {
+			[app.delegate application:app openURL:url options:@{}];
+			break;
+		}
+	}
+
+	for (UIOpenURLContext *ctx in connectionOptions.URLContexts) {
+		NSLog(@"[sd] ctx %@", ctx);
+		NSURL *url = ctx.URL;
+		if (url != nil) {
+			[app.delegate application:app openURL:url options:@{}];
+			// [app.delegate application:app openURL:url options:@{
+			// 	UIApplicationOpenURLOptionsSourceApplicationKey: ctx.options.sourceApplication,
+			// 	UIApplicationOpenURLOptionsAnnotationKey: ctx.options.annotation
+			// }];
+			break;
+		}
+	}
+}
+
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+	UIApplication *app = [UIApplication sharedApplication];
+	[app.delegate applicationWillEnterForeground:app];
+}
+
+- (void)sceneDidBecomeActive:(UIScene *)scene {
+	UIApplication *app = [UIApplication sharedApplication];
+	[app.delegate applicationDidBecomeActive:app];
+}
+
+- (void)sceneWillResignActive:(UIScene *)scene {
+	UIApplication *app = [UIApplication sharedApplication];
+	[app.delegate applicationWillResignActive:app];
+}
+
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+	UIApplication *app = [UIApplication sharedApplication];
+	[app.delegate applicationDidEnterBackground:app];
+}
+
+- (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {
+	UIApplication *app = [UIApplication sharedApplication];
+	for (UIOpenURLContext *ctx in URLContexts) {
+		NSURL *url = ctx.URL;
+		if (url != nil) {
+			[app.delegate application:app openURL:url options:@{}];
+			// [app.delegate application:app openURL:url options:@{
+			// 	UIApplicationOpenURLOptionsSourceApplicationKey: ctx.options.sourceApplication,
+			// 	UIApplicationOpenURLOptionsAnnotationKey: ctx.options.annotation
+			// }];
+			break;
+		}
+	}
+}
+
+
+
+- (void)scene:(UIScene *)scene willContinueUserActivityWithType:(NSString *)userActivityType {
+	UIApplication *app = [UIApplication sharedApplication];
+	[app.delegate application: app willContinueUserActivityWithType:userActivityType];
+}
+
+- (void)scene:(UIScene *)scene continueUserActivity:(NSUserActivity *)userActivity {
+	NSURL *url = userActivity.webpageURL;
+	UIApplication *app = [UIApplication sharedApplication];
+	if (url != nil) {
+		[app.delegate application:app openURL:url options:@{}];
+	}
+}
+
+
+
 
 @end
