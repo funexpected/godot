@@ -56,6 +56,8 @@ static ViewController *mainViewController = nil;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+	NSLog(@"[sd] willFinishLaunchingWithOptions %@", launchOptions);
+
 	// Create a full-screen window
 	CGRect windowBounds = [[UIScreen mainScreen] bounds];
 	self.window = [[UIWindow alloc] initWithFrame:windowBounds];
@@ -195,7 +197,7 @@ static ViewController *mainViewController = nil;
 }
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application {
-	if (OS::get_singleton()->get_main_loop()) {
+	if (OS::get_singleton() && OS::get_singleton()->get_main_loop()) {
 		OS::get_singleton()->get_main_loop()->notification(
 				MainLoop::NOTIFICATION_OS_MEMORY_WARNING);
 	}
@@ -222,13 +224,14 @@ static ViewController *mainViewController = nil;
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
+	NSLog(@"[sd] applicationDidBecomeActive");
 	OSIPhone::get_singleton()->on_focus_in();
 	[[NSNotificationCenter defaultCenter] postNotificationName: 
                        @"applicationDidBecomeActive_finish" object:nil userInfo: @{}];
 }
 
 - (void)dealloc {
-	self.window = nil;
+	// self.window = nil;
 }
 
 @end
