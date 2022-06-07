@@ -148,7 +148,7 @@ void iOS::cancel_notifications(const Array &identifier_arr)
 
 void iOS::share_data(const String &text, const String &image_path)
 {
-UIViewController *root_controller = (UIViewController *)((AppDelegate *)[[UIApplication sharedApplication] delegate]).window.rootViewController;
+UIViewController *root_controller = AppDelegate.viewController;
     
     NSString * message = [NSString stringWithCString:text.utf8().get_data() encoding:NSUTF8StringEncoding];
     
