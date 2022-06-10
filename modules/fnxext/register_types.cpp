@@ -11,11 +11,13 @@
 #ifdef TOOLS_ENABLED
 #include <editor/editor_node.h>
 #include "canvas_layers_editor_plugin.h"
+#include "dependency_collector_editor_plugin.h"
 #endif
 
 #ifdef TOOLS_ENABLED
 static void _editor_init() {
 	EditorNode::get_singleton()->add_editor_plugin(memnew(CanvasLayersEditorPlugin));
+	EditorNode::get_singleton()->add_editor_plugin(memnew(DependencyCollectorEditorPlugin));
 }
 #endif
 
