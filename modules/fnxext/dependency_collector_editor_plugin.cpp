@@ -42,15 +42,17 @@ void DependencyCollectorEditorPlugin::_bind_methods() {
 }
 
 void DependencyCollectorEditorPlugin::_collect_dependencies() {
-    print_line(String("[dc] plugin started, scaning =") + Variant(EditorFileSystem::get_singleton()->is_scanning()));
+    if (EditorFileSystem::get_singleton()->is_scanning()) {
+        return;
+    }
     if (collected) {
         return;
     }
     collected = true;
+    print_line("[DependencyCollector] start dependency collecting");
     FileAccess *file = FileAccess::open(result_path, FileAccess::WRITE);
     if (file) {
-        // write json directly to file
-        // as it is faster and easier
+        // write json directly to file as it is faster and easier
         // then build struct and then serialize json
         file->store_string("[");
         _populate_deps(EditorFileSystem::get_singleton()->get_filesystem(), file);
@@ -60,7 +62,7 @@ void DependencyCollectorEditorPlugin::_collect_dependencies() {
         print_error(String("Invalid file path for collecting dependencies: ") + result_path);
     }
     get_tree()->quit(0);
-    print_line("[dc] plugin done");
+    print_line("[DependencyCollector] done dependency collecting");
 }
 
 void DependencyCollectorEditorPlugin::_populate_deps(EditorFileSystemDirectory *p_dir, FileAccess *file) {
@@ -91,7 +93,6 @@ void DependencyCollectorEditorPlugin::_populate_deps(EditorFileSystemDirectory *
 }
 
 DependencyCollectorEditorPlugin::DependencyCollectorEditorPlugin() {
-    print_line("[dc] plugin constructor");
     collected = false;
     result_path = "";
     first_entry_added = false;

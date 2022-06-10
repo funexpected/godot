@@ -693,7 +693,7 @@ void EditorNode::_resources_changed(const PoolVector<String> &p_resources) {
 }
 
 void EditorNode::_fs_changed() {
-	print_line("[dc] EditorNode::_fs_changed");
+
 	for (Set<FileDialog *>::Element *E = file_dialogs.front(); E; E = E->next()) {
 
 		E->get()->invalidate();
@@ -822,7 +822,6 @@ void EditorNode::_resources_reimported(const Vector<String> &p_resources) {
 }
 
 void EditorNode::_sources_changed(bool p_exist) {
-	print_line("[dc] EditorNode::_sources_changed");
 
 	if (waiting_for_first_scan) {
 		waiting_for_first_scan = false;
