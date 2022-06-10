@@ -67,10 +67,10 @@ void DependencyCollectorEditorPlugin::_collect_dependencies() {
 
 void DependencyCollectorEditorPlugin::_populate_deps(EditorFileSystemDirectory *p_dir, FileAccess *file) {
     for (int i = 0; i < p_dir->get_subdir_count(); i++) {
-		_populate_deps(p_dir->get_subdir(i), file);
-	}
+        _populate_deps(p_dir->get_subdir(i), file);
+    }
 
-	for (int i = 0; i < p_dir->get_file_count(); i++) {
+    for (int i = 0; i < p_dir->get_file_count(); i++) {
         
         String path = p_dir->get_file_path(i);
         if (first_entry_added) {
@@ -89,7 +89,7 @@ void DependencyCollectorEditorPlugin::_populate_deps(EditorFileSystemDirectory *
             file->store_string("\"");
         }
         file->store_string("\n]");
-	}
+    }
 }
 
 DependencyCollectorEditorPlugin::DependencyCollectorEditorPlugin() {
