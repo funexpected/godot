@@ -22,7 +22,7 @@ protected:
     static void _bind_methods();
 
 public:
-    void _collect_dependencies(bool p_exist);
+    void _collect_dependencies();
     DependencyCollectorEditorPlugin();
 };
 

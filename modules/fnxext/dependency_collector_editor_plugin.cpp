@@ -41,7 +41,8 @@ void DependencyCollectorEditorPlugin::_bind_methods() {
 
 }
 
-void DependencyCollectorEditorPlugin::_collect_dependencies(bool p_exist) {
+void DependencyCollectorEditorPlugin::_collect_dependencies() {
+    print_line(String("[dc] plugin started, scaning =") + Variant(EditorFileSystem::get_singleton()->is_scanning()));
     if (collected) {
         return;
     }
@@ -59,6 +60,7 @@ void DependencyCollectorEditorPlugin::_collect_dependencies(bool p_exist) {
         print_error(String("Invalid file path for collecting dependencies: ") + result_path);
     }
     get_tree()->quit(0);
+    print_line("[dc] plugin done");
 }
 
 void DependencyCollectorEditorPlugin::_populate_deps(EditorFileSystemDirectory *p_dir, FileAccess *file) {
@@ -89,6 +91,7 @@ void DependencyCollectorEditorPlugin::_populate_deps(EditorFileSystemDirectory *
 }
 
 DependencyCollectorEditorPlugin::DependencyCollectorEditorPlugin() {
+    print_line("[dc] plugin constructor");
     collected = false;
     result_path = "";
     first_entry_added = false;
@@ -96,7 +99,7 @@ DependencyCollectorEditorPlugin::DependencyCollectorEditorPlugin() {
     bool collect_required = false;
     for (List<String>::Element *E = args.front(); E; E = E->next()) {
         if (E->get() == "--collect-dependencies") {
-            EditorFileSystem::get_singleton()->connect("sources_changed", this, "_collect_dependencies");
+            EditorFileSystem::get_singleton()->connect("filesystem_changed", this, "_collect_dependencies");
             collect_required = true;
         } else if (collect_required) {
             result_path = E->get();
