@@ -1,12 +1,15 @@
 #ifdef MODULE_FNXEXT_ENABLED
 
 #include <core/class_db.h>
+#include <core/engine.h>
+
 #include "register_types.h"
 #include "stylebox_bordered_texture.h"
 #include "visibility_controller_2d.h"
 #include "mesh_line_2d.h"
 #include "future.h"
 #include "zip_tool.h"
+#include "engine_internals.h"
 
 #ifdef TOOLS_ENABLED
 #include <editor/editor_node.h>
@@ -27,6 +30,9 @@ void register_fnxext_types() {
 	ClassDB::register_class<MeshLine2D>();
 	ClassDB::register_class<Future>();
 	ClassDB::register_class<ZipTool>();
+	ClassDB::register_class<EngineInternals>();
+
+	Engine::get_singleton()->add_singleton(Engine::Singleton("EngineInternals", memnew(EngineInternals)));
 
 #ifdef TOOLS_ENABLED
 	// Control* gui = EditorNode::get_singleton()->get_gui_base();
