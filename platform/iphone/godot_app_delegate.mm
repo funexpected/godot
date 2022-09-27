@@ -31,7 +31,7 @@
 #import "godot_app_delegate.h"
 
 #import "app_delegate.h"
-
+#include "os_iphone.h"
 @interface GodotApplicalitionDelegate ()
 
 @end
@@ -81,6 +81,8 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 // MARK: Initializing
 
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+	NSLog(@"[delegate] willFinishLaunchingWithOptions");
+	[UIView setAnimationsEnabled:NO];
 	BOOL result = NO;
 
 	for (ApplicationDelegateService *service in services) {
@@ -97,6 +99,7 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+	NSLog(@"[delegate] didFinishLaunchingWithOptions");
 	BOOL result = NO;
 
 	for (ApplicationDelegateService *service in services) {
@@ -446,17 +449,40 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 	}
 }
 
-/* Handled By Info.plist file for now
+// /* Handled By Info.plist file for now
 
 // MARK: Interface Geometry
 
-- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {}
+- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+	if (!OS::get_singleton()) {
+		NSLog(@"[delegate] call for orientation no singleton");
+		return UIInterfaceOrientationMaskPortrait;
+	}
+	NSLog(@"[delegate] call for orientation no singleton %d", OS::get_singleton()->get_screen_orientation());
+	switch (OS::get_singleton()->get_screen_orientation()) {
+		case OS::SCREEN_PORTRAIT:
+			return UIInterfaceOrientationMaskPortrait;
+		case OS::SCREEN_REVERSE_LANDSCAPE:
+			return UIInterfaceOrientationMaskLandscapeRight;
+		case OS::SCREEN_REVERSE_PORTRAIT:
+			return UIInterfaceOrientationMaskPortraitUpsideDown;
+		case OS::SCREEN_SENSOR_LANDSCAPE:
+			return UIInterfaceOrientationMaskLandscape;
+		case OS::SCREEN_SENSOR_PORTRAIT:
+			return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+		case OS::SCREEN_SENSOR:
+			return UIInterfaceOrientationMaskAll;
+		case OS::SCREEN_LANDSCAPE:
+			return UIInterfaceOrientationMaskLandscapeLeft;
+	}
+}
 
-*/
+// */
 
 // MARK: Scene
 
 - (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options API_AVAILABLE(ios(13.0)) {
+	NSLog(@"[delegate] configurationForConnectingSceneSession");
 	UISceneConfiguration *configuration = [UISceneConfiguration configurationWithName:@"main"
 																		  sessionRole:UIWindowSceneSessionRoleApplication];
 
@@ -478,6 +504,7 @@ API_AVAILABLE(ios(13.0))
 @synthesize window = _window;
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions API_AVAILABLE(ios(13.0)) {
+	NSLog(@"[delegate] willConnectToSession");
 	UIApplication *app = [UIApplication sharedApplication];
     self.window = app.delegate.window;
 	self.window.windowScene = scene;

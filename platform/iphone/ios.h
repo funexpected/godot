@@ -49,6 +49,7 @@ public:
 	String get_app_version();
 	void send_notification(const String &identifier_s, const String &title_s, const String &body_s, int time_offset);
 	void cancel_notifications(const Array &identifier_arr);
+	void set_background_color(float r, float g, float b, float a);
 
 
 	void share_data(const String &text, const String &image_path);

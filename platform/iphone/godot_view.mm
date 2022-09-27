@@ -77,6 +77,9 @@ static const int max_touches = 8;
 
 	CALayer<DisplayLayer> *layer = [GodotOpenGLLayer layer];
 
+	[CATransaction begin];
+	[CATransaction setValue:(id)kCFBooleanTrue
+	                 forKey:kCATransactionDisableActions];
 	layer.frame = self.bounds;
 	layer.contentsScale = self.contentScaleFactor;
 
@@ -84,6 +87,7 @@ static const int max_touches = 8;
 	self.renderingLayer = layer;
 
 	[layer initializeDisplayLayer];
+	[CATransaction commit];
 
 	return self.renderingLayer;
 }
@@ -276,17 +280,21 @@ static const int max_touches = 8;
 // the same size as our display area.
 
 - (void)layoutSubviews {
-	UIApplicationState state = [[UIApplication sharedApplication] applicationState];
-	if (state == UIApplicationStateBackground || state == UIApplicationStateInactive)
-	{
-		return;
-	}
+	// UIApplicationState state = [[UIApplication sharedApplication] applicationState];
+	// if (state == UIApplicationStateBackground || state == UIApplicationStateInactive)
+	// {
+	// 	return;
+	// }
+	[CATransaction begin];
+	[CATransaction setValue:(id)kCFBooleanTrue
+					forKey:kCATransactionDisableActions];
 	if (self.renderingLayer) {
 		self.renderingLayer.frame = self.bounds;
 		[self.renderingLayer layoutDisplayLayer];
 	}
 
 	[super layoutSubviews];
+	[CATransaction commit];
 }
 
 // MARK: - Input

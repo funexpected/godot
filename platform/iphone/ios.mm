@@ -44,6 +44,7 @@ void iOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_rate_url", "app_id"), &iOS::get_rate_url);
 	ClassDB::bind_method(D_METHOD("get_interface_orientation"), &iOS::get_interface_orientation);
 	ClassDB::bind_method(D_METHOD("share_data"), &iOS::share_data);
+	ClassDB::bind_method(D_METHOD("set_background_color"), &iOS::set_background_color);
 	ClassDB::bind_method(D_METHOD("get_app_version"), &iOS::get_app_version);
 	ClassDB::bind_method(D_METHOD("send_notification", "indifiter", "title", "body", "time_offset"), &iOS::send_notification);
 	ClassDB::bind_method(D_METHOD("cancel_notifications", "identifier_arr"), &iOS::cancel_notifications);
@@ -162,6 +163,14 @@ UIViewController *root_controller = AppDelegate.viewController;
     }
     [root_controller presentViewController:avc animated:true completion:nil];
 
+}
+
+void iOS::set_background_color(float r, float g, float b, float a)
+{
+	AppDelegate.viewController.view.backgroundColor = 
+		[UIColor colorWithRed:r green:g blue:b alpha:a];
+	[UIApplication sharedApplication].delegate.window.backgroundColor = 
+		[UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
 iOS::iOS(){};

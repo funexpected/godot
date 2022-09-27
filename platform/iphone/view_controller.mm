@@ -188,7 +188,7 @@
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
 	if (!OSIPhone::get_singleton()) {
-		return UIInterfaceOrientationMaskAll;
+		return UIInterfaceOrientationMaskPortrait;
 	}
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_PORTRAIT:

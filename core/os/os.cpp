@@ -829,7 +829,7 @@ OS::OS() {
 	_debug_stdout = false;
 	_no_window = false;
 	_exit_code = 0;
-	_orientation = SCREEN_LANDSCAPE;
+	_orientation = SCREEN_PORTRAIT;
 
 	_render_thread_mode = RENDER_THREAD_SAFE;
 

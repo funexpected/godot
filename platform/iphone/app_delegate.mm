@@ -59,6 +59,10 @@ static ViewController *mainViewController = nil;
 	// Create a full-screen window
 	CGRect windowBounds = [[UIScreen mainScreen] bounds];
 	self.window = [[UIWindow alloc] initWithFrame:windowBounds];
+	self.window.backgroundColor = [UIColor colorWithRed:0.42
+												   green:0.35
+												    blue:0.79
+												   alpha:1.0];
 
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
 			NSUserDomainMask, YES);
@@ -76,6 +80,11 @@ static ViewController *mainViewController = nil;
 	// it can properly initialize the OpenGL context
 
 	ViewController *viewController = [[ViewController alloc] init];
+	// ViewController.godotView.backgroundColor = [UIColor blueColor];
+	viewController.godotView.backgroundColor = [UIColor colorWithRed:0.42
+                                               				   green:0.35
+                                                                blue:0.79
+                                                               alpha:1.0];
 	viewController.godotView.useCADisplayLink = bool(GLOBAL_DEF("display.iOS/use_cadisplaylink", true)) ? YES : NO;
 	viewController.godotView.renderingInterval = 1.0 / kRenderingFrequency;
 
