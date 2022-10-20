@@ -7,6 +7,7 @@
 #include "mesh_line_2d.h"
 #include "future.h"
 #include "zip_tool.h"
+#include "onnx_engine.h"
 
 #ifdef TOOLS_ENABLED
 #include <editor/editor_node.h>
@@ -25,6 +26,7 @@ void register_fnxext_types() {
 	ClassDB::register_class<MeshLine2D>();
 	ClassDB::register_class<Future>();
 	ClassDB::register_class<ZipTool>();
+	ClassDB::register_class<OnnxEngine>();
 
 #ifdef TOOLS_ENABLED
 	// Control* gui = EditorNode::get_singleton()->get_gui_base();

@@ -4,6 +4,13 @@ Import('env_modules')
 module_env = env_modules.Clone()
 module_env.add_source_files(env.modules_sources,"*.cpp")
 
+module_env.add_source_files(env.modules_sources,"onnx_engine/src/*.c")
+module_env.add_source_files(env.modules_sources,"onnx_engine/src/default/*.c")
+
+env_modules.Append(CPPFLAGS=[
+	"-I", "modules/fnxext/onnx_engine/src/onnx.h",
+])
+
 Export('env_modules')
 Export('env')
 
