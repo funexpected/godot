@@ -1963,6 +1963,15 @@ void GDScriptFunctionState::_clear_stack() {
 	}
 }
 
+void GDScriptFunctionState::_clear_connections() {
+	List<Object::Connection> connections;
+	get_signals_connected_to_this(&connections);
+
+	for (List<Object::Connection>::Element *E = connections.front(); E; E = E->next()) {
+		disconnect(E->get().signal, E->get().target, E->get().method);
+	}
+}
+
 void GDScriptFunctionState::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("resume", "arg"), &GDScriptFunctionState::resume, DEFVAL(Variant()));

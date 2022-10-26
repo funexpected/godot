@@ -40,7 +40,7 @@
 #include "core/script_language.h"
 #include "core/translation.h"
 
-#ifdef DEBUG_ENABLED
+#if 0
 
 struct _ObjectDebugLock {
 
