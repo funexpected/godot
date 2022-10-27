@@ -302,6 +302,7 @@ public:
 		StringName function_name;
 		String script_path;
 #endif
+		Array keeper;
 		Vector<uint8_t> stack;
 		int stack_size;
 		Variant self;

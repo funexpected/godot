@@ -1275,7 +1275,16 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				gdfs->state.stack.resize(alloca_size);
 				//copy variant stack
 				for (int i = 0; i < _stack_size; i++) {
-					memnew_placement(&gdfs->state.stack.write[sizeof(Variant) * i], Variant(stack[i]));
+					Variant var = stack[i];
+					if (stack[i].get_type() == Variant::OBJECT) {
+						Object *obj = Object::cast_to<Object>((Object*)var);
+						if (obj != NULL) {
+							gdfs->state.keeper.append(stack[i]);
+							var = obj;
+
+						}
+					}
+					memnew_placement(&gdfs->state.stack.write[sizeof(Variant) * i], Variant(var));
 				}
 				gdfs->state.stack_size = _stack_size;
 				gdfs->state.self = self;
@@ -1968,7 +1977,7 @@ void GDScriptFunctionState::_clear_connections() {
 	get_signals_connected_to_this(&connections);
 
 	for (List<Object::Connection>::Element *E = connections.front(); E; E = E->next()) {
-		disconnect(E->get().signal, E->get().target, E->get().method);
+		E->get().target->disconnect(E->get().signal, this, E->get().method);
 	}
 }
 
