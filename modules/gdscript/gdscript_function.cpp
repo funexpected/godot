@@ -1973,6 +1973,9 @@ void GDScriptFunctionState::_clear_stack() {
 }
 
 void GDScriptFunctionState::_clear_connections() {
+	if (!ObjectDB::instance_validate(this)) {
+		return;
+	}
 	List<Object::Connection> connections;
 	get_signals_connected_to_this(&connections);
 
