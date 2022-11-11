@@ -955,7 +955,7 @@ GDScript::~GDScript() {
 		// the GDSCriptFunctionState to be destroyed and thus removed from the list.
 		pending_func_states.remove(E);
 		E->self()->_clear_stack();
-		E->self()->_clear_connections();
+		// E->self()->_clear_connections();
 	}
 	GDScriptLanguage::get_singleton()->lock.unlock();
 
@@ -1378,7 +1378,7 @@ GDScriptInstance::~GDScriptInstance() {
 		// the GDSCriptFunctionState to be destroyed and thus removed from the list.
 		pending_func_states.remove(E);
 		E->self()->_clear_stack();
-		E->self()->_clear_connections();
+		// E->self()->_clear_connections();
 	}
 
 	if (script.is_valid() && owner) {
