@@ -1902,6 +1902,7 @@ bool GDScriptFunctionState::is_valid(bool p_extended_check) const {
 Variant GDScriptFunctionState::resume(const Variant &p_arg) {
 
 	ERR_FAIL_COND_V(!function, Variant());
+	ERR_FAIL_COND_V(!GDScriptLanguage::singleton, Variant());
 	{
 #ifndef NO_THREADS
 		MutexLock lock(GDScriptLanguage::singleton->lock);
