@@ -23,6 +23,7 @@ Array ZipTool::list_files(const String &p_path) {
     unz_global_info64 gi;
 	int err = unzGetGlobalInfo64(zip, &gi);
     if (err != UNZ_OK) {
+        unzClose(zip);
         return result;
     }
 	
@@ -43,6 +44,7 @@ Array ZipTool::list_files(const String &p_path) {
 			unzGoToNextFile(zip);
 		}
     }
+    unzClose(zip);
 
     return result;
 }
