@@ -51,7 +51,7 @@
             android:screenOrientation="landscape"
             android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|density|keyboard|navigation|screenLayout|uiMode"
             android:resizeableActivity="false"
-            android:exported="false"
+            android:exported="true"
             tools:ignore="UnusedAttribute" >
 
             <!-- Focus awareness metadata is updated at export time if the user enables it in the 'Xr Features' section. -->
