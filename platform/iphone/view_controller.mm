@@ -230,7 +230,8 @@
 	CGRect keyboardFrame = [self.view convertRect:rawFrame fromView:nil];
 
 	if (OSIPhone::get_singleton()) {
-		OSIPhone::get_singleton()->set_virtual_keyboard_height(keyboardFrame.size.height);
+		printf("bko | tyt")
+		OSIPhone::get_singleton()->set_virtual_keyboard_height(keyboardFrame.size.height / 2);
 	}
 }
 
