@@ -103,6 +103,7 @@
 
 	self.keyboardType = type;
 	self.autocapitalizationType = UITextAutocapitalizationTypeNone;
+	self.returnKeyType = UIReturnKeyDone;
 
 
 	if (type == UIKeyboardTypeEmailAddress)
