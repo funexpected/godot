@@ -79,8 +79,6 @@ jobs:
             build: |
               scons target=release_debug platform=server tools=yes module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
               ls -l bin/
-              mv bin/godot.x11.opt.debug.64 bin/godot_server.x11.opt.tools.64
-              ls -l bin/
 
 
 
