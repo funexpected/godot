@@ -22,10 +22,10 @@ jobs:
         include:
           - os: macos-latest
             token: osx.editor
-            build: scons -j2 platform=osx tool=yes target=release_debug verbose=yes
+            build: scons -j2 platform=osx tools=yes target=release_debug verbose=yes
           - os: macos-latest
             token: osx.editor.headless
-            build: scons -j2 platform=server tool=yes target=release_debug verbose=yes
+            build: scons -j2 platform=server tools=yes target=release_debug verbose=yes
           - os: macos-latest
             token: ios.release
             build: |
@@ -75,9 +75,9 @@ jobs:
               cd -
               cp platform/android/java/lib/libs/release/android.native_libs.unstripped.release.zip bin
           - os: ubuntu-20.04
-            token: x11.editor.headless
+            token: linux.editor.headless
             build: |
-              scons target=release_debug tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
+              scons target=release_debug platform=server tools=yes module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
               ls -l bin/
               mv bin/godot.x11.opt.debug.64 bin/godot_server.x11.opt.tools.64
               ls -l bin/
@@ -139,7 +139,7 @@ jobs:
           scons --version
 
       - name: Configure dependencies
-        if: ${{startsWith(matrix.token, 'x11')}}
+        if: ${{startsWith(matrix.token, 'linux')}}
         run: |
           sudo apt-get install build-essential pkg-config libx11-dev libxcursor-dev \
             libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
