@@ -604,13 +604,13 @@ local unzFile unzOpenInternal (const void *path,
     int err=UNZ_OK;
 
     if (unz_copyright[0]!=' ')
-        return NULL;
+        return __LINE__;
 
     us.z_filefunc.zseek32_file = NULL;
     us.z_filefunc.ztell32_file = NULL;
     if (pzlib_filefunc64_32_def==NULL)
         /* GODOT start */
-        return NULL; // standard i/o not supported
+        return __LINE__; // standard i/o not supported
     us.z_filefunc = *pzlib_filefunc64_32_def;
     /* GODOT end */
     us.is64bitOpenFunction = is64bitOpenFunction;
@@ -622,7 +622,7 @@ local unzFile unzOpenInternal (const void *path,
                                                  ZLIB_FILEFUNC_MODE_READ |
                                                  ZLIB_FILEFUNC_MODE_EXISTING);
     if (us.filestream==NULL)
-        return NULL;
+        return __LINE__;
 
     central_pos = unz64local_SearchCentralDir64(&us.z_filefunc,us.filestream);
     if (central_pos)
@@ -746,7 +746,7 @@ local unzFile unzOpenInternal (const void *path,
     if (err!=UNZ_OK)
     {
         ZCLOSE64(us.z_filefunc, us.filestream);
-        return NULL;
+        return err;
     }
 
     us.byte_before_the_zipfile = central_pos -
