@@ -2608,6 +2608,8 @@ void Control::set_mouse_filter(MouseFilter p_filter) {
 
 	ERR_FAIL_INDEX(p_filter, 3);
 	data.mouse_filter = p_filter;
+	emit_signal("mouse_filter_changed");
+	_change_notify("mouse_filter");
 	update_configuration_warning();
 }
 
@@ -3115,6 +3117,7 @@ void Control::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("size_flags_changed"));
 	ADD_SIGNAL(MethodInfo("minimum_size_changed"));
 	ADD_SIGNAL(MethodInfo("modal_closed"));
+	ADD_SIGNAL(MethodInfo("mouse_filter_changed"));
 
 	BIND_VMETHOD(MethodInfo(Variant::BOOL, "has_point", PropertyInfo(Variant::VECTOR2, "point")));
 }

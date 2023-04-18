@@ -54,6 +54,7 @@ class SceneTreeEditor : public Control {
 		BUTTON_SIGNALS = 6,
 		BUTTON_GROUPS = 7,
 		BUTTON_PIN = 8,
+		BUTTON_MOUSE_FILTER = 9,
 	};
 
 	Tree *tree;
@@ -112,6 +113,7 @@ class SceneTreeEditor : public Control {
 	void _node_script_changed(Node *p_node);
 	void _node_visibility_changed(Node *p_node);
 	void _update_visibility_color(Node *p_node, TreeItem *p_item);
+	void _node_mouse_filter_changed(Node *p_node);
 
 	void _node_replace_owner(Node *p_base, Node *p_node, Node *p_root);
 

@@ -151,6 +151,26 @@ void SceneTreeEditor::_cell_button_pressed(Object *p_item, int p_column, int p_i
 
 		NodeDock::singleton->get_parent()->call("set_current_tab", NodeDock::singleton->get_index());
 		NodeDock::singleton->show_groups();
+	} else if (p_id == BUTTON_MOUSE_FILTER) {
+		undo_redo->create_action(TTR("Change Mouse Filter"));
+		const Variant stop = Control::MOUSE_FILTER_STOP;
+		const Variant pass = Control::MOUSE_FILTER_PASS;
+		const Variant ignore = Control::MOUSE_FILTER_IGNORE;
+		Variant filter = n->get("mouse_filter");
+		if (filter == ignore) {
+			undo_redo->add_do_property(n, "mouse_filter", pass);
+			undo_redo->add_undo_property(n, "mouse_filter", ignore);
+		} else if (filter == pass) {
+			undo_redo->add_do_property(n, "mouse_filter", stop);
+			undo_redo->add_undo_property(n, "mouse_filter", pass);
+		} else if (filter == stop) {
+			undo_redo->add_do_property(n, "mouse_filter", ignore);
+			undo_redo->add_undo_property(n, "mouse_filter", stop);
+		}
+		undo_redo->add_do_method(n, "property_list_changed_notify");
+		undo_redo->add_undo_method(n, "property_list_changed_notify");
+		undo_redo->commit_action();
+		_update_tree();
 	}
 }
 void SceneTreeEditor::_toggle_visible(Node *p_node) {
@@ -343,6 +363,7 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 			}
 		}
 
+
 		if (p_node->is_class("CanvasItem")) {
 
 			bool is_locked = p_node->has_meta("_edit_lock_"); //_edit_group_
@@ -352,6 +373,22 @@ bool SceneTreeEditor::_add_nodes(Node *p_node, TreeItem *p_parent, bool p_scroll
 			bool is_grouped = p_node->has_meta("_edit_group_");
 			if (is_grouped)
 				item->add_button(0, get_icon("Group", "EditorIcons"), BUTTON_GROUP, false, TTR("Children are not selectable.\nClick to make selectable."));
+
+			if (p_node->is_class("Control")) {
+				const Variant stop = Control::MOUSE_FILTER_STOP;
+				const Variant pass = Control::MOUSE_FILTER_PASS;
+				const Variant ignore = Control::MOUSE_FILTER_IGNORE;
+				Variant filter = p_node->get("mouse_filter");
+				if (filter == stop) {
+					item->add_button(0, get_icon("Stop", "EditorIcons"), BUTTON_MOUSE_FILTER, false, TTR("Mouse Filter: Stop"));
+				} else if (filter == pass) {
+					item->add_button(0, get_icon("SpriteSheet", "EditorIcons"), BUTTON_MOUSE_FILTER, false, TTR("Mouse Filter: Pass"));
+				} else if (filter == ignore) {
+					item->add_button(0, get_icon("Snap", "EditorIcons"), BUTTON_MOUSE_FILTER, false, TTR("Mouse Filter: Ignore"));
+				}
+				if (!p_node->is_connected("mouse_filter_changed", this, "_node_mouse_filter_changed"))
+					p_node->connect("mouse_filter_changed", this, "_node_mouse_filter_changed");
+			}
 
 			bool v = p_node->call("is_visible");
 			if (v)
@@ -496,6 +533,40 @@ void SceneTreeEditor::_update_visibility_color(Node *p_node, TreeItem *p_item) {
 		int idx = p_item->get_button_by_id(0, BUTTON_VISIBILITY);
 		p_item->set_button_color(0, idx, color);
 	}
+}
+
+void SceneTreeEditor::_node_mouse_filter_changed(Node *p_node) {
+
+	if (!p_node || (p_node != get_scene_node() && !p_node->get_owner())) {
+
+		return;
+	}
+
+	TreeItem *item = _find(tree->get_root(), p_node->get_path());
+
+	if (!item) {
+		return;
+	}
+
+	int idx = item->get_button_by_id(0, BUTTON_MOUSE_FILTER);
+	ERR_FAIL_COND(idx == -1);
+
+	if (!p_node->is_class("Control")) {
+		return;
+	}
+	const Variant stop = Control::MOUSE_FILTER_STOP;
+	const Variant pass = Control::MOUSE_FILTER_PASS;
+	const Variant ignore = Control::MOUSE_FILTER_IGNORE;
+	Variant filter = p_node->get("mouse_filter");
+
+	if (filter == stop) {
+		item->set_button(0, idx, get_icon("Stop", "EditorIcons"));
+	} else if (filter == pass) {
+		item->set_button(0, idx, get_icon("SpriteSheet", "EditorIcons"));
+	} else if (filter == ignore) {
+		item->set_button(0, idx, get_icon("Snap", "EditorIcons"));
+	}
+	_update_tree();
 }
 
 void SceneTreeEditor::_node_script_changed(Node *p_node) {
@@ -1145,6 +1216,7 @@ void SceneTreeEditor::_bind_methods() {
 
 	ClassDB::bind_method("_node_script_changed", &SceneTreeEditor::_node_script_changed);
 	ClassDB::bind_method("_node_visibility_changed", &SceneTreeEditor::_node_visibility_changed);
+	ClassDB::bind_method("_node_mouse_filter_changed", &SceneTreeEditor::_node_mouse_filter_changed);
 
 	ClassDB::bind_method(D_METHOD("get_drag_data_fw"), &SceneTreeEditor::get_drag_data_fw);
 	ClassDB::bind_method(D_METHOD("can_drop_data_fw"), &SceneTreeEditor::can_drop_data_fw);
