@@ -1825,6 +1825,7 @@ CurveTexture::~CurveTexture() {
 
 GradientTexture::GradientTexture() {
 	update_pending = false;
+	direction = GRADIENT_RIGHT;
 	width = 2048;
 
 	texture = VS::get_singleton()->texture_create();
@@ -1840,12 +1841,16 @@ void GradientTexture::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_gradient", "gradient"), &GradientTexture::set_gradient);
 	ClassDB::bind_method(D_METHOD("get_gradient"), &GradientTexture::get_gradient);
 
+	ClassDB::bind_method(D_METHOD("set_direction", "direction"), &GradientTexture::set_direction);
+	ClassDB::bind_method(D_METHOD("get_direction"), &GradientTexture::get_direction);
+
 	ClassDB::bind_method(D_METHOD("set_width", "width"), &GradientTexture::set_width);
 
 	ClassDB::bind_method(D_METHOD("_update"), &GradientTexture::_update);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "gradient", PROPERTY_HINT_RESOURCE_TYPE, "Gradient"), "set_gradient", "get_gradient");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "width", PROPERTY_HINT_RANGE, "1,2048,1,or_greater"), "set_width", "get_width");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "direction", PROPERTY_HINT_ENUM, "Right,Top,Bottom,Left"), "set_direction", "get_direction");
 }
 
 void GradientTexture::set_gradient(Ref<Gradient> p_gradient) {
@@ -1864,6 +1869,16 @@ void GradientTexture::set_gradient(Ref<Gradient> p_gradient) {
 
 Ref<Gradient> GradientTexture::get_gradient() const {
 	return gradient;
+}
+
+void GradientTexture::set_direction(GradientTexture::GradientDirection p_direction) {
+	direction = p_direction;
+	_update();
+	emit_changed();
+}
+
+GradientTexture::GradientDirection GradientTexture::get_direction() const {
+	return direction;
 }
 
 void GradientTexture::_queue_update() {
@@ -1889,8 +1904,12 @@ void GradientTexture::_update() {
 		Gradient &g = **gradient;
 
 		for (int i = 0; i < width; i++) {
-
+			
 			float ofs = float(i) / (width - 1);
+			if (direction == GradientDirection::GRADIENT_TOP || direction == GradientDirection::GRADIENT_LEFT) {
+				ofs = 1.0 - ofs;
+			}
+
 			Color color = g.get_color_at_offset(ofs);
 
 			wd8[i * 4 + 0] = uint8_t(CLAMP(color.r * 255.0, 0, 255));
@@ -1900,9 +1919,15 @@ void GradientTexture::_update() {
 		}
 	}
 
-	Ref<Image> image = memnew(Image(width, 1, false, Image::FORMAT_RGBA8, data));
+	Ref<Image> image;
+	if (direction == GradientDirection::GRADIENT_LEFT || direction == GradientDirection::GRADIENT_RIGHT) {
+		image = Ref<Image>(memnew(Image(width, 1, false, Image::FORMAT_RGBA8, data)));
+		VS::get_singleton()->texture_allocate(texture, width, 1, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_2D, VS::TEXTURE_FLAG_FILTER);
+	} else {
+		image = Ref<Image>(memnew(Image(1, width, false, Image::FORMAT_RGBA8, data)));
+		VS::get_singleton()->texture_allocate(texture, 1, width, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_2D, VS::TEXTURE_FLAG_FILTER);
+	}
 
-	VS::get_singleton()->texture_allocate(texture, width, 1, 0, Image::FORMAT_RGBA8, VS::TEXTURE_TYPE_2D, VS::TEXTURE_FLAG_FILTER);
 	VS::get_singleton()->texture_set_data(texture, image);
 
 	emit_changed();

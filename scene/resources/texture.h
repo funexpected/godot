@@ -620,9 +620,17 @@ public:
 		}
 	};
 
+	enum GradientDirection {
+		GRADIENT_RIGHT,
+		GRADIENT_TOP,
+		GRADIENT_BOTTOM,
+		GRADIENT_LEFT
+	};
+
 private:
 	Ref<Gradient> gradient;
 	bool update_pending;
+	GradientDirection direction;
 	RID texture;
 	int width;
 
@@ -635,6 +643,9 @@ protected:
 public:
 	void set_gradient(Ref<Gradient> p_gradient);
 	Ref<Gradient> get_gradient() const;
+
+	void set_direction(GradientDirection p_direction);
+	GradientDirection get_direction() const;
 
 	void set_width(int p_width);
 	int get_width() const;
@@ -651,6 +662,8 @@ public:
 	GradientTexture();
 	virtual ~GradientTexture();
 };
+
+VARIANT_ENUM_CAST(GradientTexture::GradientDirection);
 
 class ProxyTexture : public Texture {
 	GDCLASS(ProxyTexture, Texture);
