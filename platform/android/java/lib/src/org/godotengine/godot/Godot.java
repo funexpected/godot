@@ -733,7 +733,7 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 										Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
 				PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0,
-						notifierIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+						notifierIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
 
 				int startResult;
 				try {
