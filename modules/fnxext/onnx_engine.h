@@ -22,6 +22,9 @@ public:
 
     Variant set_input_layer(const String &layer_name);
     Variant set_output_layer(const String &layer_name);
+
+    const char *_get_input_layer_name();
+    const char *_get_output_layer_name();
     Array run(const Array& data);
     void print_layers();
     ~OnnxEngine();
