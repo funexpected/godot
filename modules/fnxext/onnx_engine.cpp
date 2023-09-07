@@ -67,13 +67,35 @@ Variant OnnxEngine::load_from_file(const String &file_path) {
     Vector<uint8_t> onnx_data = FileAccess::get_file_as_array(file_path);
 
     ctx = onnx_context_alloc(onnx_data.ptr(), onnx_data.size(), NULL, 0);
-    
+
     if (ctx) {
-        return Variant(true);
+        const char *input_layer_name = _get_input_layer_name();
+        const char *output_layer_name = _get_output_layer_name();
+        input = onnx_tensor_search(ctx, input_layer_name);
+        output = onnx_tensor_search(ctx, output_layer_name);
+        if (input && output)
+            return Variant(true);
+        else
+            return Variant(false);
     } else {
         return Variant(false);
     }
 }
+
+const char *OnnxEngine::_get_input_layer_name() {
+    if (!ctx->g->nlen)
+        return NULL;
+    
+    return ctx->g->nodes[0].inputs[0]->name;
+}
+
+const char *OnnxEngine::_get_output_layer_name() {
+    if (!ctx->g->nlen)
+        return NULL;
+    
+    return ctx->g->nodes[ctx->g->nlen - 1].outputs[0]->name;
+}
+
 void OnnxEngine::print_layers() {
     if (ctx) {
         onnx_context_dump(ctx, 0);
