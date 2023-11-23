@@ -30,6 +30,7 @@
 
 #include "texture.h"
 
+#include "core/project_settings.h"
 #include "core/core_string_names.h"
 #include "core/io/compression.h"
 #include "core/io/image_loader.h"
@@ -196,7 +197,6 @@ void ImageTexture::create(int p_width, int p_height, Image::Format p_format, uin
 	emit_changed();
 }
 void ImageTexture::create_from_image(const Ref<Image> &p_image, uint32_t p_flags) {
-
 	ERR_FAIL_COND_MSG(p_image.is_null() || p_image->empty(), "Invalid image");
 #ifdef TOOLS_ENABLED
 	if (Engine::get_singleton()->is_editor_hint() && p_image.is_valid()){
@@ -253,7 +253,6 @@ Error ImageTexture::load(const String &p_path) {
 }
 #endif
 void ImageTexture::set_data(const Ref<Image> &p_image) {
-
 	ERR_FAIL_COND_MSG(p_image.is_null(), "Invalid image");
 #ifdef TOOLS_ENABLED
 	if (Engine::get_singleton()->is_editor_hint() && p_image.is_valid()){
@@ -746,7 +745,9 @@ Error StreamTexture::_load_data(const String &p_path, int &tw, int &th, int &tw_
 }
 
 Error StreamTexture::load(const String &p_path) {
-
+	if (ProjectSettings::get_singleton()->debug_trace_image_loading) {
+		print_line(String("texture_set_data (stream): ") + p_path);
+	}
 	int lw, lh, lwc, lhc, lflags;
 	Ref<Image> image;
 	image.instance();

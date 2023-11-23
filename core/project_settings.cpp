@@ -1043,6 +1043,7 @@ ProjectSettings::ProjectSettings() {
 	last_builtin_order = 0;
 	disable_feature_overrides = false;
 	registering_order = true;
+	debug_trace_image_loading = OS::get_singleton()->get_environment("GODOT_TRACE_TEXTURE_LOADING") != String();
 
 	Array events;
 	Dictionary action;

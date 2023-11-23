@@ -115,6 +115,7 @@ protected:
 
 public:
 	static const int CONFIG_VERSION = 4;
+	bool debug_trace_image_loading;
 
 	void set_setting(const String &p_setting, const Variant &p_value);
 	Variant get_setting(const String &p_setting) const;
