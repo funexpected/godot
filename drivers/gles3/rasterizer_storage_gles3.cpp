@@ -808,7 +808,6 @@ void RasterizerStorageGLES3::texture_allocate(RID p_texture, int p_width, int p_
 }
 
 void RasterizerStorageGLES3::texture_set_data(RID p_texture, const Ref<Image> &p_image, int p_layer) {
-
 	Texture *texture = texture_owner.get(p_texture);
 
 	ERR_FAIL_COND(!texture);
