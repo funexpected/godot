@@ -2001,8 +2001,10 @@ GDScriptFunctionState::GDScriptFunctionState() :
 GDScriptFunctionState::~GDScriptFunctionState() {
 
 	_clear_stack();
-	GDScriptLanguage::singleton->lock.lock();
-	scripts_list.remove_from_list();
-	instances_list.remove_from_list();
-	GDScriptLanguage::singleton->lock.unlock();
+	if (GDScriptLanguage::singleton) {
+		GDScriptLanguage::singleton->lock.lock();
+		scripts_list.remove_from_list();
+		instances_list.remove_from_list();
+		GDScriptLanguage::singleton->lock.unlock();
+	}
 }
