@@ -12,5 +12,7 @@ zip -X -r iphone.zip iphone
 cp iphone.zip bin/ios.templates.zip
 rm -rf iphone*
 
+echo "done"
+
 
 
