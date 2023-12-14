@@ -493,6 +493,32 @@ void FileAccess::store_double(double p_dest) {
 	store_64(m.l);
 };
 
+
+void FileAccess::update_access_time(const String &p_file) {
+
+	if (PackedData::get_singleton() && !PackedData::get_singleton()->is_disabled() && (PackedData::get_singleton()->has_path(p_file) || PackedData::get_singleton()->has_directory(p_file)))
+		return ;
+
+	FileAccess *fa = create_for_path(p_file);
+	ERR_FAIL_COND_MSG(!fa, "Cannot create FileAccess for path '" + p_file + "'.");
+
+	fa->_update_access_time(p_file);
+	memdelete(fa);
+}
+
+Dictionary FileAccess::get_file_statistics(const String &p_file) {
+
+	if (PackedData::get_singleton() && !PackedData::get_singleton()->is_disabled() && (PackedData::get_singleton()->has_path(p_file) || PackedData::get_singleton()->has_directory(p_file)))
+		return Dictionary();
+
+	FileAccess *fa = create_for_path(p_file);
+	ERR_FAIL_COND_V_MSG(!fa, Dictionary(), "Cannot create FileAccess for path '" + p_file + "'.");
+
+	Dictionary stat = fa->_get_file_statistics(p_file);
+	memdelete(fa);
+	return stat;
+}
+
 uint64_t FileAccess::get_modified_time(const String &p_file) {
 
 	if (PackedData::get_singleton() && !PackedData::get_singleton()->is_disabled() && (PackedData::get_singleton()->has_path(p_file) || PackedData::get_singleton()->has_directory(p_file)))
