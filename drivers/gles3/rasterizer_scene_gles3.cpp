@@ -99,7 +99,7 @@ RID RasterizerSceneGLES3::shadow_atlas_create() {
 }
 
 void RasterizerSceneGLES3::shadow_atlas_set_size(RID p_atlas, int p_size) {
-
+	return;
 	ShadowAtlas *shadow_atlas = shadow_atlas_owner.getornull(p_atlas);
 	ERR_FAIL_COND(!shadow_atlas);
 	ERR_FAIL_COND(p_size < 0);
