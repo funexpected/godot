@@ -103,6 +103,10 @@ jobs:
         with:
           java-version: 11
 
+      - name: Setup Android SDK
+        if: ${{startsWith(matrix.token, 'android.template')}}
+        uses: android-actions/setup-android@v3
+
       - name: Install Android NDK r21
         if: ${{startsWith(matrix.token, 'android.template')}}
         run: |
