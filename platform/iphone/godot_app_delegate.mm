@@ -505,6 +505,10 @@ API_AVAILABLE(ios(13.0))
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions API_AVAILABLE(ios(13.0)) {
 	NSLog(@"[delegate] willConnectToSession");
+	if (session.role == UIWindowSceneSessionRoleExternalDisplay || session.role == UIWindowSceneSessionRoleExternalDisplayNonInteractive) {
+		NSLog(@"[delegate] external session");
+		return;
+	}
 	UIApplication *app = [UIApplication sharedApplication];
     self.window = app.delegate.window;
 	self.window.windowScene = scene;
