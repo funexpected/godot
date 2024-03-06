@@ -106,6 +106,7 @@ jobs:
       - name: Install Android NDK r21
         if: ${{startsWith(matrix.token, 'android.template')}}
         run: |
+          ls -lah ${ANDROID_HOME}/tools/bin/
           sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
       # Upload cache on completion and check it out now
