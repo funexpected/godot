@@ -109,12 +109,13 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: 6858069
+          packages: "ndk;${{env.ANDROID_NDK_VERSION}}"
 
-      - name: Install Android NDK r21
-        if: ${{startsWith(matrix.token, 'android.template')}}
-        run: |
-          sudo ls -lah ${ANDROID_HOME}/tools/bin/
-          sudo sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
+      # - name: Install Android NDK r21
+      #   if: ${{startsWith(matrix.token, 'android.template')}}
+      #   run: |
+      #     sudo ls -lah ${ANDROID_HOME}/tools/bin/
+      #     sudo sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
