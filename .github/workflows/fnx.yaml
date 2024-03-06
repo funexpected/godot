@@ -99,14 +99,23 @@ jobs:
 
       - name: Set up Java 8
         if: ${{startsWith(matrix.token, 'android.template')}}
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
           java-version: 11
+          distribution: 'zulu'
 
-      - name: Install Android NDK r21
+      - name: Setup Android SDK
         if: ${{startsWith(matrix.token, 'android.template')}}
-        run: |
-          sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 6858069
+          packages: "ndk;${{env.ANDROID_NDK_VERSION}}"
+
+      # - name: Install Android NDK r21
+      #   if: ${{startsWith(matrix.token, 'android.template')}}
+      #   run: |
+      #     sudo ls -lah ${ANDROID_HOME}/tools/bin/
+      #     sudo sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
