@@ -27,6 +27,7 @@ public:
     const char *_get_output_layer_name();
     Array run(const Array& data);
     void print_layers();
+    OnnxEngine();
     ~OnnxEngine();
 };
 
