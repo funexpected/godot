@@ -104,9 +104,13 @@ void OnnxEngine::print_layers() {
 
     }
 }
-
+OnnxEngine::OnnxEngine() {
+    ctx = NULL;
+    input = NULL;
+    output = NULL;
+}
 OnnxEngine::~OnnxEngine(){
-    if (ctx) {
+    if (ctx != NULL) {
         onnx_context_free(ctx);
     }
 }
