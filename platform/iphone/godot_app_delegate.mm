@@ -504,10 +504,12 @@ API_AVAILABLE(ios(13.0))
 @synthesize window = _window;
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions API_AVAILABLE(ios(13.0)) {
-	NSLog(@"[delegate] willConnectToSession");
-	if (session.role == UIWindowSceneSessionRoleExternalDisplay || session.role == UIWindowSceneSessionRoleExternalDisplayNonInteractive) {
-		NSLog(@"[delegate] external session");
-		return;
+	if (@available(iOS 16, *)) {
+		NSLog(@"[delegate] willConnectToSession");
+		if (session != nil && session.role == UIWindowSceneSessionRoleExternalDisplay || session.role == UIWindowSceneSessionRoleExternalDisplayNonInteractive) {
+			NSLog(@"[delegate] external session");
+			return;
+		}
 	}
 	UIApplication *app = [UIApplication sharedApplication];
     self.window = app.delegate.window;
