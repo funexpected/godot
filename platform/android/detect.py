@@ -273,7 +273,10 @@ def configure(env):
     
     env.Append(CPPFLAGS=["--sysroot=" + sysroot])
     env.Append(CPPFLAGS=["-isystem", sysroot + "/usr/include/" + abi_subpath])
-    env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/sources/android/support/include"])
+    env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/sysroot/usr/include"])
+    env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/sysroot/usr/include/" + abi_subpath])
+    print("lookup 1: " + env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/sysroot/usr/include")
+    print("lookup 2: " + env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/sysroot/usr/include/" + abi_subpath)
     env.Append(CPPFLAGS=["-isystem", gcc_toolchain_path + "/sysroot/usr/include"])
     # For unified headers this define has to be set manually
     env.Append(CPPDEFINES=[("__ANDROID_API__", str(get_platform(env["ndk_platform"])))])
