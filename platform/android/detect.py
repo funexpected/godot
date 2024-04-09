@@ -270,9 +270,11 @@ def configure(env):
 
     # Using NDK unified headers (NDK r15+)
     sysroot = env["ANDROID_NDK_ROOT"] + "/sysroot"
+    
     env.Append(CPPFLAGS=["--sysroot=" + sysroot])
     env.Append(CPPFLAGS=["-isystem", sysroot + "/usr/include/" + abi_subpath])
     env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/sources/android/support/include"])
+    env.Append(CPPFLAGS=["-isystem", gcc_toolchain_path + "/sysroot/usr/include"])
     # For unified headers this define has to be set manually
     env.Append(CPPDEFINES=[("__ANDROID_API__", str(get_platform(env["ndk_platform"])))])
 
