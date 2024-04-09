@@ -177,6 +177,8 @@ def configure(env):
             env.extra_suffix = ".armv7.neon" + env.extra_suffix
         else:
             env.extra_suffix = ".armv7" + env.extra_suffix
+        target_triple = "armv7a-linux-androideabi"
+        bin_utils = "arm-linux-androideabi"
     elif env["android_arch"] == "arm64v8":
         if get_platform(env["ndk_platform"]) < 21:
             print(
@@ -188,6 +190,8 @@ def configure(env):
         abi_subpath = "aarch64-linux-android"
         arch_subpath = "arm64-v8a"
         env.extra_suffix = ".armv8" + env.extra_suffix
+        target_triple = "aarch64-linux-android"
+        bin_utils = target_triple
 
     # Build type
 
@@ -232,8 +236,16 @@ def configure(env):
             host_subpath = "windows"
 
     compiler_path = env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/bin"
-    gcc_toolchain_path = env["ANDROID_NDK_ROOT"] + "/toolchains/" + target_subpath + "/prebuilt/" + host_subpath
+    gcc_toolchain_path = env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath
     tools_path = gcc_toolchain_path + "/" + abi_subpath + "/bin"
+
+    
+    ndk_root = env["ANDROID_NDK_ROOT"]
+    toolchain_path = ndk_root + "/toolchains/llvm/prebuilt/" + host_subpath
+    compiler_path = toolchain_path + "/bin"
+    bin_utils_path = toolchain_path + "/" + bin_utils + "/bin"
+
+    print("tools_path: " + tools_path)
 
     # For Clang to find NDK tools in preference of those system-wide
     env.PrependENVPath("PATH", tools_path)
@@ -247,9 +259,15 @@ def configure(env):
         # to enable caching we need to prepend the path to the ccache binary
         env["CC"] = ccache_path + " " + compiler_path + "/clang"
         env["CXX"] = ccache_path + " " + compiler_path + "/clang++"
-    env["AR"] = tools_path + "/ar"
-    env["RANLIB"] = tools_path + "/ranlib"
-    env["AS"] = tools_path + "/as"
+    # env["AR"] = tools_path + "/ar"
+    # env["RANLIB"] = tools_path + "/ranlib"
+    # env["AS"] = tools_path + "/as"
+    env["CC"] = compiler_path + "/clang"
+    env["CXX"] = compiler_path + "/clang++"
+    env["AR"] = compiler_path + "/llvm-ar"
+    env["RANLIB"] = compiler_path + "/llvm-ranlib"
+    env["AS"] = bin_utils_path + "/as"
+    # print("tools_path: " + tools_path)
 
     common_opts = ["-fno-integrated-as", "-gcc-toolchain", gcc_toolchain_path]
 
