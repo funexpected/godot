@@ -44,12 +44,8 @@ jobs:
           - os: ubuntu-20.04
             token: android.template.debug
             build: |
-<<<<<<< HEAD
-              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no
-              scons platform=android -j 8 target=debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no
-=======
-              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
->>>>>>> 8feba8ffa4 ([funexpected] disable webm for android)
+              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no optimize=none
+              scons platform=android -j 8 target=debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no optimize=none
               cd platform/android/java/
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
@@ -65,14 +61,9 @@ jobs:
           - os: ubuntu-20.04
             token: android.template.release
             build: |
-<<<<<<< HEAD
-              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no
-              scons platform=android -j 8 target=release_debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no
-              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no
-=======
-              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
->>>>>>> 8feba8ffa4 ([funexpected] disable webm for android)
+              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no optimize=none
+              scons platform=android -j 8 target=release_debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no optimize=none
+              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no optimize=none
               cd platform/android/java/
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
