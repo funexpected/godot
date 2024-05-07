@@ -20,10 +20,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-13
             token: osx.editor
             build: scons -j2 platform=osx tools=yes target=release_debug verbose=yes
-          - os: macos-latest
+          - os: macos-13
             token: osx.editor.headless
             build: scons -j2 platform=server tools=yes target=release_debug verbose=yes
           - os: macos-13
