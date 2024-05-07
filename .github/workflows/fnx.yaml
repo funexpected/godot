@@ -20,6 +20,27 @@ jobs:
     strategy:
       matrix:
         include:
+          - os: macos-latest
+            token: osx.editor
+            build: scons -j2 platform=osx tools=yes target=release_debug verbose=yes
+          - os: macos-latest
+            token: osx.editor.headless
+            build: scons -j2 platform=server tools=yes target=release_debug verbose=yes
+          - os: macos-latest
+            token: ios.release
+            build: |
+              mkdir iphone
+              scons p=iphone -j2 tools=no bits=64 target=release_debug arch=arm64 module_firebase_enabled=no module_websocket_enabled=no game_center=no debug_symbols=no separate_debug_symbols=yes
+              cp -R misc/dist/ios_xcode/ iphone/
+              find bin
+              cp bin/libgodot.iphone.opt.debug.arm64.a iphone/libgodot.iphone.release.fat.a
+              zip -X -r ios.release.zip iphone
+              rm -rf bin/*
+              mv ios.release.zip bin/
+              mkdir ios.headers
+              rsync -a -m -R --include '*/' --include '*.h' --include '*.inc' --exclude '*' --exclude '.git' --exclude 'bin' --exclude 'ios.headers' . ./ios.headers
+              zip -X -r ios.headers.zip ios.headers
+              mv ios.headers.zip bin/
           - os: ubuntu-20.04
             token: android.template.debug
             build: |
