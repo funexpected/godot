@@ -117,15 +117,15 @@ jobs:
       #     sudo sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
       # Upload cache on completion and check it out now
-      #- name: Load .scons_cache directory
-      #  uses: actions/cache@v2
-      #  with:
-      #    path: .scons_cache
-      #    key: ${{matrix.token}}-${{github.ref}}-${{github.sha}}
-      #    restore-keys: |
-      #      ${{matrix.token}}-${{github.ref}}-${{github.sha}}
-      #      ${{matrix.token}}-${{github.ref}}
-      #      ${{matrix.token}}
+      - name: Load .scons_cache directory
+        uses: actions/cache@v2
+        with:
+          path: .scons_cache
+          key: ${{matrix.token}}-${{github.ref}}-${{github.sha}}
+          restore-keys: |
+            ${{matrix.token}}-${{github.ref}}-${{github.sha}}
+            ${{matrix.token}}-${{github.ref}}
+            ${{matrix.token}}
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
