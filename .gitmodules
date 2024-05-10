@@ -1,0 +1,3 @@
+[submodule "modules/flash"]
+	path = modules/flash
+	url = https://github.com/funexpected/godot-flash-module.git
