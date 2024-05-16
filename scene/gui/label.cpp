@@ -406,18 +406,38 @@ void Label::regenerate_word_cache() {
 
 	WordCache *last = NULL;
 
+	if (get_name() == "japanese")
+		print_line("regenerating word cache for " + xl_text);
+	
+
 	for (int i = 0; i <= xl_text.length(); i++) {
 
 		CharType current = i < xl_text.length() ? xl_text[i] : L' '; //always a space at the end, so the algo works
 
+		if (get_name() == "japanese")
+			// print hex code of current character
+			print_line("char: " + String::num_int64(current, 16, true) + " " + itos(i) + "/" + itos(xl_text.length()));
+
 		if (uppercase)
 			current = String::char_uppercase(current);
+
+
 
 		// ranges taken from http://www.unicodemap.org/
 		// if your language is not well supported, consider helping improve
 		// the unicode support in Godot.
-		bool separatable = (current >= 0x2E08 && current < 0x3000) || (current > 0x303F && current <= 0xABFF) || (current >= 0xD7A3 && current <= 0xFAFF) || (current >= 0xFE30 && current <= 0xFE4F);
+		//bool separatable = (current >= 0x2E08 && current < 0x3000) || (current > 0x303F && current <= 0xABFF) || (current >= 0xD7A3 && current <= 0xFAFF) || (current >= 0xFE30 && current <= 0xFE4F);
+		bool separatable = (current >= 0x2E08 && current < 0x3000) || (current > 0x30FF && current <= 0x4e00) || (current > 0x9faf && current <= 0xABFF) || (current >= 0xD7A3 && current <= 0xFAFF) || (current >= 0xFE30 && current <= 0xFE4F);
+	
+		if (get_name() == "japanese")
+			print_line("separatable: " + String(separatable ? "true" : "false"));
 
+		//Japanese-style punctuation ( 3000 - 303f)
+		//Hiragana ( 3040 - 309f)
+		//Katakana ( 30a0 - 30ff)
+		//Full-width roman characters and half-width katakana ( ff00 - ffef)
+		//CJK unifed ideographs - Common and uncommon kanji ( 4e00 - 9faf)
+	
 		//current>=33 && (current < 65||current >90) && (current<97||current>122) && (current<48||current>57);
 		bool insert_newline = false;
 		real_t char_width = 0;

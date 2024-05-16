@@ -147,6 +147,7 @@ def configure(env):
             env.Append(CCFLAGS=["-fsanitize=thread"])
             env.Append(LINKFLAGS=["-fsanitize=thread"])
 
+    env.Append(CCFLAGS=["-w"])
     ## Dependencies
 
     if env["builtin_libtheora"]:
