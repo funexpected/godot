@@ -78,7 +78,11 @@ jobs:
             build: |
               scons target=release_debug platform=server tools=yes module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
               ls -l bin/
-
+          - os: ubuntu-20.04
+            token: linux.editor
+            build: |
+              scons target=release_debug platform=x11 tools=yes module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
+              ls -l bin/
 
 
 
