@@ -6,7 +6,7 @@ env:
   GODOT_BASE_BRANCH: 3.x
   SCONSFLAGS: platform=android verbose=yes warnings=all werror=yes debug_symbols=no --jobs=2
   SCONS_CACHE_LIMIT: 4096
-  ANDROID_NDK_VERSION: 21.1.6352462
+  ANDROID_NDK_VERSION: 21.4.7075529
 
 jobs:
   android-template:
