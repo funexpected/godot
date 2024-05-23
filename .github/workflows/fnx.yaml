@@ -91,7 +91,7 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Install Rosetta dependencies
-        if: ${{startsWith(matrix.token, 'macos')}}
+        if: ${{startsWith(matrix.os, 'macos')}}
         run: |
           softwareupdate --install-rosetta --agree-to-license
 
