@@ -20,13 +20,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-13
             token: osx.editor
             build: scons -j2 platform=osx tools=yes target=release_debug verbose=yes
-          - os: macos-latest
+          - os: macos-13
             token: osx.editor.headless
             build: scons -j2 platform=server tools=yes target=release_debug verbose=yes
-          - os: macos-latest
+          - os: macos-13
             token: ios.release
             build: |
               mkdir iphone
@@ -90,10 +90,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: 'recursive'
-      - name: Install Rosetta dependencies
-        if: ${{startsWith(matrix.os, 'macos')}}
-        run: |
-          softwareupdate --install-rosetta --agree-to-license
+      # - name: Install Rosetta dependencies
+      #   if: ${{startsWith(matrix.os, 'macos')}}
+      #   run: |
+      #     softwareupdate --install-rosetta --agree-to-license
 
       - name: Make apt sources.list use the default Ubuntu repositories
         if: ${{matrix.os == 'ubuntu-20.04'}}
