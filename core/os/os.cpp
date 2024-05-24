@@ -631,7 +631,7 @@ void OS::set_has_server_feature_callback(HasServerFeatureCallback p_callback) {
 bool OS::has_feature(const String &p_feature) {
 	// we can have both s3tc and etc2 on ChromeOS, but wanna use only etc2
 	if (p_feature == "s3tc" && has_feature("etc2"))
-		return false
+		return false;
 		
 
 	if (p_feature == get_name())
