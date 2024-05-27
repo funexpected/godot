@@ -515,7 +515,10 @@ bool EditorFileSystem::_test_for_reimport(const String &p_path, bool p_only_impo
 		if (dest_files.size() && !dest_md5.is_empty()) {
 			md5 = FileAccess::get_multiple_md5(dest_files);
 			if (md5 != dest_md5) {
-				return true;
+				// TODO: flash reimports crashes engine & rewrite dst md5 everytime
+				// after fixing flash dst md5, return this back to original
+				return false;
+				// return true;
 			}
 		}
 	}

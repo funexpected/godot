@@ -102,9 +102,10 @@ void ParallaxBackground::_update_scroll() {
 		}
 
 		if (ignore_camera_zoom) {
-			l->set_base_offset_and_scale((scroll_ofs + screen_offset * (scale - 1)) / scale, 1.0);
+			l->set_base_offset_and_scale((scroll_ofs + screen_offset * (scale - 1)) / scale, 1.0, screen_offset);
 		} else {
-			l->set_base_offset_and_scale(scroll_ofs, scale);
+			l->set_base_offset_and_scale(scroll_ofs, scale, screen_offset);
+
 		}
 	}
 }

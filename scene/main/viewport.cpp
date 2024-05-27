@@ -4570,6 +4570,9 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("gui_is_dragging"), &Viewport::gui_is_dragging);
 	ClassDB::bind_method(D_METHOD("gui_is_drag_successful"), &Viewport::gui_is_drag_successful);
 
+	ClassDB::bind_method(D_METHOD("gui_find_control", "position"), &Viewport::gui_find_control);
+	
+
 	ClassDB::bind_method(D_METHOD("gui_release_focus"), &Viewport::gui_release_focus);
 	ClassDB::bind_method(D_METHOD("gui_get_focus_owner"), &Viewport::gui_get_focus_owner);
 
