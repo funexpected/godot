@@ -2001,6 +2001,20 @@ GDScriptFunctionState::GDScriptFunctionState() :
 GDScriptFunctionState::~GDScriptFunctionState() {
 
 	_clear_stack();
+
+	if (GDScriptLanguage::singleton == NULL) {
+		// If GDScriptLanguage::singleton == NULL, it means that the GDScriptLanguage singleton has already been deleted,
+        // and it's no longer safe to access GDScriptLanguage::singleton->lock.
+        // The application is being deinitialized, and accessing static variables is not allowed.
+		// Accessing GDScriptLanguage::singleton->lock.lock() here will lead to a crash.
+
+        // scripts_list and instances_list are only needed for tracking the function state, so it's okay
+        // not to clear them at the end. Yes, there's pointer manipulation involved and a risk of leaks (not sure),
+        // but it's not critical.
+
+		return;
+	}
+
 	GDScriptLanguage::singleton->lock.lock();
 	scripts_list.remove_from_list();
 	instances_list.remove_from_list();
