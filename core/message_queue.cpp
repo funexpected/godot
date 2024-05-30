@@ -42,6 +42,28 @@ MessageQueue *MessageQueue::get_singleton() {
 
 Error MessageQueue::push_call(ObjectID p_id, const StringName &p_method, const Variant **p_args, int p_argcount, bool p_show_error) {
 
+	if (!this) {
+		// Occasionally, an error occurs in crashlytics when calling _THREAD_SAFE_METHOD_
+
+		// Crashed: com.apple.NSURLSession-delegate - EXC_BAD_ACCESS KERN_INVALID_ADDRESS 0x0000000000000000
+		// 0  libsystem_pthread.dylib        0x52f0 pthread_mutex_lock$VARIANT$mp + 8
+		// 1  libc++.1.dylib                 0x157a8 std::__1::recursive_mutex::lock() + 12
+		// 2  Funexpected Math               0x142a624 MessageQueue::push_call(unsigned long long, StringName const&, Variant const**, int, bool) + 4350666276
+		// 3  CFNetwork                      0x29ef0 CFHTTPMessageCopySerializedMessage + 15316
+		// 4  libdispatch.dylib              0x61c9c _dispatch_call_block_and_release + 24
+		// 5  libdispatch.dylib              0x62cc0 _dispatch_client_callout + 16
+
+		// From the calls in the main thread, it is evident that the application is terminating.
+		// The strangest part is that MessageQueue::push_call is being called from CFHTTPMessageCopySerializedMessage via _dispatch.
+		// Since the mutex in MessageQueue is located exactly at address 0, in this crash, this == 0. This can only happen after
+		// the destructor of the MessageQueue singleton has been called.
+
+		// I can't find the exact place in the code where the check MessageQueue::get_singleton() != NULL needs to be inserted,
+		// so we're using a workaround here.
+
+		return ERR_UNCONFIGURED;
+	}
+
 	_THREAD_SAFE_METHOD_
 
 	int room_needed = sizeof(Message) + sizeof(Variant) * p_argcount;
