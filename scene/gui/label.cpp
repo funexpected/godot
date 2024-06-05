@@ -416,8 +416,14 @@ void Label::regenerate_word_cache() {
 		// ranges taken from http://www.unicodemap.org/
 		// if your language is not well supported, consider helping improve
 		// the unicode support in Godot.
-		bool separatable = (current >= 0x2E08 && current < 0x3000) || (current > 0x303F && current <= 0xABFF) || (current >= 0xD7A3 && current <= 0xFAFF) || (current >= 0xFE30 && current <= 0xFE4F);
-
+		//bool separatable = (current >= 0x2E08 && current < 0x3000) || (current > 0x303F && current <= 0xABFF) || (current >= 0xD7A3 && current <= 0xFAFF) || (current >= 0xFE30 && current <= 0xFE4F);
+		bool separatable = (current >= 0x2E08 && current < 0x3000) || (current > 0x30FF && current <= 0x4e00) || (current > 0x9faf && current <= 0xABFF) || (current >= 0xD7A3 && current <= 0xFAFF) || (current >= 0xFE30 && current <= 0xFE4F);
+		//Japanese-style punctuation ( 3000 - 303f)
+		//Hiragana ( 3040 - 309f)
+		//Katakana ( 30a0 - 30ff)
+		//Full-width roman characters and half-width katakana ( ff00 - ffef)
+		//CJK unifed ideographs - Common and uncommon kanji ( 4e00 - 9faf)
+	
 		//current>=33 && (current < 65||current >90) && (current<97||current>122) && (current<48||current>57);
 		bool insert_newline = false;
 		real_t char_width = 0;
