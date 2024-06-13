@@ -711,6 +711,7 @@ public:
 				TYPE_MULTIMESH,
 				TYPE_PARTICLES,
 				TYPE_CIRCLE,
+				TYPE_MULTICIRCLE,
 				TYPE_TRANSFORM,
 				TYPE_CLIP_IGNORE,
 			};
@@ -841,6 +842,14 @@ public:
 			float radius;
 			Color color;
 			CommandCircle() { type = TYPE_CIRCLE; }
+		};
+
+		struct CommandMultiCircle : public Command {
+
+			Vector<Point2> centers;
+			Vector<float> radii;
+			Color color;
+			CommandMultiCircle() { type = TYPE_MULTICIRCLE; }
 		};
 
 		struct CommandTransform : public Command {
@@ -1063,6 +1072,12 @@ public:
 						const Item::CommandCircle *circle = static_cast<const Item::CommandCircle *>(c);
 						r.position = Point2(-circle->radius, -circle->radius) + circle->pos;
 						r.size = Point2(circle->radius * 2.0, circle->radius * 2.0);
+					} break;
+					case Item::Command::TYPE_MULTICIRCLE: {
+
+						const Item::CommandMultiCircle *circles = static_cast<const Item::CommandMultiCircle *>(c);
+						r.position = Point2(-circles->radii[0], -circles->radii[0]) + circles->centers[0];
+						r.size = Point2(circles->radii[0] * 2.0, circles->radii[0] * 2.0);
 					} break;
 					case Item::Command::TYPE_TRANSFORM: {
 
