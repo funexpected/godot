@@ -1250,6 +1250,10 @@ void GDScriptInstance::call_multilevel_reversed(const StringName &p_method, cons
 
 void GDScriptInstance::notification(int p_notification) {
 
+	if (ScriptServer::are_languages_finished()) {
+		return;
+	}
+
 	//notification is not virtual, it gets called at ALL levels just like in C.
 	Variant value = p_notification;
 	const Variant *args[1] = { &value };
