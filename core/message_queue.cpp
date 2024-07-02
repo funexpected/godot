@@ -307,7 +307,8 @@ void MessageQueue::flush() {
 
 		Object *target = ObjectDB::get_instance(message->instance_id);
 
-		if (target != NULL) {
+		//  && !ScriptServer::are_languages_finished()
+		if (target != NULL)  {
 
 			switch (message->type & FLAG_MASK) {
 				case TYPE_CALL: {
