@@ -948,7 +948,9 @@ void GDScript::_save_orphaned_subclasses() {
 }
 
 GDScript::~GDScript() {
-
+	if (GDScriptLanguage::singleton == NULL) {
+		return;
+	}
 	GDScriptLanguage::get_singleton()->lock.lock();
 	while (SelfList<GDScriptFunctionState> *E = pending_func_states.first()) {
 		// Order matters since clearing the stack may already cause
@@ -1375,6 +1377,9 @@ GDScriptInstance::GDScriptInstance() {
 }
 
 GDScriptInstance::~GDScriptInstance() {
+	if (GDScriptLanguage::singleton == NULL) {
+		return;
+	}
 	GDScriptLanguage::singleton->lock.lock();
 
 	while (SelfList<GDScriptFunctionState> *E = pending_func_states.first()) {
