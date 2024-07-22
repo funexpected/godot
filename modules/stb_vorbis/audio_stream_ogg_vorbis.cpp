@@ -122,6 +122,9 @@ void AudioStreamPlaybackOGGVorbis::seek(float p_time) {
 AudioStreamPlaybackOGGVorbis::~AudioStreamPlaybackOGGVorbis() {
 	if (ogg_alloc.alloc_buffer) {
 		stb_vorbis_close(ogg_stream);
+		if (AudioServer::get_singleton() == NULL) {
+			return;
+		}
 		AudioServer::get_singleton()->audio_data_free(ogg_alloc.alloc_buffer);
 	}
 }
@@ -161,7 +164,9 @@ String AudioStreamOGGVorbis::get_stream_name() const {
 
 void AudioStreamOGGVorbis::clear_data() {
 	if (data) {
-		AudioServer::get_singleton()->audio_data_free(data);
+		if (AudioServer::get_singleton()) {
+			AudioServer::get_singleton()->audio_data_free(data);
+		}
 		data = NULL;
 		data_len = 0;
 	}
