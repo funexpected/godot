@@ -48,7 +48,9 @@ void AudioStreamPlaybackResampled::_begin_resample() {
 }
 
 void AudioStreamPlaybackResampled::mix(AudioFrame *p_buffer, float p_rate_scale, int p_frames) {
-
+	if (AudioServer::get_singleton() == NULL) {
+		return;
+	}
 	float target_rate = AudioServer::get_singleton()->get_mix_rate();
 	float global_rate_scale = AudioServer::get_singleton()->get_global_rate_scale();
 
