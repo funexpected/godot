@@ -499,11 +499,36 @@ void OSIPhone::set_keep_screen_on(bool p_enabled) {
 	[UIApplication sharedApplication].idleTimerDisabled = p_enabled;
 };
 
+int _get_system_orientation() {
+	UIDeviceOrientation currentOrientation = [[UIDevice currentDevice] orientation];
+	switch (currentOrientation) {
+		case UIDeviceOrientationPortrait:
+			return UIInterfaceOrientationPortrait;
+		case UIDeviceOrientationPortraitUpsideDown:
+			return UIInterfaceOrientationPortraitUpsideDown;
+		case UIDeviceOrientationLandscapeLeft:
+			return UIInterfaceOrientationLandscapeRight;
+		case UIDeviceOrientationLandscapeRight:
+			return UIInterfaceOrientationLandscapeLeft;
+		default:
+			return UIInterfaceOrientationPortrait;
+	}
+}
+
 void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 	OS::set_screen_orientation(p_orientation);
 	NSNumber *value;
 	switch (p_orientation) {
 		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
+			if (!Input::get_singleton()) {
+				// Initialization process - use system orientation
+				int value_i = _get_system_orientation();
+				if (value_i == UIInterfaceOrientationPortrait || value_i == UIInterfaceOrientationPortraitUpsideDown) {
+					value_i = UIInterfaceOrientationLandscapeRight;
+				}
+				value = [NSNumber numberWithInt:value_i];
+				break;
+			}
 			Vector3 acc = Input::get_singleton()->get_accelerometer();
 			if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
 				if (acc[0] < 0.0) {
