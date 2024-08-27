@@ -125,6 +125,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
+        if: ${{ !startsWith(matrix.token, 'android.template') }}
         uses: actions/cache@v2
         with:
           path: .scons_cache
