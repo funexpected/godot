@@ -191,7 +191,7 @@ Error DynamicFontAtSize::_load() {
 #elif __APPLE__
 		int fontdata_size = 0;
 		unsigned char* fontdata = apple_get_font_data_for_font(system_font->get_apple_name().utf8().ptr(), &fontdata_size);
-		print_line("apple_get_font_data_for_font returned fontdata:" + itos(fontdata));
+		//print_line("apple_get_font_data_for_font returned fontdata:" + itos(fontdata));
 		print_line("apple_get_font_data_for_font returned fontdata_size:" + itos(fontdata_size));
 		system_font->_fontdata = Vector<uint8_t>();
 		system_font->_fontdata.resize(fontdata_size);
