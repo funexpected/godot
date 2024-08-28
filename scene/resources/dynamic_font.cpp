@@ -260,8 +260,8 @@ Error DynamicFontAtSize::_load() {
 	} else if (error) {
 
 		FT_Done_FreeType(library);
-		ERR_FAIL_V_MSG(ERR_FILE_CANT_OPEN, "Error loading font.");
 		print_line("Error code:" + itos(error));
+		ERR_FAIL_V_MSG(ERR_FILE_CANT_OPEN, "Error loading font.");
 	}
 
 	if (FT_HAS_COLOR(face) && face->num_fixed_sizes > 0) {
