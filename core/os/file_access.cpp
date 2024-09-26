@@ -96,6 +96,8 @@ FileAccess *FileAccess::open(const String &p_path, int p_mode_flags, Error *r_er
 	//try packed data first
 
 	FileAccess *ret = NULL;
+// open file from packed data first in exported project
+#ifndef TOOL_ENABLED
 	if (!(p_mode_flags & WRITE) && PackedData::get_singleton() && !PackedData::get_singleton()->is_disabled()) {
 		ret = PackedData::get_singleton()->try_open_path(p_path);
 		if (ret) {
@@ -104,6 +106,7 @@ FileAccess *FileAccess::open(const String &p_path, int p_mode_flags, Error *r_er
 			return ret;
 		}
 	}
+#endif
 
 	ret = create_for_path(p_path);
 	Error err = ret->_open(p_path, p_mode_flags);
@@ -111,10 +114,20 @@ FileAccess *FileAccess::open(const String &p_path, int p_mode_flags, Error *r_er
 	if (r_error)
 		*r_error = err;
 	if (err != OK) {
-
 		memdelete(ret);
 		ret = NULL;
 	}
+// user filesystem first in editor, and packed data if as fallback, 
+#ifdef TOOLS_ENABLED
+	if (ret == NULL && !(p_mode_flags & WRITE) && PackedData::get_singleton() && !PackedData::get_singleton()->is_disabled()) {
+		ret = PackedData::get_singleton()->try_open_path(p_path);
+		if (ret) {
+			if (r_error)
+				*r_error = OK;
+			return ret;
+		}
+	}
+#endif
 
 	return ret;
 }
