@@ -163,7 +163,7 @@ jobs:
         run: ${{ matrix.build }}
         
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.token }}
           path: bin/*   
@@ -173,7 +173,7 @@ jobs:
     needs: [build]
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Join artifacts
         run: |
           find . -type f -maxdepth 2 -mindepth 2
