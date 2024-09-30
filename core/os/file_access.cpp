@@ -97,7 +97,7 @@ FileAccess *FileAccess::open(const String &p_path, int p_mode_flags, Error *r_er
 
 	FileAccess *ret = NULL;
 // open file from packed data first in exported project
-#ifndef TOOL_ENABLED
+#ifndef TOOLS_ENABLED
 	if (!(p_mode_flags & WRITE) && PackedData::get_singleton() && !PackedData::get_singleton()->is_disabled()) {
 		ret = PackedData::get_singleton()->try_open_path(p_path);
 		if (ret) {
