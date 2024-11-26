@@ -100,10 +100,17 @@
 
 	[self observeKeyboard];
 	[self displayLoadingOverlay];
+	
 
 	if (@available(iOS 11.0, *)) {
 		[self setNeedsUpdateOfScreenEdgesDeferringSystemGestures];
 	}
+	self.view.backgroundColor = [UIColor 
+		colorWithRed:0.42
+		green:0.35
+		blue:0.79
+		alpha:1.0
+	];
 }
 
 - (void)observeKeyboard {

@@ -74,7 +74,12 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 			result = value;
 		}
 	}
-
+	result.backgroundColor = [UIColor 
+		colorWithRed:0.42
+		green:0.35
+		blue:0.79
+		alpha:1.0
+	];
 	return result;
 }
 
@@ -252,6 +257,14 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 		UIViewController *controller = [service application:application viewControllerWithRestorationIdentifierPath:identifierComponents coder:coder];
 
 		if (controller) {
+			if (controller.view) {
+				controller.view.backgroundColor = [UIColor 
+					colorWithRed:0.42
+					green:0.35
+					blue:0.79
+					alpha:1.0
+				];
+			}
 			return controller;
 		}
 	}

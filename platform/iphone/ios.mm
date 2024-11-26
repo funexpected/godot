@@ -167,10 +167,10 @@ UIViewController *root_controller = AppDelegate.viewController;
 
 void iOS::set_background_color(float r, float g, float b, float a)
 {
-	AppDelegate.viewController.view.backgroundColor = 
-		[UIColor colorWithRed:r green:g blue:b alpha:a];
-	[UIApplication sharedApplication].delegate.window.backgroundColor = 
-		[UIColor colorWithRed:r green:g blue:b alpha:a];
+	// AppDelegate.viewController.view.backgroundColor = 
+	// 	[UIColor colorWithRed:r green:g blue:b alpha:a];
+	// [UIApplication sharedApplication].delegate.window.backgroundColor = 
+	// 	[UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
 iOS::iOS(){};
