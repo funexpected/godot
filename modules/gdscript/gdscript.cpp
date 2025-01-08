@@ -2239,6 +2239,24 @@ RES ResourceFormatLoaderGDScript::load(const String &p_path, const String &p_ori
 
 	Ref<GDScript> scriptres(script);
 
+#ifdef TOOLS_ENABLED
+	// In tool mode try to load the source code first, then the bytecode.
+	Error err = OK;
+	if (p_original_path.ends_with(".gd")) {
+		err = script->load_source_code(p_original_path);
+		if (err == OK) {
+			script->set_script_path(p_original_path); // script needs this.
+			script->set_path(p_original_path);
+			err = script->reload();
+		}
+	}
+	if (err != OK && (p_path.ends_with(".gde") || p_path.ends_with(".gdc"))) {
+		script->set_script_path(p_original_path); // script needs this.
+		script->set_path(p_original_path);
+		err = script->load_byte_code(p_path);
+	}
+	ERR_FAIL_COND_V_MSG(err != OK, RES(), "Cannot load source code from file '" + p_original_path + "'.");
+#else
 	if (p_path.ends_with(".gde") || p_path.ends_with(".gdc")) {
 
 		script->set_script_path(p_original_path); // script needs this.
@@ -2255,6 +2273,7 @@ RES ResourceFormatLoaderGDScript::load(const String &p_path, const String &p_ori
 
 		script->reload();
 	}
+#endif
 	if (r_error)
 		*r_error = OK;
 
