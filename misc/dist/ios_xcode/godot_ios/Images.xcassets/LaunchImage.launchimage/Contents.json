@@ -5,7 +5,7 @@
       "idiom" : "iphone",
       "subtype" : "2436h",
       "filename" : "Default-Portrait-X.png",
-      "minimum-system-version" : "11.0",
+      "minimum-system-version" : "12.0",
       "orientation" : "portrait",
       "scale" : "3x"
     },
@@ -14,7 +14,7 @@
       "idiom" : "iphone",
       "subtype" : "2436h",
       "filename" : "Default-Landscape-X.png",
-      "minimum-system-version" : "11.0",
+      "minimum-system-version" : "12.0",
       "orientation" : "landscape",
       "scale" : "3x"
     },
