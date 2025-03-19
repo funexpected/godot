@@ -27,7 +27,7 @@ jobs:
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
         id: javascript-template-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{github.workspace}}/.scons_cache/
           key: ${{github.job}}-${{env.GODOT_BASE_BRANCH}}-${{github.ref}}-${{github.sha}}
@@ -39,7 +39,7 @@ jobs:
       # Additional cache for Emscripten generated system libraries
       - name: Load Emscripten cache
         id: javascript-template-emscripten-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{env.EM_CACHE_FOLDER}}
           key: ${{env.EM_VERSION}}-${{github.job}}

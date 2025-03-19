@@ -125,7 +125,7 @@ jobs:
 
       # Upload cache on completion and check it out now
       - name: Load .scons_cache directory
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: .scons_cache
           key: ${{matrix.token}}-${{github.ref}}-${{github.sha}}
