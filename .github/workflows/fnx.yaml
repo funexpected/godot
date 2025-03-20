@@ -128,11 +128,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .scons_cache
-          key: ${{matrix.token}}-${{github.ref}}-${{github.sha}}
+          key: ${{matrix.token}}-v2-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{matrix.token}}-${{github.ref}}-${{github.sha}}
-            ${{matrix.token}}-${{github.ref}}
-            ${{matrix.token}}
+            ${{matrix.token}}-v2-${{github.ref}}-${{github.sha}}
+            ${{matrix.token}}-v2-${{github.ref}}
+            ${{matrix.token}}-v2
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
