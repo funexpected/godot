@@ -166,6 +166,8 @@ void onnx_context_free(struct onnx_context_t * ctx)
 			onnx_free(ctx->rctx);
 		if(ctx->r)
 			onnx_free(ctx->r);
+		if(ctx->shape_params)
+			hmap_free(ctx->shape_params);
 		if(ctx->map)
 			hmap_free(ctx->map);
 		if(ctx->model)

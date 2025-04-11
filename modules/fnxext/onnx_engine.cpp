@@ -63,12 +63,37 @@ Array OnnxEngine::run(const Array& data) {
 }
 
 
-Variant OnnxEngine::load_from_file(const String &file_path) {
+Variant OnnxEngine::load_from_file(const String &file_path, const Dictionary &params) {
     Vector<uint8_t> onnx_data = FileAccess::get_file_as_array(file_path);
+    
+    List<Variant> shape_keys;
+    params.get_key_list(&shape_keys);
 
-    ctx = onnx_context_alloc(onnx_data.ptr(), onnx_data.size(), NULL, 0, 0);
+    struct hmap_t *shape_params = hmap_alloc(0, NULL);
+    if (!shape_params) {
+        print_line(String("OnnxEngine - Cant alloc shape_params"));
+        return 0;
+    }
+
+    // TODO
+    // for (List<Variant>::Element *E = shape_keys.front(); E; E = E->next()) {
+        
+    //     int(E->get());
+    //     hmap_add(shape_params, String(E->get()).ptr(), &width);
+
+    // }
+
+
+	int64_t width = 128;
+	int64_t batch_size = 1;
+	hmap_add(shape_params, "width", &width);
+	hmap_add(shape_params, "batch_size", &batch_size);
+
+
+    ctx = onnx_context_alloc(onnx_data.ptr(), onnx_data.size(), NULL, 0, shape_params);
 
     if (ctx) {
+        print_line(String("OnnxEngine- ctx created"));
         const char *input_layer_name = _get_input_layer_name();
         const char *output_layer_name = _get_output_layer_name();
         input = onnx_tensor_search(ctx, input_layer_name);

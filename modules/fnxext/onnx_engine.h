@@ -18,7 +18,7 @@ protected:
 public:
     void _init();
 
-    Variant load_from_file(const String &file_path);
+    Variant load_from_file(const String &file_path, const Dictionary &params);
 
     Variant set_input_layer(const String &layer_name);
     Variant set_output_layer(const String &layer_name);
