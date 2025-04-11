@@ -11,7 +11,7 @@ static int HardSigmoid_init(struct onnx_node_t * n)
 
 	if((n->ninput > 0) && (n->noutput > 0))
 	{
-		pdat = malloc(sizeof(struct operator_pdata_t));
+		pdat = onnx_malloc(sizeof(struct operator_pdata_t));
 		if(pdat)
 		{
 			pdat->alpha = onnx_attribute_read_float(n, "alpha", 0.2);
@@ -28,7 +28,7 @@ static int HardSigmoid_exit(struct onnx_node_t * n)
 	struct operator_pdata_t * pdat = (struct operator_pdata_t *)n->priv;
 
 	if(pdat)
-		free(pdat);
+		onnx_free(pdat);
 	return 1;
 }
 
@@ -52,7 +52,7 @@ static void HardSigmoid_float16(struct onnx_node_t * n)
 	for(size_t i = 0, l = y->ndata; i < l; i++)
 	{
 		v = float16_to_float32(px[i]);
-		py[i] = float32_to_float16(maxx((float)0.0, minn((float)1.0, (float)(pdat->alpha * v + pdat->beta))));
+		py[i] = float32_to_float16(XMAX((float)0.0, XMIN((float)1.0, (float)(pdat->alpha * v + pdat->beta))));
 	}
 }
 
@@ -65,7 +65,7 @@ static void HardSigmoid_float32(struct onnx_node_t * n)
 	float * py = (float *)y->datas;
 
 	for(size_t i = 0, l = y->ndata; i < l; i++)
-		py[i] = maxx((float)0.0, minn((float)1.0, (float)(pdat->alpha * px[i] + pdat->beta)));
+		py[i] = XMAX((float)0.0, XMIN((float)1.0, (float)(pdat->alpha * px[i] + pdat->beta)));
 }
 
 static void HardSigmoid_float64(struct onnx_node_t * n)
@@ -77,7 +77,7 @@ static void HardSigmoid_float64(struct onnx_node_t * n)
 	double * py = (double *)y->datas;
 
 	for(size_t i = 0, l = y->ndata; i < l; i++)
-		py[i] = maxx((double)0.0, minn((double)1.0, (double)(pdat->alpha * px[i] + pdat->beta)));
+		py[i] = XMAX((double)0.0, XMIN((double)1.0, (double)(pdat->alpha * px[i] + pdat->beta)));
 }
 
 void resolver_default_op_HardSigmoid(struct onnx_node_t * n)

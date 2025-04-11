@@ -2,17 +2,8 @@
 
 static int Reshape_init(struct onnx_node_t * n)
 {
-	struct onnx_tensor_t * x;
-	struct onnx_tensor_t * s;
-
 	if((n->ninput == 2) && (n->noutput == 1))
 	{
-		x = n->inputs[0];
-		s = n->inputs[1];
-		if((x->ndim == 0) || (x->type == ONNX_TENSOR_TYPE_UNDEFINED))
-			return 0;
-		if((s->ndim == 0) || (s->type != ONNX_TENSOR_TYPE_INT64))
-			return 0;
 		return 1;
 	}
 	return 0;
@@ -61,6 +52,7 @@ static void Reshape_operator(struct onnx_node_t * n)
 {
 	struct onnx_tensor_t * y = n->outputs[0];
 	struct onnx_tensor_t * x = n->inputs[0];
+	struct onnx_tensor_t * new_shape = n->inputs[1];
 	char ** py = (char **)y->datas;
 	char ** px = (char **)x->datas;
 
@@ -69,13 +61,13 @@ static void Reshape_operator(struct onnx_node_t * n)
 		for(size_t i = 0, l = y->ndata; i < l; i++)
 		{
 			if(py[i])
-				free(py[i]);
-			py[i] = strdup(px[i]);
+				onnx_free(py[i]);
+			py[i] = onnx_strdup(px[i]);
 		}
 	}
 	else
 	{
-		memcpy(y->datas, x->datas, x->ndata * onnx_tensor_type_sizeof(x->type));
+		onnx_memcpy(y->datas, x->datas, x->ndata * onnx_tensor_type_sizeof(x->type));
 	}
 }
 

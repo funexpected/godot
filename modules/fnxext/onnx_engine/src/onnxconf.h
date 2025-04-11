@@ -10,17 +10,60 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <limits.h>
+#include <assert.h>
+
 #include <float.h>
 #include <math.h>
 #include "list.h"
 #include "hmap.h"
 
+#ifndef onnx_malloc
+#define onnx_malloc			malloc
+#endif
+
+#ifndef onnx_free
+#define onnx_free			free
+#endif
+
+#ifndef onnx_memcpy
+#define onnx_memcpy			memcpy
+#endif
+
+#ifndef onnx_memset
+#define onnx_memset			memset
+#endif
+
+#ifndef onnx_memmove
+#define onnx_memmove		memmove
+#endif
+
+#ifndef onnx_strdup
+#define onnx_strdup			strdup
+#endif
+
+#ifndef onnx_strcmp
+#define onnx_strcmp			strcmp
+#endif
+
+#ifndef onnx_strlen
+#define onnx_strlen			strlen
+#endif
+
+#ifndef onnx_printf
+#define onnx_printf			printf
+#endif
+
+#ifndef onnx_assert
+#define onnx_assert			assert
+#endif
+
 /*
  * Macro
  */
-#define minn(a, b)			({typeof(a) _amin = (a); typeof(b) _bmin = (b); (void)(&_amin == &_bmin); _amin < _bmin ? _amin : _bmin;})
-#define maxx(a, b)			({typeof(a) _amax = (a); typeof(b) _bmax = (b); (void)(&_amax == &_bmax); _amax > _bmax ? _amax : _bmax;})
-#define clamp(v, a, b)		min(max(a, v), b)
+#define XMIN(a, b)			({typeof(a) _amin = (a); typeof(b) _bmin = (b); (void)(&_amin == &_bmin); _amin < _bmin ? _amin : _bmin;})
+#define XMAX(a, b)			({typeof(a) _amax = (a); typeof(b) _bmax = (b); (void)(&_amax == &_bmax); _amax > _bmax ? _amax : _bmax;})
+#define XCLAMP(v, a, b)		XMIN(XMAX(a, v), b)
 
 /*
  * little or big endian

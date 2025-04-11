@@ -24,6 +24,10 @@ void resolver_default_op_Atanh(struct onnx_node_t * n);
 void resolver_default_op_AveragePool(struct onnx_node_t * n);
 void resolver_default_op_BatchNormalization(struct onnx_node_t * n);
 void resolver_default_op_BitShift(struct onnx_node_t * n);
+void resolver_default_op_BitwiseAnd(struct onnx_node_t * n);
+void resolver_default_op_BitwiseNot(struct onnx_node_t * n);
+void resolver_default_op_BitwiseOr(struct onnx_node_t * n);
+void resolver_default_op_BitwiseXor(struct onnx_node_t * n);
 void resolver_default_op_Cast(struct onnx_node_t * n);
 void resolver_default_op_Ceil(struct onnx_node_t * n);
 void resolver_default_op_Clip(struct onnx_node_t * n);
@@ -175,6 +179,7 @@ void resolver_default_op_NegativeLogLikelihoodLoss(struct onnx_node_t * n);
 void resolver_default_op_Range(struct onnx_node_t * n);
 void resolver_default_op_Softmax(struct onnx_node_t * n);
 void resolver_default_op_SoftmaxCrossEntropyLoss(struct onnx_node_t * n);
+void resolver_default_op_DynamicQuantizeLSTM(struct onnx_node_t * n);
 
 extern struct onnx_resolver_t resolver_default;
 

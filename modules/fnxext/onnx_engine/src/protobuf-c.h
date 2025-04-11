@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2018, Dave Benson and the protobuf-c authors.
+ * Copyright (c) 2008-2023, Dave Benson and the protobuf-c authors.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -196,10 +196,7 @@ size_t foo__bar__baz_bah__pack_to_buffer
 #ifndef PROTOBUF_C_H
 #define PROTOBUF_C_H
 
-#include <assert.h>
-#include <limits.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "onnxconf.h"
 
 #ifdef __cplusplus
 # define PROTOBUF_C__BEGIN_DECLS	extern "C" {
@@ -794,13 +791,13 @@ protobuf_c_version_number(void);
  * The version of the protobuf-c headers, represented as a string using the same
  * format as protobuf_c_version().
  */
-#define PROTOBUF_C_VERSION		"1.4.0"
+#define PROTOBUF_C_VERSION		"1.5.0"
 
 /**
  * The version of the protobuf-c headers, represented as an integer using the
  * same format as protobuf_c_version_number().
  */
-#define PROTOBUF_C_VERSION_NUMBER	1004000
+#define PROTOBUF_C_VERSION_NUMBER	1005000
 
 /**
  * The minimum protoc-c version which works with the current version of the
@@ -1065,7 +1062,7 @@ do {                                                                    \
 				(simp_buf)->allocator,                  \
 				(simp_buf)->data);			\
 		else                                                    \
-			free((simp_buf)->data);                         \
+			onnx_free((simp_buf)->data);                         \
 	}                                                               \
 } while (0)
 

@@ -18,7 +18,7 @@ static int Expand_reshape(struct onnx_node_t * n)
 	struct onnx_tensor_t * x = n->inputs[0];
 	struct onnx_tensor_t * s = n->inputs[1];
 	int64_t * ps = (int64_t *)s->datas;
-	int ndim = maxx(x->ndim, (int)s->ndata);
+	int ndim = XMAX(x->ndim, (int)s->ndata);
 	int dims[ndim];
 	int i, j, k;
 
@@ -266,8 +266,8 @@ static void Expand_string(struct onnx_node_t * n)
 	{
 		px = onnx_tensor_broadcast_map_address(x, y, i);
 		if(py[i])
-			free(py[i]);
-		py[i] = strdup(px[i]);
+			onnx_free(py[i]);
+		py[i] = onnx_strdup(px[i]);
 	}
 }
 

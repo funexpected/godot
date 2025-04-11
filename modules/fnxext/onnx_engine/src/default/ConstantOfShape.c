@@ -39,13 +39,13 @@ static int ConstantOfShape_init(struct onnx_node_t * n)
 
 	if((n->ninput == 1) && (n->noutput == 1))
 	{
-		pdat = malloc(sizeof(struct operator_pdata_t));
+		pdat = onnx_malloc(sizeof(struct operator_pdata_t));
 		if(pdat)
 		{
 			for(i = 0; i < n->proto->n_attribute; i++)
 			{
 				attr = n->proto->attribute[i];
-				if((attr->type == ONNX__ATTRIBUTE_PROTO__ATTRIBUTE_TYPE__TENSOR) && (strcmp(attr->name, "value") == 0))
+				if((attr->type == ONNX__ATTRIBUTE_PROTO__ATTRIBUTE_TYPE__TENSOR) && (onnx_strcmp(attr->name, "value") == 0))
 				{
 					t = attr->t;
 					break;
@@ -57,7 +57,17 @@ static int ConstantOfShape_init(struct onnx_node_t * n)
 				switch(t->data_type)
 				{
 				case ONNX__TENSOR_PROTO__DATA_TYPE__FLOAT:
-					pdat->scalar.v_float32 = t->float_data[0];
+					if(t->n_float_data > 0)
+						pdat->scalar.v_float32 = t->float_data[0];
+					else if(t->raw_data.len >= sizeof(float))
+					{
+						uint32_t * q = (uint32_t *)t->raw_data.data;
+						union { uint32_t u; float f; } v;
+						v.u = le32_to_cpu(q[0]);
+						pdat->scalar.v_float32 = v.f;
+					}
+					else
+						pdat->scalar.v_float32 = 0.0f;
 					break;
 				case ONNX__TENSOR_PROTO__DATA_TYPE__UINT8:
 					pdat->scalar.v_uint8 = t->int32_data[0];
@@ -104,14 +114,14 @@ static int ConstantOfShape_init(struct onnx_node_t * n)
 					pdat->scalar.v_complex128.imaginary = t->double_data[1];
 					break;
 				default:
-					memset(&pdat->scalar, 0, sizeof(union onnx_scalar_t));
+					onnx_memset(&pdat->scalar, 0, sizeof(union onnx_scalar_t));
 					break;
 				}
 			}
 			else
 			{
 				pdat->type = ONNX_TENSOR_TYPE_FLOAT32;
-				memset(&pdat->scalar, 0, sizeof(union onnx_scalar_t));
+				pdat->scalar.v_float32 = 0.0f;
 			}
 			pdat->size = onnx_tensor_type_sizeof(pdat->type);
 			n->priv = pdat;
@@ -126,7 +136,7 @@ static int ConstantOfShape_exit(struct onnx_node_t * n)
 	struct operator_pdata_t * pdat = (struct operator_pdata_t *)n->priv;
 
 	if(pdat)
-		free(pdat);
+		onnx_free(pdat);
 	return 1;
 }
 
@@ -155,7 +165,7 @@ static void ConstantOfShape_operator(struct onnx_node_t * n)
 		onnx_tensor_reinit(y, pdat->type, NULL, 0);
 	}
 	for(i = 0, l = y->ndata, p = y->datas; i < l; i++, p += pdat->size)
-		memcpy(p, &pdat->scalar, pdat->size);
+		onnx_memcpy(p, &pdat->scalar, pdat->size);
 }
 
 void resolver_default_op_ConstantOfShape(struct onnx_node_t * n)

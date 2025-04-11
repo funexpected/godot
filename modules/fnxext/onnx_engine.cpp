@@ -66,7 +66,7 @@ Array OnnxEngine::run(const Array& data) {
 Variant OnnxEngine::load_from_file(const String &file_path) {
     Vector<uint8_t> onnx_data = FileAccess::get_file_as_array(file_path);
 
-    ctx = onnx_context_alloc(onnx_data.ptr(), onnx_data.size(), NULL, 0);
+    ctx = onnx_context_alloc(onnx_data.ptr(), onnx_data.size(), NULL, 0, 0);
 
     if (ctx) {
         const char *input_layer_name = _get_input_layer_name();
