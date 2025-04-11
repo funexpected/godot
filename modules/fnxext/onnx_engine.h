@@ -12,13 +12,14 @@ class OnnxEngine: public Reference {
     struct onnx_context_t* ctx;
 	struct onnx_tensor_t* input;
 	struct onnx_tensor_t* output;
+    Vector<void*> allocated_params;
 
 protected:
     static void _bind_methods();
 public:
     void _init();
 
-    Variant load_from_file(const String &file_path, const Dictionary &params);
+    Variant load_from_file(const String &file_path, const Dictionary &params = Dictionary(), const String &input_layer_name = "", const String &output_layer_name = "");
 
     Variant set_input_layer(const String &layer_name);
     Variant set_output_layer(const String &layer_name);
