@@ -2305,7 +2305,7 @@ void onnx_run(struct onnx_context_t * ctx)
 			n = &ctx->g->nodes[i];
 
 			
-			onnx_printf("Node %s\r\n", n->proto->op_type);
+			// onnx_printf("Node %s\r\n", n->proto->op_type);
 
 			if (have_inputs_changed(n) || !n->initialized) {
 				if (n->exit) {
@@ -2332,7 +2332,7 @@ void onnx_run(struct onnx_context_t * ctx)
 			} else {
 				onnx_printf("Not all inputs are ready for node %s\r\n", n->proto->op_type);
 			}
-			onnx_tensor_dump(n->outputs[0], 1);
+			// onnx_tensor_dump(n->outputs[0], 1);
 		}
 	}
 }
