@@ -29,6 +29,10 @@ struct onnx_resolver_t resolver_default = {
 	.op_AveragePool					= resolver_default_op_AveragePool,
 	.op_BatchNormalization			= resolver_default_op_BatchNormalization,
 	.op_BitShift					= resolver_default_op_BitShift,
+	.op_BitwiseAnd					= resolver_default_op_BitwiseAnd,
+	.op_BitwiseNot					= resolver_default_op_BitwiseNot,
+	.op_BitwiseOr					= resolver_default_op_BitwiseOr,
+	.op_BitwiseXor					= resolver_default_op_BitwiseXor,
 	.op_Cast						= resolver_default_op_Cast,
 	.op_Ceil						= resolver_default_op_Ceil,
 	.op_Clip						= resolver_default_op_Clip,
@@ -180,5 +184,6 @@ struct onnx_resolver_t resolver_default = {
 	.op_Range						= resolver_default_op_Range,
 	.op_Softmax						= resolver_default_op_Softmax,
 	.op_SoftmaxCrossEntropyLoss		= resolver_default_op_SoftmaxCrossEntropyLoss,
+	.op_DynamicQuantizeLSTM			= resolver_default_op_DynamicQuantizeLSTM,
 };
 

@@ -72,14 +72,68 @@ static void Squeeze_operator(struct onnx_node_t * n)
 		for(size_t i = 0, l = y->ndata; i < l; i++)
 		{
 			if(py[i])
-				free(py[i]);
-			py[i] = strdup(px[i]);
+				onnx_free(py[i]);
+			py[i] = onnx_strdup(px[i]);
 		}
 	}
 	else
 	{
-		memcpy(y->datas, x->datas, x->ndata * onnx_tensor_type_sizeof(x->type));
+		onnx_memcpy(y->datas, x->datas, x->ndata * onnx_tensor_type_sizeof(x->type));
 	}
+}
+
+static int Squeeze_init_v11(struct onnx_node_t * n)
+{
+	if((n->ninput == 1) && (n->noutput == 1))
+		return 1;
+	return 0;
+}
+
+static int Squeeze_reshape_v11(struct onnx_node_t * n)
+{
+	struct onnx_tensor_t * y = n->outputs[0];
+	struct onnx_tensor_t * x = n->inputs[0];
+	int64_t * axes = NULL;
+	int naxes = 0;
+	int dims[x->ndim];
+	int ndim = 0;
+	int axis, flag;
+	int i, j;
+
+	naxes = onnx_attribute_read_ints(n, "axes", &axes);
+
+	if(naxes > 0)
+	{
+		for(i = 0, ndim = 0; i < x->ndim; i++)
+		{
+			if(x->dims[i] == 1)
+			{
+				for(j = 0, flag = 0; j < naxes; j++)
+				{
+					axis = axes[j];
+					if(axis < 0)
+						axis += x->ndim;
+					if(i == axis)
+					{
+						flag = 1;
+						break;
+					}
+				}
+				if(flag)
+					continue;
+			}
+			dims[ndim++] = x->dims[i];
+		}
+	}
+	else
+	{
+		for(i = 0, ndim = 0; i < x->ndim; i++)
+		{
+			if(x->dims[i] > 1)
+				dims[ndim++] = x->dims[i];
+		}
+	}
+	return onnx_tensor_reshape(y, dims, ndim, x->type);
 }
 
 void resolver_default_op_Squeeze(struct onnx_node_t * n)
@@ -115,6 +169,32 @@ void resolver_default_op_Squeeze(struct onnx_node_t * n)
 	}
 	else if(n->opset >= 11)
 	{
+		switch(n->inputs[0]->type)
+		{
+		case ONNX_TENSOR_TYPE_BOOL:
+		case ONNX_TENSOR_TYPE_INT8:
+		case ONNX_TENSOR_TYPE_INT16:
+		case ONNX_TENSOR_TYPE_INT32:
+		case ONNX_TENSOR_TYPE_INT64:
+		case ONNX_TENSOR_TYPE_UINT8:
+		case ONNX_TENSOR_TYPE_UINT16:
+		case ONNX_TENSOR_TYPE_UINT32:
+		case ONNX_TENSOR_TYPE_UINT64:
+		case ONNX_TENSOR_TYPE_BFLOAT16:
+		case ONNX_TENSOR_TYPE_FLOAT16:
+		case ONNX_TENSOR_TYPE_FLOAT32:
+		case ONNX_TENSOR_TYPE_FLOAT64:
+		case ONNX_TENSOR_TYPE_COMPLEX64:
+		case ONNX_TENSOR_TYPE_COMPLEX128:
+		case ONNX_TENSOR_TYPE_STRING:
+			n->init = Squeeze_init_v11;
+			n->exit = Squeeze_exit;
+			n->reshape = Squeeze_reshape_v11;
+			n->operator_ = Squeeze_operator;
+			break;
+		default:
+			break;
+		}
 	}
 	else if(n->opset >= 1)
 	{

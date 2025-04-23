@@ -28,15 +28,13 @@
 #include "onnx.h"
 #include "default/default.h"
 
-#define ONNX_LOG(...)	printf(__VA_ARGS__)
-
 static void hmap_entry_callback(struct hmap_t * m, struct hmap_entry_t * e)
 {
 	if(e && e->value)
 		onnx_tensor_free((struct onnx_tensor_t *)e->value);
 }
 
-struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct onnx_resolver_t ** r, int rlen)
+struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct onnx_resolver_t ** r, int rlen, struct hmap_t * shape_params)
 {
 	struct onnx_context_t * ctx;
 	int i;
@@ -44,15 +42,15 @@ struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct 
 	if(!buf || len <= 0)
 		return NULL;
 
-	ctx = malloc(sizeof(struct onnx_context_t));
+	ctx = onnx_malloc(sizeof(struct onnx_context_t));
 	if(!ctx)
 		return NULL;
-
+	ctx->shape_params = shape_params;
 	ctx->model = onnx__model_proto__unpack(NULL, len, buf);
 	if(!ctx->model)
 	{
 		if(ctx)
-			free(ctx);
+			onnx_free(ctx);
 		return NULL;
 	}
 
@@ -62,27 +60,27 @@ struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct 
 		if(ctx->model)
 			onnx__model_proto__free_unpacked(ctx->model, NULL);
 		if(ctx)
-			free(ctx);
+			onnx_free(ctx);
 		return NULL;
 	}
 
 	ctx->rlen = rlen;
 	if(r && (ctx->rlen > 0))
 	{
-		ctx->r = malloc(sizeof(struct onnx_resolver_t *) * ctx->rlen);
-		ctx->rctx = malloc(sizeof(void *) * ctx->rlen);
+		ctx->r = onnx_malloc(sizeof(struct onnx_resolver_t *) * ctx->rlen);
+		ctx->rctx = onnx_malloc(sizeof(void *) * ctx->rlen);
 		if(!ctx->r || !ctx->rctx)
 		{
 			if(ctx->rctx)
-				free(ctx->rctx);
+				onnx_free(ctx->rctx);
 			if(ctx->r)
-				free(ctx->r);
+				onnx_free(ctx->r);
 			if(ctx->map)
 				hmap_free(ctx->map);
 			if(ctx->model)
 				onnx__model_proto__free_unpacked(ctx->model, NULL);
 			if(ctx)
-				free(ctx);
+				onnx_free(ctx);
 			return NULL;
 		}
 	}
@@ -108,22 +106,22 @@ struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct 
 				ctx->r[i]->destroy(ctx->rctx[i]);
 		}
 		if(ctx->rctx)
-			free(ctx->rctx);
+			onnx_free(ctx->rctx);
 		if(ctx->r)
-			free(ctx->r);
+			onnx_free(ctx->r);
 		if(ctx->map)
 			hmap_free(ctx->map);
 		if(ctx->model)
 			onnx__model_proto__free_unpacked(ctx->model, NULL);
 		if(ctx)
-			free(ctx);
+			onnx_free(ctx);
 		return NULL;
 	}
 
 	return ctx;
 }
 
-struct onnx_context_t * onnx_context_alloc_from_file(const char * filename, struct onnx_resolver_t ** r, int rlen)
+struct onnx_context_t * onnx_context_alloc_from_file(const char * filename, struct onnx_resolver_t ** r, int rlen, struct hmap_t * shape_params)
 {
 	struct onnx_context_t * ctx = NULL;
 	FILE * fp;
@@ -138,12 +136,12 @@ struct onnx_context_t * onnx_context_alloc_from_file(const char * filename, stru
 		fseek(fp, 0L, SEEK_SET);
 		if(l > 0)
 		{
-			buf = malloc(l);
+			buf = onnx_malloc(l);
 			if(buf)
 			{
 				for(len = 0; len < l; len += fread(buf + len, 1, l - len, fp));
-				ctx = onnx_context_alloc(buf, len, r, rlen);
-				free(buf);
+				ctx = onnx_context_alloc(buf, len, r, rlen, shape_params);
+				onnx_free(buf);
 			}
 		}
 		fclose(fp);
@@ -165,23 +163,25 @@ void onnx_context_free(struct onnx_context_t * ctx)
 				ctx->r[i]->destroy(ctx->rctx[i]);
 		}
 		if(ctx->rctx)
-			free(ctx->rctx);
+			onnx_free(ctx->rctx);
 		if(ctx->r)
-			free(ctx->r);
+			onnx_free(ctx->r);
+		if(ctx->shape_params)
+			hmap_free(ctx->shape_params);
 		if(ctx->map)
 			hmap_free(ctx->map);
 		if(ctx->model)
 			onnx__model_proto__free_unpacked(ctx->model, NULL);
-		free(ctx);
+		onnx_free(ctx);
 	}
 }
 
-static struct onnx_tensor_t * onnx_tensor_alloc_from_value_info(Onnx__ValueInfoProto * v)
+static struct onnx_tensor_t * onnx_tensor_alloc_from_value_info(struct onnx_context_t * ctx, Onnx__ValueInfoProto * v)
 {
 	struct onnx_tensor_t * t;
 	enum onnx_tensor_type_t type;
 	int * dims = NULL;
-	int ndim;
+	int ndim = 0;
 	int i;
 
 	if(!v || !v->name)
@@ -191,35 +191,44 @@ static struct onnx_tensor_t * onnx_tensor_alloc_from_value_info(Onnx__ValueInfoP
 	{
 	case ONNX__TYPE_PROTO__VALUE_TENSOR_TYPE:
 		type = (enum onnx_tensor_type_t)v->type->tensor_type->elem_type;
-		ndim = v->type->tensor_type->shape->n_dim;
-		if(ndim > 0)
-		{
-			dims = malloc(sizeof(int) * ndim);
-			if(dims)
+		if(v->type->tensor_type->shape) {
+			ndim = v->type->tensor_type->shape->n_dim;
+			if(ndim > 0)
 			{
-				for(i = 0; i < ndim; i++)
+				dims = onnx_malloc(sizeof(int) * ndim);
+				if(dims)
 				{
-					switch(v->type->tensor_type->shape->dim[i]->value_case)
+					for(i = 0; i < ndim; i++)
 					{
-					case ONNX__TENSOR_SHAPE_PROTO__DIMENSION__VALUE_DIM_VALUE:
-						dims[i] = v->type->tensor_type->shape->dim[i]->dim_value;
-						break;
-					case ONNX__TENSOR_SHAPE_PROTO__DIMENSION__VALUE_DIM_PARAM:
-						if(strcmp(v->type->tensor_type->shape->dim[i]->dim_param, "batch_size") == 0)
-							dims[i] = 1;
-						else
-							dims[i] = 1;
-						break;
-					default:
-						dims[i] = 1;
-						break;
+						switch(v->type->tensor_type->shape->dim[i]->value_case)
+						{
+						case ONNX__TENSOR_SHAPE_PROTO__DIMENSION__VALUE_DIM_VALUE:
+							dims[i] = v->type->tensor_type->shape->dim[i]->dim_value;
+							break;
+						case ONNX__TENSOR_SHAPE_PROTO__DIMENSION__VALUE_DIM_PARAM:
+							{
+								const char* dim_param = v->type->tensor_type->shape->dim[i]->dim_param;
+								if(ctx->shape_params) {
+									int64_t* value = hmap_search(ctx->shape_params, dim_param);
+									if(value) {
+										dims[i] = *value;
+										break;
+									}
+								}
+								dims[i] = -1;
+							}
+							break;
+						default:
+							dims[i] = -1;
+							break;
+						}
 					}
 				}
 			}
 		}
 		t = onnx_tensor_alloc(v->name, type, dims, ndim);
 		if(dims)
-			free(dims);
+			onnx_free(dims);
 		break;
 	case ONNX__TYPE_PROTO__VALUE_SEQUENCE_TYPE:
 		t = NULL;
@@ -257,7 +266,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							union { uint32_t u; float f; } v;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 								{
 									v.u = le32_to_cpu(q[i]);
@@ -272,8 +281,8 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint8_t * q = (uint8_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len);
-								memcpy(p, q, n);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len);
+								onnx_memcpy(p, q, n);
 							}
 						}
 						break;
@@ -283,8 +292,8 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							int8_t * q = (int8_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len);
-								memcpy(p, q, n);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len);
+								onnx_memcpy(p, q, n);
 							}
 						}
 						break;
@@ -294,7 +303,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint16_t * q = (uint16_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le16_to_cpu(q[i]);
 							}
@@ -306,7 +315,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							int16_t * q = (int16_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le16_to_cpu(q[i]);
 							}
@@ -318,7 +327,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							int32_t * q = (int32_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le32_to_cpu(q[i]);
 							}
@@ -330,7 +339,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							int64_t * q = (int64_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le64_to_cpu(q[i]);
 							}
@@ -344,8 +353,8 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint8_t * q = (uint8_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len);
-								memcpy(p, q, n);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len);
+								onnx_memcpy(p, q, n);
 							}
 						}
 						break;
@@ -355,7 +364,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint16_t * q = (uint16_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le16_to_cpu(q[i]);
 							}
@@ -368,7 +377,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							union { uint64_t u; double f; } v;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 								{
 									v.u = le64_to_cpu(q[i]);
@@ -383,7 +392,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint32_t * q = (uint32_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le32_to_cpu(q[i]);
 							}
@@ -395,7 +404,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint64_t * q = (uint64_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le64_to_cpu(q[i]);
 							}
@@ -408,7 +417,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							union { uint32_t u; float f; } v;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz) * 2;
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz) * 2;
 								for(i = 0; i < n; i++)
 								{
 									v.u = le32_to_cpu(q[i]);
@@ -424,7 +433,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							union { uint64_t u; double f; } v;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz) * 2;
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz) * 2;
 								for(i = 0; i < n; i++)
 								{
 									v.u = le64_to_cpu(q[i]);
@@ -439,7 +448,7 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							uint16_t * q = (uint16_t *)o->raw_data.data;
 							if(t->ndata > 0)
 							{
-								n = minn(t->ndata, (size_t)o->raw_data.len / sz);
+								n = XMIN(t->ndata, (size_t)o->raw_data.len / sz);
 								for(i = 0; i < n; i++)
 									p[i] = le16_to_cpu(q[i]);
 							}
@@ -454,9 +463,9 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 					switch(o->data_type)
 					{
 					case ONNX__TENSOR_PROTO__DATA_TYPE__FLOAT:
-						n = minn(t->ndata, (size_t)o->n_float_data);
+						n = XMIN(t->ndata, (size_t)o->n_float_data);
 						if((n > 0) && t->datas && o->float_data)
-							memcpy(t->datas, o->float_data, sizeof(float) * n);
+							onnx_memcpy(t->datas, o->float_data, sizeof(float) * n);
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__UINT8:
 					case ONNX__TENSOR_PROTO__DATA_TYPE__INT8:
@@ -467,12 +476,12 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 					case ONNX__TENSOR_PROTO__DATA_TYPE__FLOAT16:
 					case ONNX__TENSOR_PROTO__DATA_TYPE__BFLOAT16:
 						//TODO
-						n = minn(t->ndata, (size_t)o->n_int32_data);
+						n = XMIN(t->ndata, (size_t)o->n_int32_data);
 						if((n > 0) && t->datas && o->int32_data)
-							memcpy(t->datas, o->int32_data, sz * n);
+							onnx_memcpy(t->datas, o->int32_data, sz * n);
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__STRING:
-						n = minn(t->ndata, (size_t)o->n_string_data);
+						n = XMIN(t->ndata, (size_t)o->n_string_data);
 						if((n > 0) && t->datas && o->string_data)
 						{
 							char ** str = (char **)t->datas;
@@ -480,47 +489,47 @@ static void onnx_tensor_copy_from_tensor_proto(struct onnx_tensor_t * t, Onnx__T
 							{
 								if(str[i])
 								{
-									free(str[i]);
+									onnx_free(str[i]);
 									str[i] = NULL;
 								}
 							}
 							for(i = 0; i < n; i++)
 							{
-								str[i] = malloc(o->string_data[i].len + 1);
+								str[i] = onnx_malloc(o->string_data[i].len + 1);
 								if(str[i])
 								{
 									str[i][o->string_data[i].len] = 0;
-									memcpy(str[i], o->string_data[i].data, o->string_data[i].len);
+									onnx_memcpy(str[i], o->string_data[i].data, o->string_data[i].len);
 								}
 							}
 						}
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__INT64:
-						n = minn(t->ndata, (size_t)o->n_int64_data);
+						n = XMIN(t->ndata, (size_t)o->n_int64_data);
 						if((n > 0) && t->datas && o->int64_data)
-							memcpy(t->datas, o->int64_data, sizeof(int64_t) * n);
+							onnx_memcpy(t->datas, o->int64_data, sizeof(int64_t) * n);
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__DOUBLE:
-						n = minn(t->ndata, (size_t)o->n_double_data);
+						n = XMIN(t->ndata, (size_t)o->n_double_data);
 						if((n > 0) && t->datas && o->double_data)
-							memcpy(t->datas, o->double_data, sizeof(double) * n);
+							onnx_memcpy(t->datas, o->double_data, sizeof(double) * n);
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__UINT32:
 					case ONNX__TENSOR_PROTO__DATA_TYPE__UINT64:
 						//TODO
-						n = minn(t->ndata, (size_t)o->n_uint64_data);
+						n = XMIN(t->ndata, (size_t)o->n_uint64_data);
 						if((n > 0) && t->datas && o->uint64_data)
-							memcpy(t->datas, o->uint64_data, sz * n);
+							onnx_memcpy(t->datas, o->uint64_data, sz * n);
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__COMPLEX64:
-						n = minn(t->ndata, (size_t)(o->n_float_data / 2));
+						n = XMIN(t->ndata, (size_t)(o->n_float_data / 2));
 						if((n > 0) && t->datas && o->float_data)
-							memcpy(t->datas, o->float_data, sizeof(float) * 2 * n);
+							onnx_memcpy(t->datas, o->float_data, sizeof(float) * 2 * n);
 						break;
 					case ONNX__TENSOR_PROTO__DATA_TYPE__COMPLEX128:
-						n = minn(t->ndata, (size_t)(o->n_double_data / 2));
+						n = XMIN(t->ndata, (size_t)(o->n_double_data / 2));
 						if((n > 0) && t->datas && o->double_data)
-							memcpy(t->datas, o->double_data, sizeof(double) * 2 * n);
+							onnx_memcpy(t->datas, o->double_data, sizeof(double) * 2 * n);
 						break;
 					default:
 						break;
@@ -538,7 +547,7 @@ static int reshape_dummy(struct onnx_node_t * n)
 
 static void operator_dummy(struct onnx_node_t * n)
 {
-	ONNX_LOG("\033[45;37mUnsupported opset\033[0m => %s-%d (%s)\r\n", n->proto->op_type, n->opset, (strlen(n->proto->domain) > 0) ? n->proto->domain : "ai.onnx");
+	onnx_printf("\033[45;37mUnsupported opset\033[0m => %s-%d (%s)\r\n", n->proto->op_type, n->opset, (onnx_strlen(n->proto->domain) > 0) ? n->proto->domain : "ai.onnx");
 }
 
 static void resolver_solve_operator(struct onnx_resolver_t * r, struct onnx_node_t * n)
@@ -590,6 +599,18 @@ static void resolver_solve_operator(struct onnx_resolver_t * r, struct onnx_node
 			break;
 		case 0x0bfe45a2: /* "BitShift" */
 			rop = r->op_BitShift;
+			break;
+		case 0xdadf882f: /* "BitwiseAnd" */
+			rop = r->op_BitwiseAnd;
+			break;
+		case 0xdadfbfad: /* "BitwiseNot" */
+			rop = r->op_BitwiseNot;
+			break;
+		case 0xdfd83c3d: /* "BitwiseOr" */
+			rop = r->op_BitwiseOr;
+			break;
+		case 0xdadfea35: /* "BitwiseXor" */
+			rop = r->op_BitwiseXor;
 			break;
 		case 0x7c8378d0: /* "Cast" */
 			rop = r->op_Cast;
@@ -1036,13 +1057,14 @@ static void resolver_solve_operator(struct onnx_resolver_t * r, struct onnx_node
 		case 0x522154a3: /* "SoftmaxCrossEntropyLoss" */
 			rop = r->op_SoftmaxCrossEntropyLoss;
 			break;
-
+		case 0xbe84199b: /* "DynamicQuantizeLSTM" */
+			rop = r->op_DynamicQuantizeLSTM;
+			break;
 		default:
 			rop = NULL;
 			break;
 		}
-		if(rop)
-			rop(n);
+		n->rop = rop;
 	}
 }
 
@@ -1060,16 +1082,16 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 	if(!graph)
 		return NULL;
 
-	g = malloc(sizeof(struct onnx_graph_t));
+	g = onnx_malloc(sizeof(struct onnx_graph_t));
 	if(!g)
 		return NULL;
-	memset(g, 0, sizeof(struct onnx_graph_t));
+	onnx_memset(g, 0, sizeof(struct onnx_graph_t));
 
 	g->nlen = graph->n_node;
-	g->nodes = malloc(sizeof(struct onnx_node_t) * g->nlen);
+	g->nodes = onnx_malloc(sizeof(struct onnx_node_t) * g->nlen);
 	if(!g->nodes)
 	{
-		free(g);
+		onnx_free(g);
 		return NULL;
 	}
 
@@ -1078,12 +1100,12 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 		v = graph->input[i];
 		if(!onnx_tensor_search(ctx, v->name))
 		{
-			t = onnx_tensor_alloc_from_value_info(v);
+			t = onnx_tensor_alloc_from_value_info(ctx, v);
 			if(t)
 			{
 				for(j = 0; j < graph->n_initializer; j++)
 				{
-					if(strcmp(graph->initializer[j]->name, t->name) == 0)
+					if(onnx_strcmp(graph->initializer[j]->name, t->name) == 0)
 					{
 						onnx_tensor_copy_from_tensor_proto(t, graph->initializer[j]);
 						break;
@@ -1099,7 +1121,7 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 		v = graph->output[i];
 		if(!onnx_tensor_search(ctx, v->name))
 		{
-			t = onnx_tensor_alloc_from_value_info(v);
+			t = onnx_tensor_alloc_from_value_info(ctx, v);
 			if(t)
 				hmap_add(ctx->map, t->name, t);
 		}
@@ -1110,7 +1132,7 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 		v = graph->value_info[i];
 		if(!onnx_tensor_search(ctx, v->name))
 		{
-			t = onnx_tensor_alloc_from_value_info(v);
+			t = onnx_tensor_alloc_from_value_info(ctx, v);
 			if(t)
 				hmap_add(ctx->map, t->name, t);
 		}
@@ -1139,7 +1161,7 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 			{
 				for(k = 0; k < graph->n_initializer; k++)
 				{
-					if(strcmp(graph->initializer[k]->name, name) == 0)
+					if(onnx_strcmp(graph->initializer[k]->name, name) == 0)
 					{
 						o = graph->initializer[k];
 						if(o)
@@ -1158,13 +1180,6 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 						}
 					}
 				}
-				if(!onnx_tensor_search(ctx, name))
-				{
-					if(g->nodes)
-						free(g->nodes);
-					free(g);
-					return NULL;
-				}
 			}
 		}
 	}
@@ -1172,19 +1187,20 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 	for(i = 0; i < g->nlen; i++)
 	{
 		n = &g->nodes[i];
-		memset(n, 0, sizeof(struct onnx_node_t));
+		onnx_memset(n, 0, sizeof(struct onnx_node_t));
 
 		n->ctx = ctx;
 		n->proto = graph->node[i];
+		n->index = i;
 		domain = n->proto->domain;
-		if(!domain || (strlen(domain) == 0))
+		if(!domain || (onnx_strlen(domain) == 0))
 			domain = "ai.onnx";
 		for(j = 0; j < ctx->model->n_opset_import; j++)
 		{
 			p = ctx->model->opset_import[j]->domain;
-			if(!p || (strlen(p) == 0))
+			if(!p || (onnx_strlen(p) == 0))
 				p = "ai.onnx";
-			if(strcmp(domain, p) == 0)
+			if(onnx_strcmp(domain, p) == 0)
 			{
 				n->opset = ctx->model->opset_import[j]->version;
 				break;
@@ -1192,17 +1208,27 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 		}
 		if(n->proto->n_input > 0)
 		{
-			n->inputs = malloc(sizeof(struct onnx_tensor_t *) * n->proto->n_input);
+			if (n->index == 23) {
+				n->index = 23;
+			}
+
+
+
+			n->inputs = onnx_malloc(sizeof(struct onnx_tensor_t *) * n->proto->n_input);
 			if(n->inputs)
 			{
 				n->ninput = n->proto->n_input;
-				for(j = 0; j < n->ninput; j++)
+				for(j = 0; j < n->ninput; j++) 
+				{
+
 					n->inputs[j] = onnx_tensor_search(ctx, n->proto->input[j]);
+
+				}
 			}
 		}
 		if(n->proto->n_output > 0)
 		{
-			n->outputs = malloc(sizeof(struct onnx_tensor_t *) * n->proto->n_output);
+			n->outputs = onnx_malloc(sizeof(struct onnx_tensor_t *) * n->proto->n_output);
 			if(n->outputs)
 			{
 				n->noutput = n->proto->n_output;
@@ -1213,58 +1239,80 @@ struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphP
 		for(j = 0; j < ctx->rlen; j++)
 		{
 			resolver_solve_operator(ctx->r[j], n);
-			if(n->operator_)
+			if(n->rop)
 			{
 				n->r = ctx->r[j];
 				n->rctx = ctx->rctx[j];
 				break;
 			}
 		}
-		if(!n->operator_)
+		if(!n->rop)
 		{
 			resolver_solve_operator(&resolver_default, n);
-			if(n->operator_)
+			if(n->rop)
 			{
 				n->r = &resolver_default;
 				n->rctx = NULL;
 			}
 		}
-		if(!n->reshape)
-			n->reshape = reshape_dummy;
-		if(!n->operator_)
-			n->operator_ = operator_dummy;
-		if(n->init)
-		{
-			if(n->init(n) <= 0)
+
+		if (initialize_input_states(n) <= 0) {
+			if(g->nodes)
 			{
-				if(g->nodes)
+				for(j = 0; j <= i; j++)
 				{
-					for(j = 0; j <= i; j++)
-					{
-						n = &g->nodes[j];
-						if(n->exit)
-							n->exit(n);
-						if(n->inputs)
-							free(n->inputs);
-						if(n->outputs)
-							free(n->outputs);
-					}
-					free(g->nodes);
+					free_node(&g->nodes[j]);
 				}
-				free(g);
-				return NULL;
+				onnx_free(g->nodes);
 			}
+			onnx_free(g);
+			return NULL;
 		}
-		if(n->reshape)
-			n->reshape(n);
 	}
 
 	return g;
 }
 
+void free_node(struct onnx_node_t * n) {
+	if(n->exit)
+	n->exit(n);
+	
+	if(n->inputs)
+	onnx_free(n->inputs);
+	if(n->outputs)
+	onnx_free(n->outputs);
+
+	if(n->last_input_states)
+	{
+		for(int j = 0; j < n->ninput; j++)
+		{
+			if(n->last_input_states[j].dims)
+				onnx_free(n->last_input_states[j].dims);
+		}
+		onnx_free(n->last_input_states);
+	}
+
+}
+
+int is_all_inputs_ready(struct onnx_node_t * n)
+{
+	if(n->ninput > 0)
+	{
+		for(int i = 0; i < n->ninput; i++)
+		{
+			struct onnx_tensor_t * x = n->inputs[i];
+			if (!x) 
+				continue;
+			if(!x || x->type == ONNX_TENSOR_TYPE_UNDEFINED || x->ndata == 0) {
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
 void onnx_graph_free(struct onnx_graph_t * g)
 {
-	struct onnx_node_t * n;
 	int i;
 
 	if(g)
@@ -1273,23 +1321,18 @@ void onnx_graph_free(struct onnx_graph_t * g)
 		{
 			for(i = 0; i < g->nlen; i++)
 			{
-				n = &g->nodes[i];
-				if(n->exit)
-					n->exit(n);
-				if(n->inputs)
-					free(n->inputs);
-				if(n->outputs)
-					free(n->outputs);
+				free_node(&g->nodes[i]);
+				
 			}
-			free(g->nodes);
+			onnx_free(g->nodes);
 		}
-		free(g);
+		onnx_free(g);
 	}
 }
 
 const char * onnx_tensor_type_tostring(enum onnx_tensor_type_t type)
 {
-	static const char * typestr[17] = {
+	static const char * typestr[] = {
 		"undefined",
 		"float32",
 		"uint8",
@@ -1307,6 +1350,12 @@ const char * onnx_tensor_type_tostring(enum onnx_tensor_type_t type)
 		"complex64",
 		"complex128",
 		"bfloat16",
+		"float8e4m3fn",
+		"float8e4m3fnuz",
+		"float8e5m2",
+		"float8e5m2fnuz",
+		"uint4",
+		"int4",
 	};
 	if((type > 0) && (type < (sizeof(typestr) / sizeof((typestr)[0]))))
 		return typestr[type];
@@ -1315,7 +1364,7 @@ const char * onnx_tensor_type_tostring(enum onnx_tensor_type_t type)
 
 int onnx_tensor_type_sizeof(enum onnx_tensor_type_t type)
 {
-	static const int typesz[17] = {
+	static const int typesz[] = {
 		0,
 		sizeof(float),
 		sizeof(uint8_t),
@@ -1333,6 +1382,12 @@ int onnx_tensor_type_sizeof(enum onnx_tensor_type_t type)
 		sizeof(float) * 2,
 		sizeof(double) * 2,
 		sizeof(uint16_t),
+		sizeof(uint8_t),
+		sizeof(uint8_t),
+		sizeof(uint8_t),
+		sizeof(uint8_t),
+		sizeof(uint8_t),
+		sizeof(uint8_t),
 	};
 	if((type > 0) && (type < (sizeof(typesz) / sizeof((typesz)[0]))))
 		return typesz[type];
@@ -1353,12 +1408,12 @@ struct onnx_tensor_t * onnx_tensor_alloc(const char * name, enum onnx_tensor_typ
 	if(!name)
 		return NULL;
 
-	t = malloc(sizeof(struct onnx_tensor_t));
+	t = onnx_malloc(sizeof(struct onnx_tensor_t));
 	if(!t)
 		return NULL;
-	memset(t, 0, sizeof(struct onnx_tensor_t));
+	onnx_memset(t, 0, sizeof(struct onnx_tensor_t));
 
-	t->name = strdup(name);
+	t->name = onnx_strdup(name);
 	onnx_tensor_reinit(t, type, dims, ndim);
 	return t;
 }
@@ -1382,17 +1437,17 @@ struct onnx_tensor_t * onnx_tensor_alloc_from_file(const char * filename)
 		fseek(fp, 0L, SEEK_SET);
 		if(l > 0)
 		{
-			buf = malloc(l);
+			buf = onnx_malloc(l);
 			if(buf)
 			{
 				for(len = 0; len < l; len += fread(buf + len, 1, l - len, fp));
 				pb = onnx__tensor_proto__unpack(NULL, len, buf);
-				free(buf);
+				onnx_free(buf);
 				if(pb)
 				{
 					if(pb->n_dims > 0)
 					{
-						dims = malloc(sizeof(int) * pb->n_dims);
+						dims = onnx_malloc(sizeof(int) * pb->n_dims);
 						if(dims)
 						{
 							for(i = 0; i < pb->n_dims; i++)
@@ -1402,7 +1457,7 @@ struct onnx_tensor_t * onnx_tensor_alloc_from_file(const char * filename)
 					}
 					t = onnx_tensor_alloc(pb->name, (enum onnx_tensor_type_t)pb->data_type, dims, ndim);
 					if((ndim > 0) && dims)
-						free(dims);
+						onnx_free(dims);
 					onnx_tensor_copy_from_tensor_proto(t, pb);
 					onnx__tensor_proto__free_unpacked(pb, NULL);
 				}
@@ -1420,13 +1475,13 @@ void onnx_tensor_free(struct onnx_tensor_t * t)
 	if(t)
 	{
 		if(t->name)
-			free(t->name);
+			onnx_free(t->name);
 		if(t->ndim > 0)
 		{
 			if(t->strides)
-				free(t->strides);
+				onnx_free(t->strides);
 			if(t->dims)
-				free(t->dims);
+				onnx_free(t->dims);
 		}
 		if((t->ndata > 0) && t->datas)
 		{
@@ -1436,12 +1491,12 @@ void onnx_tensor_free(struct onnx_tensor_t * t)
 				for(size_t idx = 0; idx < t->ndata; idx++)
 				{
 					if(str[idx])
-						free(str[idx]);
+						onnx_free(str[idx]);
 				}
 			}
-			free(t->datas);
+			onnx_free(t->datas);
 		}
-		free(t);
+		onnx_free(t);
 	}
 }
 
@@ -1465,14 +1520,23 @@ int onnx_tensor_equal(struct onnx_tensor_t * a, struct onnx_tensor_t * b)
 	switch(a->type)
 	{
 	case ONNX_TENSOR_TYPE_BOOL:
+	case ONNX_TENSOR_TYPE_INT4:
 	case ONNX_TENSOR_TYPE_INT8:
 	case ONNX_TENSOR_TYPE_INT16:
 	case ONNX_TENSOR_TYPE_INT32:
 	case ONNX_TENSOR_TYPE_INT64:
+	case ONNX_TENSOR_TYPE_UINT4:
 	case ONNX_TENSOR_TYPE_UINT8:
 	case ONNX_TENSOR_TYPE_UINT16:
 	case ONNX_TENSOR_TYPE_UINT32:
 	case ONNX_TENSOR_TYPE_UINT64:
+		if(memcmp(a->datas, b->datas, a->ndata * onnx_tensor_type_sizeof(a->type)) != 0)
+			return 0;
+		break;
+	case ONNX_TENSOR_TYPE_FLOAT8E4M3FN:
+	case ONNX_TENSOR_TYPE_FLOAT8E4M3FNUZ:
+	case ONNX_TENSOR_TYPE_FLOAT8E5M2:
+	case ONNX_TENSOR_TYPE_FLOAT8E5M2FNUZ:
 		if(memcmp(a->datas, b->datas, a->ndata * onnx_tensor_type_sizeof(a->type)) != 0)
 			return 0;
 		break;
@@ -1548,7 +1612,7 @@ int onnx_tensor_equal(struct onnx_tensor_t * a, struct onnx_tensor_t * b)
 			char ** q = (char **)b->datas;
 			for(i = 0; i < a->ndata; i++)
 			{
-				if(p[i] && q[i] && (strcmp(p[i], q[i]) != 0))
+				if(p[i] && q[i] && (onnx_strcmp(p[i], q[i]) != 0))
 					return 0;
 			}
 		}
@@ -1571,12 +1635,12 @@ void onnx_tensor_reinit(struct onnx_tensor_t * t, enum onnx_tensor_type_t type, 
 		{
 			if(t->strides)
 			{
-				free(t->strides);
+				onnx_free(t->strides);
 				t->strides = NULL;
 			}
 			if(t->dims)
 			{
-				free(t->dims);
+				onnx_free(t->dims);
 				t->dims = NULL;
 			}
 			t->ndim = 0;
@@ -1590,12 +1654,12 @@ void onnx_tensor_reinit(struct onnx_tensor_t * t, enum onnx_tensor_type_t type, 
 				{
 					if(str[idx])
 					{
-						free(str[idx]);
+						onnx_free(str[idx]);
 						str[idx] = NULL;
 					}
 				}
 			}
-			free(t->datas);
+			onnx_free(t->datas);
 			t->datas = NULL;
 			t->ndata = 0;
 		}
@@ -1606,27 +1670,32 @@ void onnx_tensor_reinit(struct onnx_tensor_t * t, enum onnx_tensor_type_t type, 
 			{
 				for(i = 0; i < ndim; i++)
 				{
-					if(dims[i] <= 0)
+					if(dims[i] < 0 && dims[i] != -1)
 						return;
 				}
-				t->strides = malloc(sizeof(int) * ndim);
-				t->dims = malloc(sizeof(int) * ndim);
+				t->strides = onnx_malloc(sizeof(int) * ndim);
+				t->dims = onnx_malloc(sizeof(int) * ndim);
 				if(t->strides && t->dims)
 				{
 					t->strides[ndim - 1] = 1;
 					for(i = ndim - 2; i >= 0; i--)
-						t->strides[i] = dims[i + 1] * t->strides[i + 1];
-					memcpy(t->dims, dims, sizeof(int) * ndim);
+					{
+						if(dims[i+1] > 0)
+							t->strides[i] = dims[i + 1] * t->strides[i + 1];
+						else
+							t->strides[i] = t->strides[i + 1];
+					}
+					onnx_memcpy(t->dims, dims, sizeof(int) * ndim);
 					t->ndim = ndim;
 					for(i = 0, n = 1; i < t->ndim; i++)
-						n *= t->dims[i];
+						n *= (t->dims[i] > 0) ? t->dims[i] : 1;
 					sz = onnx_tensor_type_sizeof(t->type);
 					if(sz > 0)
 					{
-						t->datas = malloc(n * sz);
+						t->datas = onnx_malloc(n * sz);
 						if(t->datas)
 						{
-							memset(t->datas, 0, n * sz);
+							onnx_memset(t->datas, 0, n * sz);
 							t->ndata = n;
 						}
 					}
@@ -1635,12 +1704,12 @@ void onnx_tensor_reinit(struct onnx_tensor_t * t, enum onnx_tensor_type_t type, 
 				{
 					if(t->strides)
 					{
-						free(t->strides);
+						onnx_free(t->strides);
 						t->strides = NULL;
 					}
 					if(t->dims)
 					{
-						free(t->dims);
+						onnx_free(t->dims);
 						t->dims = NULL;
 					}
 				}
@@ -1650,10 +1719,10 @@ void onnx_tensor_reinit(struct onnx_tensor_t * t, enum onnx_tensor_type_t type, 
 				sz = onnx_tensor_type_sizeof(t->type);
 				if(sz > 0)
 				{
-					t->datas = malloc(sz);
+					t->datas = onnx_malloc(sz);
 					if(t->datas)
 					{
-						memset(t->datas, 0, sz);
+						onnx_memset(t->datas, 0, sz);
 						t->ndata = 1;
 					}
 				}
@@ -1682,19 +1751,19 @@ void onnx_tensor_apply(struct onnx_tensor_t * t, void * buf, size_t len)
 					{
 						if(p[idx])
 						{
-							free(p[idx]);
+							onnx_free(p[idx]);
 							p[idx] = NULL;
 						}
 					}
-					l = minn(t->ndata, (size_t)len);
+					l = XMIN(t->ndata, (size_t)len);
 					for(size_t idx = 0; idx < l; idx++)
-						p[idx] = strdup(q[idx]);
+						p[idx] = onnx_strdup(q[idx]);
 				}
 				else
 				{
 					l = t->ndata * sz;
 					if(l > 0)
-						memcpy(t->datas, buf, minn(l, len));
+						onnx_memcpy(t->datas, buf, XMIN(l, len));
 				}
 			}
 		}
@@ -1711,7 +1780,7 @@ static Onnx__AttributeProto * onnx_search_attribute(struct onnx_node_t * n, cons
 		for(i = 0; i < n->proto->n_attribute; i++)
 		{
 			attr = n->proto->attribute[i];
-			if(strcmp(attr->name, name) == 0)
+			if(onnx_strcmp(attr->name, name) == 0)
 				return attr;
 		}
 	}
@@ -1751,6 +1820,40 @@ char * onnx_attribute_read_string(struct onnx_node_t * n, const char * name, cha
 	return def;
 }
 
+int onnx_attribute_read_strings(struct onnx_node_t * n, const char * name, char ***strings)
+{
+    Onnx__AttributeProto * attr = onnx_search_attribute(n, name);
+
+    if(attr && (attr->type == ONNX__ATTRIBUTE_PROTO__ATTRIBUTE_TYPE__STRINGS))
+    {
+        if(attr->n_strings > 0 && attr->strings)
+        {
+            *strings = onnx_malloc(sizeof(char*) * attr->n_strings);
+            if(*strings)
+            {
+                for(size_t i = 0; i < attr->n_strings; i++)
+                {
+                    if(attr->strings[i].len > 0)
+                    {
+                        (*strings)[i] = onnx_malloc(attr->strings[i].len + 1);
+                        if((*strings)[i])
+                        {
+                            onnx_memcpy((*strings)[i], attr->strings[i].data, attr->strings[i].len);
+                            (*strings)[i][attr->strings[i].len] = '\0';
+                        }
+                    }
+                    else
+                    {
+                        (*strings)[i] = NULL;
+                    }
+                }
+                return attr->n_strings;
+            }
+        }
+    }
+    return 0;
+}
+
 int onnx_attribute_read_floats(struct onnx_node_t * n, const char * name, float ** floats)
 {
 	Onnx__AttributeProto * attr = onnx_search_attribute(n, name);
@@ -1788,7 +1891,7 @@ int onnx_attribute_read_tensor(struct onnx_node_t * n, const char * name, struct
 		{
 			if(attr->t->n_dims > 0)
 			{
-				dims = malloc(sizeof(int) * attr->t->n_dims);
+				dims = onnx_malloc(sizeof(int) * attr->t->n_dims);
 				if(dims)
 				{
 					for(i = 0; i < attr->t->n_dims; i++)
@@ -1799,7 +1902,7 @@ int onnx_attribute_read_tensor(struct onnx_node_t * n, const char * name, struct
 			if((t->ndim != ndim) || (memcmp(t->dims, dims, sizeof(int) * ndim) != 0) || (t->type != (enum onnx_tensor_type_t)attr->t->data_type))
 				onnx_tensor_reinit(t, (enum onnx_tensor_type_t)attr->t->data_type, dims, ndim);
 			if((ndim > 0) && dims)
-				free(dims);
+				onnx_free(dims);
 			onnx_tensor_copy_from_tensor_proto(t, attr->t);
 			return 1;
 		}
@@ -1841,31 +1944,32 @@ void onnx_tensor_dump(struct onnx_tensor_t * t, int detail)
 
 	if(t)
 	{
-		ONNX_LOG("%s: %s", t->name, onnx_tensor_type_tostring(t->type));
+		onnx_printf("%s: %s", t->name, onnx_tensor_type_tostring(t->type));
 		if(t->ndim > 0)
 		{
-			ONNX_LOG("[");
+			onnx_printf("[");
 			for(i = 0; i < t->ndim; i++)
 			{
-				ONNX_LOG("%d", t->dims[i]);
+				onnx_printf("%d", t->dims[i]);
 				if(i != t->ndim - 1)
-					ONNX_LOG(" x ");
+					onnx_printf(" x ");
 			}
-			ONNX_LOG("]");
+			onnx_printf("]");
+			int print_limit = 100;
 			if(detail)
 			{
-				ONNX_LOG(" = \r\n");
+				onnx_printf(" = \r\n");
 				for(i = 0; i < t->ndim; i++)
 				{
 					if(t->dims[i] <= 0)
 						return;
 				}
-				sizes = malloc(sizeof(int) * t->ndim);
-				levels = malloc(sizeof(int) * t->ndim);
+				sizes = onnx_malloc(sizeof(int) * t->ndim);
+				levels = onnx_malloc(sizeof(int) * t->ndim);
 				sizes[t->ndim - 1] = t->dims[t->ndim - 1];
 				levels[t->ndim - 1] = 0;
-				lbuf = malloc(sizeof(char) * (t->ndim + 1));
-				rbuf = malloc(sizeof(char) * (t->ndim + 1));
+				lbuf = onnx_malloc(sizeof(char) * (t->ndim + 1));
+				rbuf = onnx_malloc(sizeof(char) * (t->ndim + 1));
 				lp = lbuf;
 				rp = rbuf;
 				for(i = t->ndim - 2; i >= 0; i--)
@@ -1873,7 +1977,7 @@ void onnx_tensor_dump(struct onnx_tensor_t * t, int detail)
 					sizes[i] = t->dims[i] * sizes[i + 1];
 					levels[i] = 0;
 				}
-				for(size_t idx = 0; idx < t->ndata; idx++)
+				for(size_t idx = 0; (idx < t->ndata) && (print_limit > 0); idx++)
 				{
 					for(j = 0; j < t->ndim; j++)
 					{
@@ -1899,154 +2003,155 @@ void onnx_tensor_dump(struct onnx_tensor_t * t, int detail)
 						}
 					}
 					*lp = *rp = '\0';
-					ONNX_LOG("%s", rbuf);
+					onnx_printf("%s", rbuf);
 					if(*rbuf != '\0')
 					{
-						ONNX_LOG("\r\n");
-						for(k = t->ndim - strlen(rbuf); k > 0; k--)
-							ONNX_LOG(" ");
+						onnx_printf("\r\n");
+						for(k = t->ndim - onnx_strlen(rbuf); k > 0; k--)
+							onnx_printf(" ");
 					}
-					ONNX_LOG("%s", lbuf);
+					onnx_printf("%s", lbuf);
 					if(*lbuf == '\0')
-						ONNX_LOG(" ");
+						onnx_printf(" ");
 					p = (void *)(t->datas + onnx_tensor_type_sizeof(t->type) * idx);
 					switch(t->type)
 					{
 					case ONNX_TENSOR_TYPE_BOOL:
-						ONNX_LOG("%s,", *((uint8_t *)p) ? "true" : "false");
+						onnx_printf("%s,", *((uint8_t *)p) ? "true" : "false");
 						break;
 					case ONNX_TENSOR_TYPE_INT8:
-						ONNX_LOG("%d,", *((int8_t *)p));
+						onnx_printf("%d,", *((int8_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_INT16:
-						ONNX_LOG("%d,", *((int16_t *)p));
+						onnx_printf("%d,", *((int16_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_INT32:
-						ONNX_LOG("%d,", *((int32_t *)p));
+						onnx_printf("%d,", *((int32_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_INT64:
-						ONNX_LOG("%ld,", *((int64_t *)p));
+						onnx_printf("%ld,", *((int64_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_UINT8:
-						ONNX_LOG("%u,", *((uint8_t *)p));
+						onnx_printf("%u,", *((uint8_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_UINT16:
-						ONNX_LOG("%u,", *((uint16_t *)p));
+						onnx_printf("%u,", *((uint16_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_UINT32:
-						ONNX_LOG("%u,", *((uint32_t *)p));
+						onnx_printf("%u,", *((uint32_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_UINT64:
-						ONNX_LOG("%lu,", *((uint64_t *)p));
+						onnx_printf("%lu,", *((uint64_t *)p));
 						break;
 					case ONNX_TENSOR_TYPE_BFLOAT16:
-						ONNX_LOG("%g,", bfloat16_to_float32(*((uint16_t *)p)));
+						onnx_printf("%g,", bfloat16_to_float32(*((uint16_t *)p)));
 						break;
 					case ONNX_TENSOR_TYPE_FLOAT16:
-						ONNX_LOG("%g,", float16_to_float32(*((uint16_t *)p)));
+						onnx_printf("%g,", float16_to_float32(*((uint16_t *)p)));
 						break;
 					case ONNX_TENSOR_TYPE_FLOAT32:
-						ONNX_LOG("%g,", *((float *)p));
+						onnx_printf("%g,", *((float *)p));
 						break;
 					case ONNX_TENSOR_TYPE_FLOAT64:
-						ONNX_LOG("%g,", *((double *)p));
+						onnx_printf("%g,", *((double *)p));
 						break;
 					case ONNX_TENSOR_TYPE_COMPLEX64:
-						ONNX_LOG("%g + %gi,", *((float *)p), *((float *)(p + sizeof(float))));
+						onnx_printf("%g + %gi,", *((float *)p), *((float *)(p + sizeof(float))));
 						break;
 					case ONNX_TENSOR_TYPE_COMPLEX128:
-						ONNX_LOG("%g + %gi,", *((double *)p), *((double *)(p + sizeof(double))));
+						onnx_printf("%g + %gi,", *((double *)p), *((double *)(p + sizeof(double))));
 						break;
 					case ONNX_TENSOR_TYPE_STRING:
-						ONNX_LOG("%s,", (char *)(((char **)p)[0]));
+						onnx_printf("%s,", (char *)(((char **)p)[0]));
 						break;
 					default:
-						ONNX_LOG("?,");
+						onnx_printf("?,");
 						break;
 					}
 					lp = lbuf;
 					rp = rbuf;
+					print_limit--;
 				}
 				for(j = 0; j < t->ndim; j++)
-					ONNX_LOG("]");
-				free(sizes);
-				free(levels);
-				free(lbuf);
-				free(rbuf);
-				ONNX_LOG("\r\n");
+					onnx_printf("]");
+				onnx_free(sizes);
+				onnx_free(levels);
+				onnx_free(lbuf);
+				onnx_free(rbuf);
+				onnx_printf("\r\n");
 			}
 			else
 			{
-				ONNX_LOG(" = ");
-				ONNX_LOG("[...]");
-				ONNX_LOG("\r\n");
+				onnx_printf(" = ");
+				onnx_printf("[...]");
+				onnx_printf("\r\n");
 			}
 		}
 		else if(t->ndata == 1)
 		{
-			ONNX_LOG(" = ");
+			onnx_printf(" = ");
 			p = (void *)(t->datas);
 			switch(t->type)
 			{
 			case ONNX_TENSOR_TYPE_BOOL:
-				ONNX_LOG("%s", *((uint8_t *)p) ? "true" : "false");
+				onnx_printf("%s", *((uint8_t *)p) ? "true" : "false");
 				break;
 			case ONNX_TENSOR_TYPE_INT8:
-				ONNX_LOG("%d", *((int8_t *)p));
+				onnx_printf("%d", *((int8_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_INT16:
-				ONNX_LOG("%d", *((int16_t *)p));
+				onnx_printf("%d", *((int16_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_INT32:
-				ONNX_LOG("%d", *((int32_t *)p));
+				onnx_printf("%d", *((int32_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_INT64:
-				ONNX_LOG("%ld", *((int64_t *)p));
+				onnx_printf("%ld", *((int64_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_UINT8:
-				ONNX_LOG("%u", *((uint8_t *)p));
+				onnx_printf("%u", *((uint8_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_UINT16:
-				ONNX_LOG("%u", *((uint16_t *)p));
+				onnx_printf("%u", *((uint16_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_UINT32:
-				ONNX_LOG("%u", *((uint32_t *)p));
+				onnx_printf("%u", *((uint32_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_UINT64:
-				ONNX_LOG("%lu", *((uint64_t *)p));
+				onnx_printf("%lu", *((uint64_t *)p));
 				break;
 			case ONNX_TENSOR_TYPE_BFLOAT16:
-				ONNX_LOG("%g", bfloat16_to_float32(*((uint16_t *)p)));
+				onnx_printf("%g", bfloat16_to_float32(*((uint16_t *)p)));
 				break;
 			case ONNX_TENSOR_TYPE_FLOAT16:
-				ONNX_LOG("%g", float16_to_float32(*((uint16_t *)p)));
+				onnx_printf("%g", float16_to_float32(*((uint16_t *)p)));
 				break;
 			case ONNX_TENSOR_TYPE_FLOAT32:
-				ONNX_LOG("%g", *((float *)p));
+				onnx_printf("%g", *((float *)p));
 				break;
 			case ONNX_TENSOR_TYPE_FLOAT64:
-				ONNX_LOG("%g", *((double *)p));
+				onnx_printf("%g", *((double *)p));
 				break;
 			case ONNX_TENSOR_TYPE_COMPLEX64:
-				ONNX_LOG("%g + %gi", *((float *)p), *((float *)(p + sizeof(float))));
+				onnx_printf("%g + %gi", *((float *)p), *((float *)(p + sizeof(float))));
 				break;
 			case ONNX_TENSOR_TYPE_COMPLEX128:
-				ONNX_LOG("%g + %gi", *((double *)p), *((double *)(p + sizeof(double))));
+				onnx_printf("%g + %gi", *((double *)p), *((double *)(p + sizeof(double))));
 				break;
 			case ONNX_TENSOR_TYPE_STRING:
-				ONNX_LOG("%s", (char *)(((char **)p)[0]));
+				onnx_printf("%s", (char *)(((char **)p)[0]));
 				break;
 			default:
-				ONNX_LOG("?");
+				onnx_printf("?");
 				break;
 			}
-			ONNX_LOG("\r\n");
+			onnx_printf("\r\n");
 		}
 		else
 		{
-			ONNX_LOG(" = ");
-			ONNX_LOG("null");
-			ONNX_LOG("\r\n");
+			onnx_printf(" = ");
+			onnx_printf("null");
+			onnx_printf("\r\n");
 		}
 	}
 }
@@ -2057,22 +2162,22 @@ void onnx_node_dump(struct onnx_node_t * n, int detail)
 
 	if(n)
 	{
-		ONNX_LOG("%s: %s-%d (%s)\r\n", n->proto->name, n->proto->op_type, n->opset, (strlen(n->proto->domain) > 0) ? n->proto->domain : "ai.onnx");
+		onnx_printf("%s: %s-%d (%s)\r\n", n->proto->name, n->proto->op_type, n->opset, (onnx_strlen(n->proto->domain) > 0) ? n->proto->domain : "ai.onnx");
 		if(n->ninput > 0)
 		{
-			ONNX_LOG("\tInputs:\r\n");
+			onnx_printf("\tInputs:\r\n");
 			for(i = 0; i < n->ninput; i++)
 			{
-				ONNX_LOG("\t\t");
+				onnx_printf("\t\t");
 				onnx_tensor_dump(n->inputs[i], detail);
 			}
 		}
 		if(n->noutput > 0)
 		{
-			ONNX_LOG("\tOutputs:\r\n");
+			onnx_printf("\tOutputs:\r\n");
 			for(i = 0; i < n->noutput; i++)
 			{
-				ONNX_LOG("\t\t");
+				onnx_printf("\t\t");
 				onnx_tensor_dump(n->outputs[i], detail);
 			}
 		}
@@ -2098,17 +2203,95 @@ void onnx_context_dump(struct onnx_context_t * ctx, int detail)
 	{
 		if(ctx->model)
 		{
-			ONNX_LOG("IR Version: v%ld\r\n", ctx->model->ir_version);
-			ONNX_LOG("Producer: %s %s\r\n", ctx->model->producer_name, ctx->model->producer_version);
-			ONNX_LOG("Domain: %s\r\n", ctx->model->domain);
-			ONNX_LOG("Imports:\r\n");
+			onnx_printf("IR Version: v%ld\r\n", ctx->model->ir_version);
+			onnx_printf("Producer: %s %s\r\n", ctx->model->producer_name, ctx->model->producer_version);
+			onnx_printf("Domain: %s\r\n", ctx->model->domain);
+			onnx_printf("Imports:\r\n");
 			for(i = 0; i < ctx->model->n_opset_import; i++)
-				ONNX_LOG("\t%s v%ld\r\n", (strlen(ctx->model->opset_import[i]->domain) > 0) ? ctx->model->opset_import[i]->domain : "ai.onnx", ctx->model->opset_import[i]->version);
+				onnx_printf("\t%s v%ld\r\n", (onnx_strlen(ctx->model->opset_import[i]->domain) > 0) ? ctx->model->opset_import[i]->domain : "ai.onnx", ctx->model->opset_import[i]->version);
 		}
 		if(ctx->g)
 			onnx_graph_dump(ctx->g, detail);
 	}
 }
+
+
+int initialize_input_states(struct onnx_node_t * n)
+{
+	if (!n->last_input_states && n->ninput > 0) {
+		n->last_input_states = onnx_malloc(sizeof(struct onnx_input_state_t) * n->ninput);
+		if (!n->last_input_states) {
+			return 0;
+		}
+		
+		for (int i = 0; i < n->ninput; i++) {
+			n->last_input_states[i].type = ONNX_TENSOR_TYPE_UNDEFINED;
+			n->last_input_states[i].dims = NULL;
+			n->last_input_states[i].ndim = -1;
+		}
+	}
+	return 1;
+}
+
+
+int have_inputs_changed(struct onnx_node_t * n)
+{	
+	for (int i = 0; i < n->ninput; i++) {
+		struct onnx_tensor_t * input = n->inputs[i];
+		struct onnx_input_state_t * state = &n->last_input_states[i];
+		
+		if (!input)
+			continue;
+
+		if (input->type != state->type) {
+			return 1;
+		}
+		
+		if (input->ndim != state->ndim) {
+			return 1;
+		}
+		
+		for (int j = 0; j < input->ndim; j++) {
+			if (input->dims[j] != state->dims[j]) {
+				return 1;
+			}
+		}
+	}
+	
+	return 0;
+}
+
+
+static void update_input_states(struct onnx_node_t * n)
+{
+	
+	for (int i = 0; i < n->ninput; i++) {
+		struct onnx_tensor_t * input = n->inputs[i];
+		struct onnx_input_state_t * state = &n->last_input_states[i];
+		
+		if (input)
+			state->type = input->type;
+		
+		if (state->dims) {
+			onnx_free(state->dims);
+		}
+		
+		if (input && input->ndim > 0) {
+			state->ndim = input->ndim;
+			state->dims = onnx_malloc(sizeof(int) * input->ndim);
+			if (state->dims) {
+				for (int j = 0; j < input->ndim; j++) {
+					state->dims[j] = input->dims[j];
+				}
+			}
+		} else {
+			state->ndim = 0;
+			state->dims = NULL;
+		}
+	}
+	
+}
+
 
 void onnx_run(struct onnx_context_t * ctx)
 {
@@ -2120,8 +2303,36 @@ void onnx_run(struct onnx_context_t * ctx)
 		for(i = 0; i < ctx->g->nlen; i++)
 		{
 			n = &ctx->g->nodes[i];
-			if(n->reshape(n))
-				n->operator_(n);
+
+			
+			// onnx_printf("Node %s\r\n", n->proto->op_type);
+
+			if (have_inputs_changed(n) || !n->initialized) {
+				if (n->exit) {
+					n->exit(n);
+				}
+				n->initialized = 1;
+				if (n->rop)
+					n->rop(n);
+				else {
+					n->reshape = reshape_dummy;
+					n->operator_ = operator_dummy;
+				}
+				if(n->init)
+					n->init(n);
+				update_input_states(n);
+			}
+
+			if (is_all_inputs_ready(n)) {
+				if (n->reshape && n->reshape(n)) {
+					n->operator_(n);
+				} else {
+					onnx_printf("Reshape problem");
+				}
+			} else {
+				onnx_printf("Not all inputs are ready for node %s\r\n", n->proto->op_type);
+			}
+			// onnx_tensor_dump(n->outputs[0], 1);
 		}
 	}
 }

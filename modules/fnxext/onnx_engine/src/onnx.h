@@ -20,23 +20,29 @@ struct onnx_context_t;
 struct onnx_resolver_t;
 
 enum onnx_tensor_type_t {
-	ONNX_TENSOR_TYPE_UNDEFINED	= 0,
-	ONNX_TENSOR_TYPE_BOOL		= 9,
-	ONNX_TENSOR_TYPE_INT8		= 3,
-	ONNX_TENSOR_TYPE_INT16		= 5,
-	ONNX_TENSOR_TYPE_INT32		= 6,
-	ONNX_TENSOR_TYPE_INT64		= 7,
-	ONNX_TENSOR_TYPE_UINT8		= 2,
-	ONNX_TENSOR_TYPE_UINT16		= 4,
-	ONNX_TENSOR_TYPE_UINT32		= 12,
-	ONNX_TENSOR_TYPE_UINT64		= 13,
-	ONNX_TENSOR_TYPE_BFLOAT16	= 16,
-	ONNX_TENSOR_TYPE_FLOAT16	= 10,
-	ONNX_TENSOR_TYPE_FLOAT32	= 1,
-	ONNX_TENSOR_TYPE_FLOAT64	= 11,
-	ONNX_TENSOR_TYPE_COMPLEX64	= 14,
-	ONNX_TENSOR_TYPE_COMPLEX128	= 15,
-	ONNX_TENSOR_TYPE_STRING		= 8,
+	ONNX_TENSOR_TYPE_UNDEFINED		= 0,
+	ONNX_TENSOR_TYPE_BOOL			= 9,
+	ONNX_TENSOR_TYPE_INT4			= 22,
+	ONNX_TENSOR_TYPE_INT8			= 3,
+	ONNX_TENSOR_TYPE_INT16			= 5,
+	ONNX_TENSOR_TYPE_INT32			= 6,
+	ONNX_TENSOR_TYPE_INT64			= 7,
+	ONNX_TENSOR_TYPE_UINT4			= 21,
+	ONNX_TENSOR_TYPE_UINT8			= 2,
+	ONNX_TENSOR_TYPE_UINT16			= 4,
+	ONNX_TENSOR_TYPE_UINT32			= 12,
+	ONNX_TENSOR_TYPE_UINT64			= 13,
+	ONNX_TENSOR_TYPE_FLOAT8E4M3FN	= 17,
+	ONNX_TENSOR_TYPE_FLOAT8E4M3FNUZ	= 18,
+	ONNX_TENSOR_TYPE_FLOAT8E5M2		= 19,
+	ONNX_TENSOR_TYPE_FLOAT8E5M2FNUZ	= 20,
+	ONNX_TENSOR_TYPE_BFLOAT16		= 16,
+	ONNX_TENSOR_TYPE_FLOAT16		= 10,
+	ONNX_TENSOR_TYPE_FLOAT32		= 1,
+	ONNX_TENSOR_TYPE_FLOAT64		= 11,
+	ONNX_TENSOR_TYPE_COMPLEX64		= 14,
+	ONNX_TENSOR_TYPE_COMPLEX128		= 15,
+	ONNX_TENSOR_TYPE_STRING			= 8,
 };
 
 struct onnx_tensor_t {
@@ -49,6 +55,12 @@ struct onnx_tensor_t {
 	size_t ndata;
 };
 
+struct onnx_input_state_t {
+	enum onnx_tensor_type_t type;
+	int * dims;
+	int ndim;
+};
+
 struct onnx_node_t {
 	struct onnx_context_t * ctx;
 	struct onnx_resolver_t * r;
@@ -59,11 +71,16 @@ struct onnx_node_t {
 	struct onnx_tensor_t ** outputs;
 	int noutput;
 	Onnx__NodeProto * proto;
+	int index;
+	
+	struct onnx_input_state_t * last_input_states;
+	int initialized;
 
-	void (*operator_)(struct onnx_node_t * n);
 	int (*init)(struct onnx_node_t * n);
 	int (*exit)(struct onnx_node_t * n);
 	int (*reshape)(struct onnx_node_t * n);
+	void (*operator_)(struct onnx_node_t * n);
+	void (*rop)(struct onnx_node_t *);
 	void * priv;
 };
 
@@ -79,6 +96,7 @@ struct onnx_context_t {
 	void ** rctx;
 	int rlen;
 	struct onnx_graph_t * g;
+	struct hmap_t * shape_params;
 };
 
 struct onnx_resolver_t {
@@ -101,6 +119,10 @@ struct onnx_resolver_t {
 	void (*op_AveragePool)(struct onnx_node_t * n);
 	void (*op_BatchNormalization)(struct onnx_node_t * n);
 	void (*op_BitShift)(struct onnx_node_t * n);
+	void (*op_BitwiseAnd)(struct onnx_node_t * n);
+	void (*op_BitwiseNot)(struct onnx_node_t * n);
+	void (*op_BitwiseOr)(struct onnx_node_t * n);
+	void (*op_BitwiseXor)(struct onnx_node_t * n);
 	void (*op_Cast)(struct onnx_node_t * n);
 	void (*op_Ceil)(struct onnx_node_t * n);
 	void (*op_Clip)(struct onnx_node_t * n);
@@ -252,14 +274,19 @@ struct onnx_resolver_t {
 	void (*op_Range)(struct onnx_node_t * n);
 	void (*op_Softmax)(struct onnx_node_t * n);
 	void (*op_SoftmaxCrossEntropyLoss)(struct onnx_node_t * n);
+	void (*op_DynamicQuantizeLSTM)(struct onnx_node_t * n);
 };
 
-struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct onnx_resolver_t ** r, int rlen);
-struct onnx_context_t * onnx_context_alloc_from_file(const char * filename, struct onnx_resolver_t ** r, int rlen);
+struct onnx_context_t * onnx_context_alloc(const void * buf, size_t len, struct onnx_resolver_t ** r, int rlen, struct hmap_t * shape_params);
+struct onnx_context_t * onnx_context_alloc_from_file(const char * filename, struct onnx_resolver_t ** r, int rlen, struct hmap_t * shape_params);
 void onnx_context_free(struct onnx_context_t * ctx);
 
 struct onnx_graph_t * onnx_graph_alloc(struct onnx_context_t * ctx, Onnx__GraphProto * graph);
 void onnx_graph_free(struct onnx_graph_t * g);
+
+void free_node(struct onnx_node_t * n);
+
+int is_all_inputs_ready(struct onnx_node_t * n);
 
 const char * onnx_tensor_type_tostring(enum onnx_tensor_type_t type);
 int onnx_tensor_type_sizeof(enum onnx_tensor_type_t type);
@@ -326,7 +353,7 @@ static inline int onnx_tensor_reshape_identity(struct onnx_tensor_t * y, struct 
 
 static inline int onnx_tensor_reshape_multi_broadcast(struct onnx_tensor_t * y, struct onnx_tensor_t * a, struct onnx_tensor_t * b, enum onnx_tensor_type_t type)
 {
-	int ndim = maxx(a->ndim, b->ndim);
+	int ndim = XMAX(a->ndim, b->ndim);
 	int dims[ndim];
 	int i, j, k;
 
@@ -379,6 +406,8 @@ static inline void * onnx_tensor_broadcast_map_address(struct onnx_tensor_t * x,
 float onnx_attribute_read_float(struct onnx_node_t * n, const char * name, float def);
 int64_t onnx_attribute_read_int(struct onnx_node_t * n, const char * name, int64_t def);
 char * onnx_attribute_read_string(struct onnx_node_t * n, const char * name, char * def);
+int onnx_attribute_read_strings(struct onnx_node_t * n, const char * name, char ***strings);
+
 int onnx_attribute_read_ints(struct onnx_node_t * n, const char * name, int64_t ** ints);
 int onnx_attribute_read_floats(struct onnx_node_t * n, const char * name, float ** floats);
 int onnx_attribute_read_tensor(struct onnx_node_t * n, const char * name, struct onnx_tensor_t * t);
@@ -389,6 +418,8 @@ void onnx_tensor_dump(struct onnx_tensor_t * t, int detail);
 void onnx_node_dump(struct onnx_node_t * n, int detail);
 void onnx_graph_dump(struct onnx_graph_t * g, int detail);
 void onnx_context_dump(struct onnx_context_t * ctx, int detail);
+
+int initialize_input_states(struct onnx_node_t * n);
 
 void onnx_run(struct onnx_context_t * ctx);
 

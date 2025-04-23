@@ -1,4 +1,5 @@
 #include "../onnx.h"
+#include "../matrix.h"
 
 struct operator_pdata_t {
 	int m;
@@ -12,7 +13,7 @@ static int MatMul_init(struct onnx_node_t * n)
 
 	if((n->ninput == 2) && (n->noutput == 1))
 	{
-		pdat = malloc(sizeof(struct operator_pdata_t));
+		pdat = onnx_malloc(sizeof(struct operator_pdata_t));
 		if(pdat)
 		{
 			pdat->m = 0;
@@ -30,7 +31,7 @@ static int MatMul_exit(struct onnx_node_t * n)
 	struct operator_pdata_t * pdat = (struct operator_pdata_t *)n->priv;
 
 	if(pdat)
-		free(pdat);
+		onnx_free(pdat);
 	return 1;
 }
 
@@ -65,7 +66,7 @@ static int MatMul_reshape(struct onnx_node_t * n)
 		bdims = b->dims;
 		bndim = b->ndim;
 	}
-	int ndim = maxx(andim, bndim);
+	int ndim = XMAX(andim, bndim);
 	int dims[ndim];
 	if(andim < 2 || bndim < 2)
 		return 0;
@@ -79,7 +80,7 @@ static int MatMul_reshape(struct onnx_node_t * n)
 		int blen = (bndim - i) < 0 ? 1 : bdims[bndim - i];
 		if(alen != blen && alen > 1 && blen > 1)
 			return 0;
-		dims[ndim - i] = maxx(alen, blen);
+		dims[ndim - i] = XMAX(alen, blen);
 	}
 	pdat->m = adims[andim - 2];
 	pdat->n = bdims[bndim - 1];
@@ -96,22 +97,12 @@ static void MatMul_int32(struct onnx_node_t * n)
 	int32_t * py = (int32_t *)y->datas;
 	int32_t * pa;
 	int32_t * pb;
-	int32_t sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += pa[u * pdat->k + w] * pb[w * pdat->n + v];
-				py[i + u * pdat->n + v] = sum;
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_INT32);
 	}
 }
 
@@ -124,22 +115,12 @@ static void MatMul_int64(struct onnx_node_t * n)
 	int64_t * py = (int64_t *)y->datas;
 	int64_t * pa;
 	int64_t * pb;
-	int64_t sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += pa[u * pdat->k + w] * pb[w * pdat->n + v];
-				py[i + u * pdat->n + v] = sum;
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_INT64);
 	}
 }
 
@@ -152,22 +133,12 @@ static void MatMul_uint32(struct onnx_node_t * n)
 	uint32_t * py = (uint32_t *)y->datas;
 	uint32_t * pa;
 	uint32_t * pb;
-	uint32_t sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += pa[u * pdat->k + w] * pb[w * pdat->n + v];
-				py[i + u * pdat->n + v] = sum;
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_UINT32);
 	}
 }
 
@@ -180,22 +151,12 @@ static void MatMul_uint64(struct onnx_node_t * n)
 	uint64_t * py = (uint64_t *)y->datas;
 	uint64_t * pa;
 	uint64_t * pb;
-	uint64_t sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += pa[u * pdat->k + w] * pb[w * pdat->n + v];
-				py[i + u * pdat->n + v] = sum;
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_UINT64);
 	}
 }
 
@@ -208,22 +169,12 @@ static void MatMul_bfloat16(struct onnx_node_t * n)
 	uint16_t * py = (uint16_t *)y->datas;
 	uint16_t * pa;
 	uint16_t * pb;
-	float sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += bfloat16_to_float32(pa[u * pdat->k + w]) * bfloat16_to_float32(pb[w * pdat->n + v]);
-				py[i + u * pdat->n + v] = float32_to_bfloat16(sum);
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_BFLOAT16);
 	}
 }
 
@@ -236,22 +187,12 @@ static void MatMul_float16(struct onnx_node_t * n)
 	uint16_t * py = (uint16_t *)y->datas;
 	uint16_t * pa;
 	uint16_t * pb;
-	float sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += float16_to_float32(pa[u * pdat->k + w]) * float16_to_float32(pb[w * pdat->n + v]);
-				py[i + u * pdat->n + v] = float32_to_float16(sum);
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_FLOAT16);
 	}
 }
 
@@ -264,22 +205,12 @@ static void MatMul_float32(struct onnx_node_t * n)
 	float * py = (float *)y->datas;
 	float * pa;
 	float * pb;
-	float sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += pa[u * pdat->k + w] * pb[w * pdat->n + v];
-				py[i + u * pdat->n + v] = sum;
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_FLOAT32);
 	}
 }
 
@@ -292,22 +223,12 @@ static void MatMul_float64(struct onnx_node_t * n)
 	double * py = (double *)y->datas;
 	double * pa;
 	double * pb;
-	double sum;
 
 	for(size_t i = 0, l = y->ndata; i < l; i += pdat->m * pdat->n)
 	{
 		pa = onnx_tensor_broadcast_map_address(a, y, i);
 		pb = onnx_tensor_broadcast_map_address(b, y, i);
-		for(int u = 0; u < pdat->m; u++)
-		{
-			for(int v = 0; v < pdat->n; v++)
-			{
-				sum = 0;
-				for(int w = 0; w < pdat->k; w++)
-					sum += pa[u * pdat->k + w] * pb[w * pdat->n + v];
-				py[i + u * pdat->n + v] = sum;
-			}
-		}
+		matrix_mul(pdat->m, pdat->n, pdat->k, pa, pb, &py[i], ONNX_TENSOR_TYPE_FLOAT64);
 	}
 }
 
