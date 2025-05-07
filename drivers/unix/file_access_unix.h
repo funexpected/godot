@@ -81,6 +81,9 @@ public:
 	virtual bool file_exists(const String &p_path); ///< return true if a file exists
 
 	virtual uint64_t _get_modified_time(const String &p_file);
+	virtual Dictionary _get_file_statistics(const String &p_file);
+	virtual void _update_access_time(const String &p_file);
+
 	virtual uint32_t _get_unix_permissions(const String &p_file);
 	virtual Error _set_unix_permissions(const String &p_file, uint32_t p_permissions);
 
