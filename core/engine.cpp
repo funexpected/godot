@@ -257,6 +257,10 @@ void Engine::add_custom_error_handler(const String &p_path) {
 	custom_error_handlers.push_back(handler);
 }
 
+List<CustomErrorHandler *> Engine::get_custom_error_handlers() {
+	return List<CustomErrorHandler *>(custom_error_handlers);
+}
+
 void Engine::remove_custom_error_handlers() {
 	for (List<CustomErrorHandler *>::Element *E = custom_error_handlers.front(); E; E = E->next()) {
 		memdelete(E->get());

@@ -44,6 +44,7 @@
 #include "core/project_settings.h"
 #include "core/register_core_types.h"
 #include "core/script_debugger_local.h"
+#include "core/script_debugger_stack.h"
 #include "core/script_language.h"
 #include "core/translation.h"
 #include "core/version.h"
@@ -940,6 +941,8 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 		script_debugger = memnew(ScriptDebuggerLocal);
 		OS::get_singleton()->initialize_debugging();
+	} else {
+		script_debugger = memnew(ScriptDebuggerStack);
 	}
 	if (script_debugger) {
 		//there is a debugger, parse breakpoints
