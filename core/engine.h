@@ -110,6 +110,7 @@ public:
 	void add_global_constant(const String &p_name, const Variant &p_value) const;
 	void add_custom_error_handlers();
 	void add_custom_error_handler(const String &p_path);
+	List<CustomErrorHandler *> get_custom_error_handlers();
 	void remove_custom_error_handlers();
 
 	_FORCE_INLINE_ bool get_use_gpu_pixel_snap() const { return _gpu_pixel_snap; }
