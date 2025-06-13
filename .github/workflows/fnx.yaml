@@ -23,7 +23,7 @@ jobs:
         include:
           - os: macos-13
             token: osx.editor
-            build: scons -j2 platform=osx tools=yes target=release_debug verbose=yes
+            build: scons -j2 platform=osx arch=arm64v8 tools=yes target=release_debug verbose=yes
           - os: macos-13
             token: osx.editor.headless
             build: scons -j2 platform=server tools=yes target=release_debug verbose=yes
