@@ -42,6 +42,7 @@ jobs:
               rsync -a -m -R --include '*/' --include '*.h' --include '*.inc' --exclude '*' --exclude '.git' --exclude 'bin' --exclude 'ios.headers' . ./ios.headers
               zip -X -r ios.headers.zip ios.headers
               mv ios.headers.zip bin/
+
           - os: ubuntu-24.04
             token: android.template.debug
             build: |
@@ -100,8 +101,6 @@ jobs:
       - name: Make apt sources.list use the default Ubuntu repositories
         if: ${{matrix.os == 'ubuntu-24.04'}}
         run: |
-          sudo rm -f /etc/apt/sources.list.d/*
-          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
           sudo apt-get update
 
       - name: Set up Java 8
