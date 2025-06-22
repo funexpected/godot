@@ -21,69 +21,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-13
+          - os: macos-15
             token: osx.editor
-            build: scons -j2 platform=osx tools=yes target=release_debug verbose=yes
-          - os: macos-13
-            token: osx.editor.headless
-            build: scons -j2 platform=server tools=yes target=release_debug verbose=yes
-          - os: macos-13
-            token: ios.release
-            build: |
-              mkdir iphone
-              scons p=iphone -j2 tools=no bits=64 target=release_debug arch=arm64 module_firebase_enabled=no module_websocket_enabled=no game_center=no debug_symbols=no separate_debug_symbols=yes
-              cp -R misc/dist/ios_xcode/ iphone/
-              find bin
-              cp bin/libgodot.iphone.opt.debug.arm64.a iphone/libgodot.iphone.release.fat.a
-              zip -X -r ios.release.zip iphone
-              rm -rf bin/*
-              mv ios.release.zip bin/
-              mkdir ios.headers
-              rsync -a -m -R --include '*/' --include '*.h' --include '*.inc' --exclude '*' --exclude '.git' --exclude 'bin' --exclude 'ios.headers' . ./ios.headers
-              zip -X -r ios.headers.zip ios.headers
-              mv ios.headers.zip bin/
-          - os: ubuntu-24.04
-            token: android.template.debug
-            build: |
-              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              cd platform/android/java/
-              ./gradlew generateGodotTemplates
-              # Remove files that will not be needed for export
-              cd ../../..
-              mv bin/android_source.zip bin/android_source.debug.zip
-              rm bin/android_debug.apk
-              rm bin/godot-lib.debug.aar
-              # copy unstripped binaries (for crashlytics)
-              cd platform/android/java/lib/libs/debug/
-              zip -r android.native_libs.unstripped.debug.zip ./
-              cd -
-              cp platform/android/java/lib/libs/debug/android.native_libs.unstripped.debug.zip bin
-          - os: ubuntu-24.04
-            token: android.template.release
-            build: |
-              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=release_debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              cd platform/android/java/
-              ./gradlew generateGodotTemplates
-              # Remove files that will not be needed for export
-              cd ../../..
-              mv bin/android_source.zip bin/android_source.release.zip
-              rm bin/android_release.apk
-              rm bin/godot-lib.release.aar
-              # copy unstripped binaries (for crashlytics)
-              cd platform/android/java/lib/libs/release/
-              zip -r android.native_libs.unstripped.release.zip ./
-              cd -
-              cp platform/android/java/lib/libs/release/android.native_libs.unstripped.release.zip bin
-          - os: ubuntu-24.04
-            token: linux.editor.headless
-            build: |
-              scons target=release_debug platform=server tools=yes module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
-              ls -l bin/
-
-
+            build: scons -j2 platform=osx arch=arm64v8 tools=yes target=release_debug verbose=yes
 
 
     steps:
