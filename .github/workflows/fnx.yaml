@@ -9,9 +9,6 @@ on: [push]
 
 env:
   GODOT_BASE_BRANCH: 3.2
-  SCONS_CACHE_MSVC_CONFIG: true
-  SCONS_CACHE_LIMIT: 1024
-  SCONS_CACHE_MAX_MB: 1024
   ANDROID_NDK_VERSION: 21.4.7075529
 
 jobs:
@@ -106,7 +103,7 @@ jobs:
           sudo apt-get update
           export SKIP_JDK_VERSION_CHECK=true
 
-      - name: Set up Java 21
+      - name: Set up Java 8
         if: ${{startsWith(matrix.token, 'android.template')}}
         uses: actions/setup-java@v4
         with:
@@ -161,8 +158,7 @@ jobs:
             libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
 
       - name: Compilation
-        env:
-          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        
         run: ${{ matrix.build }}
         
       - name: Upload artifact
