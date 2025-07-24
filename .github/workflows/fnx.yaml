@@ -16,7 +16,7 @@ jobs:
     name: Build ${{ matrix.token }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: macos-13
