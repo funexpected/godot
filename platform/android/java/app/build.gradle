@@ -79,6 +79,7 @@ dependencies {
 }
 
 android {
+    namespace getExportPackageName()
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
 
