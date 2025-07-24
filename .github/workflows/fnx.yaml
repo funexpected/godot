@@ -116,7 +116,7 @@ jobs:
         if: ${{startsWith(matrix.token, 'android.template')}}
         uses: android-actions/setup-android@v3
         with:
-          cmdline-tools-version: 6858069
+          cmdline-tools-version: 12266719
           packages: "ndk;${{env.ANDROID_NDK_VERSION}}"
 
       # - name: Install Android NDK r21
