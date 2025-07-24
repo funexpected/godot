@@ -238,3 +238,11 @@ task copyAndRenameReleaseAab(type: Copy) {
 
 //CHUNK_GLOBAL_BEGIN
 //CHUNK_GLOBAL_END
+
+// Ensure mergeReleaseJniLibFolders depends on copyReleaseAARToAppModule to fix Gradle implicit dependency error
+// This must be after the Android plugin applies its tasks
+afterEvaluate {
+    tasks.matching { it.name == 'mergeReleaseJniLibFolders' }.all { t ->
+        t.dependsOn rootProject.tasks.matching { it.name == 'copyReleaseAARToAppModule' }
+    }
+}
