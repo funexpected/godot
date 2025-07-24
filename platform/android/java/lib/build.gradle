@@ -10,6 +10,7 @@ dependencies {
 def pathToRootDir = "../../../../"
 
 android {
+    namespace 'org.godotengine.godot'
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
 
@@ -25,6 +26,11 @@ android {
     compileOptions {
         sourceCompatibility versions.javaVersion
         targetCompatibility versions.javaVersion
+    }
+
+    buildFeatures {
+        buildConfig true
+        aidl true
     }
 
     lintOptions {
