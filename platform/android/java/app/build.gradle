@@ -246,3 +246,11 @@ afterEvaluate {
         t.dependsOn rootProject.tasks.matching { it.name == 'copyReleaseAARToAppModule' }
     }
 }
+
+// Ensure mergeDebugJniLibFolders depends on copyDebugAARToAppModule to fix Gradle implicit dependency error for debug build
+// This must be after the Android plugin applies its tasks
+afterEvaluate {
+    tasks.matching { it.name == 'mergeDebugJniLibFolders' }.all { t ->
+        t.dependsOn rootProject.tasks.matching { it.name == 'copyDebugAARToAppModule' }
+    }
+}
