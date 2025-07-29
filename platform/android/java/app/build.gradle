@@ -79,7 +79,7 @@ dependencies {
 }
 
 android {
-    namespace getExportPackageName()
+    namespace 'com.godot.game'
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
 
