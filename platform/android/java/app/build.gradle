@@ -9,7 +9,7 @@ buildscript {
 
     repositories {
         google()
-        jcenter()
+        mavenCentral()
 //CHUNK_BUILDSCRIPT_REPOSITORIES_BEGIN
 //CHUNK_BUILDSCRIPT_REPOSITORIES_END
     }
@@ -29,7 +29,6 @@ allprojects {
     repositories {
         mavenCentral()
         google()
-        jcenter()
 //CHUNK_ALLPROJECTS_REPOSITORIES_BEGIN
 //CHUNK_ALLPROJECTS_REPOSITORIES_END
 
@@ -80,6 +79,7 @@ dependencies {
 }
 
 android {
+    namespace 'com.godot.game'
     compileSdkVersion versions.compileSdk
     buildToolsVersion versions.buildTools
 
@@ -238,3 +238,19 @@ task copyAndRenameReleaseAab(type: Copy) {
 
 //CHUNK_GLOBAL_BEGIN
 //CHUNK_GLOBAL_END
+
+// Ensure mergeReleaseJniLibFolders depends on copyReleaseAARToAppModule to fix Gradle implicit dependency error
+// This must be after the Android plugin applies its tasks
+afterEvaluate {
+    tasks.matching { it.name == 'mergeReleaseJniLibFolders' }.all { t ->
+        t.dependsOn rootProject.tasks.matching { it.name == 'copyReleaseAARToAppModule' }
+    }
+}
+
+// Ensure mergeDebugJniLibFolders depends on copyDebugAARToAppModule to fix Gradle implicit dependency error for debug build
+// This must be after the Android plugin applies its tasks
+afterEvaluate {
+    tasks.matching { it.name == 'mergeDebugJniLibFolders' }.all { t ->
+        t.dependsOn rootProject.tasks.matching { it.name == 'copyDebugAARToAppModule' }
+    }
+}

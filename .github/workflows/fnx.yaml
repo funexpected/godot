@@ -9,9 +9,6 @@ on: [push]
 
 env:
   GODOT_BASE_BRANCH: 3.2
-  SCONS_CACHE_MSVC_CONFIG: true
-  SCONS_CACHE_LIMIT: 1024
-  SCONS_CACHE_MAX_MB: 1024
   ANDROID_NDK_VERSION: 21.4.7075529
 
 jobs:
@@ -19,6 +16,7 @@ jobs:
     name: Build ${{ matrix.token }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: true
       matrix:
         include:
           - os: macos-13
@@ -42,7 +40,7 @@ jobs:
               rsync -a -m -R --include '*/' --include '*.h' --include '*.inc' --exclude '*' --exclude '.git' --exclude 'bin' --exclude 'ios.headers' . ./ios.headers
               zip -X -r ios.headers.zip ios.headers
               mv ios.headers.zip bin/
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             token: android.template.debug
             build: |
               scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
@@ -59,7 +57,7 @@ jobs:
               zip -r android.native_libs.unstripped.debug.zip ./
               cd -
               cp platform/android/java/lib/libs/debug/android.native_libs.unstripped.debug.zip bin
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             token: android.template.release
             build: |
               scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
@@ -77,7 +75,7 @@ jobs:
               zip -r android.native_libs.unstripped.release.zip ./
               cd -
               cp platform/android/java/lib/libs/release/android.native_libs.unstripped.release.zip bin
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             token: linux.editor.headless
             build: |
               scons target=release_debug platform=server tools=yes module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no module_mono_enabled=no mono_glue=no
@@ -98,24 +96,25 @@ jobs:
       #     softwareupdate --install-rosetta --agree-to-license
 
       - name: Make apt sources.list use the default Ubuntu repositories
-        if: ${{matrix.os == 'ubuntu-24.04'}}
+        if: ${{matrix.os == 'ubuntu-latest'}}
         run: |
           sudo rm -f /etc/apt/sources.list.d/*
           sudo cp -f misc/ci/sources.list /etc/apt/sources.list
           sudo apt-get update
+          export SKIP_JDK_VERSION_CHECK=true
 
       - name: Set up Java 8
         if: ${{startsWith(matrix.token, 'android.template')}}
         uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 21
           distribution: 'zulu'
 
       - name: Setup Android SDK
         if: ${{startsWith(matrix.token, 'android.template')}}
         uses: android-actions/setup-android@v3
         with:
-          cmdline-tools-version: 6858069
+          cmdline-tools-version: 12266719
           packages: "ndk;${{env.ANDROID_NDK_VERSION}}"
 
       # - name: Install Android NDK r21
@@ -125,15 +124,15 @@ jobs:
       #     sudo sdkmanager --install 'ndk;${{env.ANDROID_NDK_VERSION}}'
 
       # Upload cache on completion and check it out now
-      - name: Load .scons_cache directory
+      - name: Load scons cache
         uses: actions/cache@v4
         with:
           path: .scons_cache
-          key: ${{matrix.token}}-v2-${{github.ref}}-${{github.sha}}
+          key: ${{matrix.token}}-v3-${{github.ref}}-${{github.sha}}
           restore-keys: |
-            ${{matrix.token}}-v2-${{github.ref}}-${{github.sha}}
-            ${{matrix.token}}-v2-${{github.ref}}
-            ${{matrix.token}}-v2
+            ${{matrix.token}}-v3-${{github.ref}}-${{github.sha}}
+            ${{matrix.token}}-v3-${{github.ref}}
+            ${{matrix.token}}-v3
 
       # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
       - name: Set up Python 3.x
@@ -159,8 +158,7 @@ jobs:
             libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
 
       - name: Compilation
-        env:
-          SCONS_CACHE: ${{github.workspace}}/.scons_cache/
+        
         run: ${{ matrix.build }}
         
       - name: Upload artifact
