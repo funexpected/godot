@@ -232,31 +232,41 @@ def configure(env):
             host_subpath = "windows"
 
     compiler_path = env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/bin"
-    gcc_toolchain_path = env["ANDROID_NDK_ROOT"] + "/toolchains/" + target_subpath + "/prebuilt/" + host_subpath
-    tools_path = gcc_toolchain_path + "/" + abi_subpath + "/bin"
+    # NDK 27+ uses unified LLVM toolchain, no separate GCC toolchain
+    tools_path = compiler_path
 
     # For Clang to find NDK tools in preference of those system-wide
     env.PrependENVPath("PATH", tools_path)
 
+    # Use NDK's target-specific compilers to avoid Apple toolchain conflicts
+    api_level = str(get_platform(env["ndk_platform"]))
+    if env["android_arch"] == "armv7":
+        target_compiler = "armv7a-linux-androideabi" + api_level
+    elif env["android_arch"] == "arm64v8":
+        target_compiler = "aarch64-linux-android" + api_level
+    elif env["android_arch"] == "x86":
+        target_compiler = "i686-linux-android" + api_level
+    elif env["android_arch"] == "x86_64":
+        target_compiler = "x86_64-linux-android" + api_level
+    
     ccache_path = os.environ.get("CCACHE")
     if ccache_path is None:
-        env["CC"] = compiler_path + "/clang"
-        env["CXX"] = compiler_path + "/clang++"
+        env["CC"] = compiler_path + "/" + target_compiler + "-clang"
+        env["CXX"] = compiler_path + "/" + target_compiler + "-clang++"
     else:
         # there aren't any ccache wrappers available for Android,
         # to enable caching we need to prepend the path to the ccache binary
-        env["CC"] = ccache_path + " " + compiler_path + "/clang"
-        env["CXX"] = ccache_path + " " + compiler_path + "/clang++"
-    env["AR"] = tools_path + "/ar"
-    env["RANLIB"] = tools_path + "/ranlib"
-    env["AS"] = tools_path + "/as"
+        env["CC"] = ccache_path + " " + compiler_path + "/" + target_compiler + "-clang"
+        env["CXX"] = ccache_path + " " + compiler_path + "/" + target_compiler + "-clang++"
+    # NDK 27+ uses LLVM tools
+    env["AR"] = tools_path + "/llvm-ar"
+    env["RANLIB"] = tools_path + "/llvm-ranlib"
+    env["AS"] = tools_path + "/llvm-as"
 
-    common_opts = ["-fno-integrated-as", "-gcc-toolchain", gcc_toolchain_path]
+    # Use integrated assembler for cross-compilation compatibility
+    common_opts = [] #, "-gcc-toolchain", gcc_toolchain_path]
 
     # Compile flags
-
-    env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/sources/cxx-stl/llvm-libc++/include"])
-    env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/sources/cxx-stl/llvm-libc++abi/include"])
 
     # Disable exceptions and rtti on non-tools (template) builds
     if env["tools"]:
@@ -266,12 +276,15 @@ def configure(env):
         # Don't use dynamic_cast, necessary with no-rtti.
         env.Append(CPPDEFINES=["NO_SAFE_CAST"])
 
-    lib_sysroot = env["ANDROID_NDK_ROOT"] + "/platforms/" + env["ndk_platform"] + "/" + env["ARCH"]
-
     # Using NDK unified headers (NDK r15+)
-    sysroot = env["ANDROID_NDK_ROOT"] + "/sysroot"
+    # NDK 27+ moved sysroot to toolchains/llvm/prebuilt/host/sysroot
+    sysroot = env["ANDROID_NDK_ROOT"] + "/toolchains/llvm/prebuilt/" + host_subpath + "/sysroot"
+    # NDK 27+ uses unified sysroot for both headers and libraries
+    lib_sysroot = sysroot
     env.Append(CPPFLAGS=["--sysroot=" + sysroot])
     env.Append(CPPFLAGS=["-isystem", sysroot + "/usr/include/" + abi_subpath])
+    # NDK 27+ has C++ headers in sysroot
+    env.Append(CPPFLAGS=["-isystem", sysroot + "/usr/include/c++/v1"])
     env.Append(CPPFLAGS=["-isystem", env["ANDROID_NDK_ROOT"] + "/sources/android/support/include"])
     # For unified headers this define has to be set manually
     env.Append(CPPDEFINES=[("__ANDROID_API__", str(get_platform(env["ndk_platform"])))])
@@ -283,15 +296,9 @@ def configure(env):
 
     env["neon_enabled"] = False
     if env["android_arch"] == "x86":
-        target_opts = ["-target", "i686-none-linux-android"]
         # The NDK adds this if targeting API < 21, so we can drop it when Godot targets it at least
         env.Append(CCFLAGS=["-mstackrealign"])
-
-    elif env["android_arch"] == "x86_64":
-        target_opts = ["-target", "x86_64-none-linux-android"]
-
     elif env["android_arch"] == "armv7":
-        target_opts = ["-target", "armv7-none-linux-androideabi"]
         env.Append(CCFLAGS="-march=armv7-a -mfloat-abi=softfp".split())
         env.Append(CPPDEFINES=["__ARM_ARCH_7__", "__ARM_ARCH_7A__"])
         if env["android_neon"]:
@@ -300,13 +307,10 @@ def configure(env):
             env.Append(CPPDEFINES=["__ARM_NEON__"])
         else:
             env.Append(CCFLAGS=["-mfpu=vfpv3-d16"])
-
     elif env["android_arch"] == "arm64v8":
-        target_opts = ["-target", "aarch64-none-linux-android"]
         env.Append(CCFLAGS=["-mfix-cortex-a53-835769"])
         env.Append(CPPDEFINES=["__ARM_ARCH_8A__"])
 
-    env.Append(CCFLAGS=target_opts)
     env.Append(CCFLAGS=common_opts)
 
     # Link flags
@@ -314,50 +318,26 @@ def configure(env):
     ndk_version = get_env_ndk_version(env["ANDROID_NDK_ROOT"])
     if ndk_version != None and LooseVersion(ndk_version) >= LooseVersion("17.1.4828580"):
         env.Append(LINKFLAGS=["-Wl,--exclude-libs,libgcc.a", "-Wl,--exclude-libs,libatomic.a", "-nostdlib++"])
-    else:
-        env.Append(
-            LINKFLAGS=[
-                env["ANDROID_NDK_ROOT"] + "/sources/cxx-stl/llvm-libc++/libs/" + arch_subpath + "/libandroid_support.a"
-            ]
-        )
+    # Note: NDK 27+ doesn't need libandroid_support.a - it's handled by the unified toolchain
     env.Append(LINKFLAGS=["-shared", "--sysroot=" + lib_sysroot, "-Wl,--warn-shared-textrel"])
-    env.Append(LIBPATH=[env["ANDROID_NDK_ROOT"] + "/sources/cxx-stl/llvm-libc++/libs/" + arch_subpath + "/"])
-    env.Append(
-        LINKFLAGS=[env["ANDROID_NDK_ROOT"] + "/sources/cxx-stl/llvm-libc++/libs/" + arch_subpath + "/libc++_shared.so"]
-    )
-
+    # NDK 27+ has libc++ in sysroot (use the non-API specific version)
+    env.Append(LINKFLAGS=[sysroot + "/usr/lib/" + abi_subpath + "/libc++_shared.so"])
+    
     if env["android_arch"] == "armv7":
         env.Append(LINKFLAGS="-Wl,--fix-cortex-a8".split())
     env.Append(LINKFLAGS="-Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now".split())
     env.Append(LINKFLAGS="-Wl,-soname,libgodot_android.so -Wl,--gc-sections".split())
 
-    env.Append(LINKFLAGS=target_opts)
     env.Append(LINKFLAGS=common_opts)
 
-    env.Append(
-        LIBPATH=[
-            env["ANDROID_NDK_ROOT"]
-            + "/toolchains/"
-            + target_subpath
-            + "/prebuilt/"
-            + host_subpath
-            + "/lib/gcc/"
-            + abi_subpath
-            + "/4.9.x"
-        ]
-    )
-    env.Append(
-        LIBPATH=[
-            env["ANDROID_NDK_ROOT"]
-            + "/toolchains/"
-            + target_subpath
-            + "/prebuilt/"
-            + host_subpath
-            + "/"
-            + abi_subpath
-            + "/lib"
-        ]
-    )
+    # NDK 27+ uses unified LLVM toolchain, library paths are in sysroot
+    # Libraries are organized by API level in subdirectories
+    api_level = str(get_platform(env["ndk_platform"]))
+    crt_path = sysroot + "/usr/lib/" + abi_subpath + "/" + api_level
+    
+    # Target-specific compilers handle CRT objects automatically
+    env.Append(LIBPATH=[sysroot + "/usr/lib/" + abi_subpath + "/" + api_level])
+    env.Append(LIBPATH=[sysroot + "/usr/lib/" + abi_subpath])  # Fallback for libraries not in API subdirs
 
     env.Prepend(CPPPATH=["#platform/android"])
     env.Append(CPPDEFINES=["ANDROID_ENABLED", "UNIX_ENABLED", "NO_FCNTL"])

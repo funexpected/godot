@@ -59,7 +59,29 @@ if lib_arch_dir != "":
         out_dir + "/libgodot_android.so", "#bin/libgodot" + env["SHLIBSUFFIX"], Move("$TARGET", "$SOURCE")
     )
 
+    # NDK 27+ has libc++_shared.so in sysroot
+    import sys
+    import platform as host_platform
+    if sys.platform.startswith("linux"):
+        host_subpath = "linux-x86_64"
+    elif sys.platform.startswith("darwin"):
+        host_subpath = "darwin-x86_64"
+    elif sys.platform.startswith("win"):
+        if host_platform.machine().endswith("64"):
+            host_subpath = "windows-x86_64"
+        else:
+            host_subpath = "windows"
+    
+    # Map Godot arch names to NDK ABI names
+    abi_map = {
+        "armeabi-v7a": "arm-linux-androideabi",
+        "arm64-v8a": "aarch64-linux-android", 
+        "x86": "i686-linux-android",
+        "x86_64": "x86_64-linux-android"
+    }
+    abi_subpath = abi_map.get(lib_arch_dir, lib_arch_dir)
+    
     stl_lib_path = (
-        str(env["ANDROID_NDK_ROOT"]) + "/sources/cxx-stl/llvm-libc++/libs/" + lib_arch_dir + "/libc++_shared.so"
+        str(env["ANDROID_NDK_ROOT"]) + "/toolchains/llvm/prebuilt/" + host_subpath + "/sysroot/usr/lib/" + abi_subpath + "/libc++_shared.so"
     )
     env_android.Command(out_dir + "/libc++_shared.so", stl_lib_path, Copy("$TARGET", "$SOURCE"))
