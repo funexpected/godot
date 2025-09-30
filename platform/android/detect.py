@@ -327,6 +327,8 @@ def configure(env):
         env.Append(LINKFLAGS="-Wl,--fix-cortex-a8".split())
     env.Append(LINKFLAGS="-Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now".split())
     env.Append(LINKFLAGS="-Wl,-soname,libgodot_android.so -Wl,--gc-sections".split())
+    # Add 16KB alignment for Android 15+ compatibility
+    env.Append(LINKFLAGS=["-Wl,-z,max-page-size=16384"])
 
     env.Append(LINKFLAGS=common_opts)
 
