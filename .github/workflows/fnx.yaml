@@ -43,8 +43,8 @@ jobs:
           - os: ubuntu-latest
             token: android.template.debug
             build: |
-              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
+              scons platform=android -j 8 target=debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no ndk_platform=android-21
+              scons platform=android -j 8 target=debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no ndk_platform=android-21
               cd platform/android/java/
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
@@ -60,9 +60,9 @@ jobs:
           - os: ubuntu-latest
             token: android.template.release
             build: |
-              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=release_debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
-              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no
+              scons platform=android -j 8 target=release_debug android_arch=arm64v8 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no ndk_platform=android-21
+              scons platform=android -j 8 target=release_debug android_arch=x86_64 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no ndk_platform=android-21
+              scons platform=android -j 8 target=release_debug android_arch=armv7 tools=no module_firebase_enabled=no module_bullet_enabled=no module_websocket_enabled=no game_center=no builtin_pcre2_with_jit=no builtin_libvpx=no module_webm_enabled=no ndk_platform=android-21 module_opus_enabled=no
               cd platform/android/java/
               ./gradlew generateGodotTemplates
               # Remove files that will not be needed for export
@@ -103,7 +103,7 @@ jobs:
           sudo apt-get update
           export SKIP_JDK_VERSION_CHECK=true
 
-      - name: Set up Java 8
+      - name: Set up Java 21
         if: ${{startsWith(matrix.token, 'android.template')}}
         uses: actions/setup-java@v4
         with:
