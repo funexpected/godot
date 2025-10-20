@@ -280,6 +280,10 @@ static const int max_touches = 8;
 // the same size as our display area.
 
 - (void)layoutSubviews {
+	NSLog(@"[GODOT_ORIENTATION] GodotView layoutSubviews");
+	NSLog(@"[GODOT_ORIENTATION] GodotView bounds: %@", NSStringFromCGRect(self.bounds));
+	NSLog(@"[GODOT_ORIENTATION] GodotView frame: %@", NSStringFromCGRect(self.frame));
+	
 	// UIApplicationState state = [[UIApplication sharedApplication] applicationState];
 	// if (state == UIApplicationStateBackground || state == UIApplicationStateInactive)
 	// {
@@ -289,8 +293,10 @@ static const int max_touches = 8;
 	[CATransaction setValue:(id)kCFBooleanTrue
 					forKey:kCATransactionDisableActions];
 	if (self.renderingLayer) {
+		NSLog(@"[GODOT_ORIENTATION] Setting renderingLayer frame to: %@", NSStringFromCGRect(self.bounds));
 		self.renderingLayer.frame = self.bounds;
 		[self.renderingLayer layoutDisplayLayer];
+		NSLog(@"[GODOT_ORIENTATION] Rendering layer frame after update: %@", NSStringFromCGRect(self.renderingLayer.frame));
 	}
 
 	[super layoutSubviews];

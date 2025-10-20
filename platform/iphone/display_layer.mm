@@ -99,9 +99,12 @@ bool gles3_available = true;
 }
 
 - (void)layoutDisplayLayer {
+	NSLog(@"[GODOT_ORIENTATION] DisplayLayer layoutDisplayLayer");
+	NSLog(@"[GODOT_ORIENTATION] Display layer bounds: %@", NSStringFromCGRect(self.bounds));
 	[EAGLContext setCurrentContext:context];
 	[self destroyFramebuffer];
 	[self createFramebuffer];
+	NSLog(@"[GODOT_ORIENTATION] Framebuffer recreated");
 }
 
 - (void)startRenderDisplayLayer {
@@ -146,6 +149,8 @@ bool gles3_available = true;
 
 	glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
 	glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
+	
+	NSLog(@"[GODOT_ORIENTATION] createFramebuffer: Got backing size from GL: %dx%d", backingWidth, backingHeight);
 
 	// For this sample, we also need a depth buffer, so we'll create and attach one via another renderbuffer.
 	glGenRenderbuffersOES(1, &depthRenderbuffer);
@@ -164,8 +169,38 @@ bool gles3_available = true;
 		vm.width = backingWidth;
 		vm.height = backingHeight;
 		vm.resizable = false;
+		NSLog(@"[GODOT_ORIENTATION] createFramebuffer: Setting VideoMode to %dx%d", vm.width, vm.height);
+		
+		// Store old size to detect change
+		Size2 old_size = OS::get_singleton()->get_window_size();
+		NSLog(@"[GODOT_ORIENTATION] createFramebuffer: Old window size: %dx%d", (int)old_size.width, (int)old_size.height);
+		
 		OS::get_singleton()->set_video_mode(vm);
 		OSIPhone::get_singleton()->set_base_framebuffer(viewFramebuffer);
+		
+		Size2 new_size = OS::get_singleton()->get_window_size();
+		NSLog(@"[GODOT_ORIENTATION] createFramebuffer: New window size: %dx%d", (int)new_size.width, (int)new_size.height);
+		NSLog(@"[GODOT_ORIENTATION] createFramebuffer: VideoMode updated and framebuffer set");
+		
+		// CRITICAL: Force rendering system to update for new size
+		// Schedule the update for the next frame to ensure proper timing
+		dispatch_async(dispatch_get_main_queue(), ^{
+			MainLoop *ml = OS::get_singleton()->get_main_loop();
+			if (ml) {
+				NSLog(@"[GODOT_ORIENTATION] createFramebuffer: Forcing scene tree update");
+				
+				// The SceneTree checks window size in its idle() method
+				// Force an idle cycle to trigger screen_resized signal
+				if (!Main::is_iterating()) {
+					ml->idle(0.0);
+				}
+				
+				Main::force_redraw();
+				NSLog(@"[GODOT_ORIENTATION] createFramebuffer: Scene tree updated");
+			}
+		});
+	} else {
+		NSLog(@"[GODOT_ORIENTATION] createFramebuffer: WARNING - No OS singleton!");
 	}
 
 	gl_view_base_fb = viewFramebuffer;

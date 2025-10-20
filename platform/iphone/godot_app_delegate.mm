@@ -87,6 +87,7 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
 	NSLog(@"[delegate] willFinishLaunchingWithOptions");
+	// Temporarily disable animations during launch to prevent flicker
 	[UIView setAnimationsEnabled:NO];
 	BOOL result = NO;
 
@@ -116,6 +117,11 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 			result = YES;
 		}
 	}
+	
+	// Re-enable animations after launch is complete to allow proper orientation transitions
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[UIView setAnimationsEnabled:YES];
+	});
 
 	return result;
 }
@@ -500,6 +506,11 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 																		  sessionRole:UIWindowSceneSessionRoleApplication];
 
     configuration.delegateClass = GodotSceneDelegate.class;
+    
+    // For iOS 16+, ensure we request full screen from the start
+    if (@available(iOS 16.0, *)) {
+    	NSLog(@"[delegate] Configuring scene for full-screen mode");
+    }
 
     return configuration;
 }
@@ -517,13 +528,34 @@ API_AVAILABLE(ios(13.0))
 @synthesize window = _window;
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions API_AVAILABLE(ios(13.0)) {
-	if (@available(iOS 16, *)) {
-		NSLog(@"[delegate] willConnectToSession");
-		if (session != nil && session.role == UIWindowSceneSessionRoleExternalDisplay || session.role == UIWindowSceneSessionRoleExternalDisplayNonInteractive) {
-			NSLog(@"[delegate] external session");
-			return;
+	NSLog(@"[delegate] willConnectToSession");
+	if (session != nil && (session.role == UIWindowSceneSessionRoleExternalDisplay || session.role == UIWindowSceneSessionRoleExternalDisplayNonInteractive)) {
+		NSLog(@"[delegate] external session");
+		return;
+	}
+	
+	// Request full-screen geometry
+	if ([scene isKindOfClass:[UIWindowScene class]]) {
+		UIWindowScene *windowScene = (UIWindowScene *)scene;
+		
+		if (@available(iOS 16.0, *)) {
+			// NOTE: UIRequiresFullScreen is DEPRECATED in iPadOS 16+
+			// Apple now requires apps to support multitasking
+			// We can request full-screen as default, but can't disable multitasking entirely
+			
+			UIWindowSceneGeometryPreferencesIOS *geometryPreferences = [[UIWindowSceneGeometryPreferencesIOS alloc] init];
+			geometryPreferences.interfaceOrientations = UIInterfaceOrientationMaskAll;
+			
+			NSLog(@"[GODOT_SCENE] 🎯 Requesting full-screen geometry (interfaceOrientations=All)");
+			NSLog(@"[GODOT_SCENE] Screen bounds: %@", NSStringFromCGSize(windowScene.screen.bounds.size));
+			
+			[windowScene requestGeometryUpdateWithPreferences:geometryPreferences
+												  errorHandler:^(NSError * _Nonnull error) {
+				NSLog(@"[GODOT_SCENE] ❌ Geometry update error: %@", error.localizedDescription);
+			}];
 		}
 	}
+	
 	UIApplication *app = [UIApplication sharedApplication];
     self.window = app.delegate.window;
 	self.window.windowScene = scene;
@@ -556,6 +588,52 @@ API_AVAILABLE(ios(13.0))
 }
 
 - (void)sceneDidBecomeActive:(UIScene *)scene {
+	NSLog(@"[GODOT_SCENE] sceneDidBecomeActive");
+	
+	// Check if UIRequiresFullScreen is set in Info.plist
+	NSNumber *requiresFullScreen = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIRequiresFullScreen"];
+	NSLog(@"[GODOT_SCENE] Info.plist UIRequiresFullScreen = %@", requiresFullScreen);
+	
+	// Force full-screen geometry when scene becomes active
+	// This ensures we're not stuck in Slide Over/Split View mode
+	if (@available(iOS 16.0, *)) {
+		if ([scene isKindOfClass:[UIWindowScene class]]) {
+			UIWindowScene *windowScene = (UIWindowScene *)scene;
+			
+			CGSize windowSize = self.window.bounds.size;
+			CGSize screenSize = windowScene.screen.bounds.size;
+			
+			NSLog(@"[GODOT_SCENE] sceneDidBecomeActive - Window: %.0fx%.0f, Screen: %.0fx%.0f", 
+				  windowSize.width, windowSize.height,
+				  screenSize.width, screenSize.height);
+			
+			// Request full-screen geometry
+			NSLog(@"[GODOT_SCENE] 🎯 Requesting full-screen geometry");
+			
+			UIWindowSceneGeometryPreferencesIOS *geometryPreferences = [[UIWindowSceneGeometryPreferencesIOS alloc] init];
+			geometryPreferences.interfaceOrientations = UIInterfaceOrientationMaskAll;
+			
+			[windowScene requestGeometryUpdateWithPreferences:geometryPreferences
+												  errorHandler:^(NSError * _Nonnull error) {
+				NSLog(@"[GODOT_SCENE] ❌ Geometry update error: %@", error.localizedDescription);
+			}];
+			
+			// iOS 16+ with deprecated UIRequiresFullScreen: user can still manually resize
+			// But we force full-screen as much as possible
+			dispatch_async(dispatch_get_main_queue(), ^{
+				CGRect screenBounds = windowScene.screen.bounds;
+				if (!CGRectEqualToRect(self.window.frame, screenBounds)) {
+					NSLog(@"[GODOT_SCENE] Window (%@) != Screen (%@), forcing to screen bounds",
+						  NSStringFromCGRect(self.window.frame),
+						  NSStringFromCGRect(screenBounds));
+					self.window.frame = screenBounds;
+					[self.window setNeedsLayout];
+					[self.window layoutIfNeeded];
+				}
+			});
+		}
+	}
+	
 	UIApplication *app = [UIApplication sharedApplication];
 	[app.delegate applicationDidBecomeActive:app];
 }
@@ -568,6 +646,51 @@ API_AVAILABLE(ios(13.0))
 - (void)sceneDidEnterBackground:(UIScene *)scene {
 	UIApplication *app = [UIApplication sharedApplication];
 	[app.delegate applicationDidEnterBackground:app];
+}
+
+- (void)windowScene:(UIWindowScene *)windowScene didUpdateCoordinateSpace:(id<UICoordinateSpace>)previousCoordinateSpace interfaceOrientation:(UIInterfaceOrientation)previousInterfaceOrientation traitCollection:(UITraitCollection *)previousTraitCollection API_AVAILABLE(ios(13.0)) {
+	NSLog(@"[GODOT_ORIENTATION] *** windowScene didUpdateCoordinateSpace ***");
+	NSLog(@"[GODOT_ORIENTATION] Scene bounds: %@", NSStringFromCGRect(windowScene.coordinateSpace.bounds));
+	NSLog(@"[GODOT_ORIENTATION] Previous orientation: %ld, new orientation: %ld", (long)previousInterfaceOrientation, (long)windowScene.interfaceOrientation);
+	
+	// Ensure window fills the entire scene bounds - THIS IS CRITICAL
+	if (self.window) {
+		NSLog(@"[GODOT_ORIENTATION] Current window frame: %@", NSStringFromCGRect(self.window.frame));
+		
+		// Force window to match scene bounds (like manual resize does)
+		self.window.frame = windowScene.coordinateSpace.bounds;
+		NSLog(@"[GODOT_ORIENTATION] Set window frame to scene bounds: %@", NSStringFromCGRect(self.window.frame));
+		
+		// Force immediate layout pass
+		[self.window setNeedsLayout];
+		[self.window layoutIfNeeded];
+		
+		// Update root view to match new window size
+		if (self.window.rootViewController) {
+			self.window.rootViewController.view.frame = self.window.bounds;
+			NSLog(@"[GODOT_ORIENTATION] Set root view frame to: %@", NSStringFromCGRect(self.window.rootViewController.view.frame));
+			
+			[self.window.rootViewController.view setNeedsLayout];
+			[self.window.rootViewController.view layoutIfNeeded];
+			NSLog(@"[GODOT_ORIENTATION] Root view frame after layout: %@", NSStringFromCGRect(self.window.rootViewController.view.frame));
+		}
+	}
+	
+	// Request full-screen geometry on iOS 16+
+	if (@available(iOS 16.0, *)) {
+		UIWindowSceneGeometryPreferencesIOS *geometryPreferences = [[UIWindowSceneGeometryPreferencesIOS alloc] init];
+		if (self.window.rootViewController) {
+			geometryPreferences.interfaceOrientations = [self.window.rootViewController supportedInterfaceOrientations];
+			NSLog(@"[GODOT_ORIENTATION] Requesting geometry with mask: %lu", (unsigned long)[self.window.rootViewController supportedInterfaceOrientations]);
+		} else {
+			geometryPreferences.interfaceOrientations = UIInterfaceOrientationMaskAll;
+			NSLog(@"[GODOT_ORIENTATION] Requesting geometry with mask: All");
+		}
+		[windowScene requestGeometryUpdateWithPreferences:geometryPreferences
+											  errorHandler:^(NSError * _Nonnull error) {
+			NSLog(@"[GODOT_ORIENTATION] ERROR in didUpdateCoordinateSpace: %@", error.localizedDescription);
+		}];
+	}
 }
 
 - (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {

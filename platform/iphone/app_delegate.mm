@@ -68,6 +68,12 @@ static ViewController *mainViewController = nil;
 			NSUserDomainMask, YES);
 	NSString *documentsDirectory = [paths objectAtIndex:0];
 
+	ViewController *initialViewController = [[UIViewController alloc] init];
+	self.window.rootViewController = initialViewController;
+	[self.window makeKeyAndVisible];
+
+
+
 	int err = iphone_main(gargc, gargv, String::utf8([documentsDirectory UTF8String]));
 	if (err != 0) {
 		// bail, things did not go very well for us, should probably output a message on screen with our error code...
@@ -87,8 +93,15 @@ static ViewController *mainViewController = nil;
                                                                alpha:1.0];
 	viewController.godotView.useCADisplayLink = bool(GLOBAL_DEF("display.iOS/use_cadisplaylink", true)) ? YES : NO;
 	viewController.godotView.renderingInterval = 1.0 / kRenderingFrequency;
-
+	viewController.modalPresentationStyle = UIModalPresentationFullScreen;
+	
 	self.window.rootViewController = viewController;
+	
+	// Force window to use full screen bounds
+	if (@available(iOS 13.0, *)) {
+		// On iOS 13+, ensure window uses full screen
+		self.window.frame = windowBounds;
+	}
 
 	// Show the window
 	[self.window makeKeyAndVisible];

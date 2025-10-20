@@ -182,6 +182,10 @@ public:
 
 	void on_focus_out();
 	void on_focus_in();
+	void notify_resize();
+	
+private:
+	bool is_resizing;
 };
 
 #endif // OS_IPHONE_H

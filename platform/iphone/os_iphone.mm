@@ -393,7 +393,11 @@ Error OSIPhone::get_dynamic_library_symbol_handle(void *p_library_handle, const 
 }
 
 void OSIPhone::set_video_mode(const VideoMode &p_video_mode, int p_screen) {
+	NSLog(@"[GODOT_ORIENTATION] OSIPhone::set_video_mode called: %dx%d (was %dx%d)", 
+		  (int)p_video_mode.width, (int)p_video_mode.height,
+		  (int)video_mode.width, (int)video_mode.height);
 	video_mode = p_video_mode;
+	NSLog(@"[GODOT_ORIENTATION] OSIPhone::set_video_mode: video_mode updated");
 }
 
 OS::VideoMode OSIPhone::get_video_mode(int p_screen) const {
@@ -517,44 +521,103 @@ int _get_system_orientation() {
 
 void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 	OS::set_screen_orientation(p_orientation);
-	NSNumber *value;
-	switch (p_orientation) {
-		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
-			if (!Input::get_singleton()) {
-				// Initialization process - use system orientation
-				int value_i = _get_system_orientation();
-				if (value_i == UIInterfaceOrientationPortrait || value_i == UIInterfaceOrientationPortraitUpsideDown) {
-					value_i = UIInterfaceOrientationLandscapeRight;
-				}
-				value = [NSNumber numberWithInt:value_i];
-				break;
-			}
-			Vector3 acc = Input::get_singleton()->get_accelerometer();
-			if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
-				if (acc[0] < 0.0) {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+	
+	NSLog(@"[GODOT_ORIENTATION] ==> set_screen_orientation called: %d", (int)p_orientation);
+	
+	// Use modern iOS API for orientation changes
+	dispatch_async(dispatch_get_main_queue(), ^{
+		if (AppDelegate.viewController) {
+			NSLog(@"[GODOT_ORIENTATION] View controller exists");
+			NSLog(@"[GODOT_ORIENTATION] Current view frame: %@", NSStringFromCGRect(AppDelegate.viewController.view.frame));
+			NSLog(@"[GODOT_ORIENTATION] Current window frame: %@", NSStringFromCGRect(AppDelegate.viewController.view.window.frame));
+			NSLog(@"[GODOT_ORIENTATION] Window bounds: %@", NSStringFromCGRect(AppDelegate.viewController.view.window.bounds));
+			
+			// Update supported orientations
+			if (@available(iOS 16.0, *)) {
+				// iOS 16+ method - request geometry update for proper full-screen support
+				[AppDelegate.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
+				UIWindowScene *windowScene = (UIWindowScene *)AppDelegate.viewController.view.window.windowScene;
+				if (windowScene) {
+					// Request full-screen geometry update with proper orientation mask
+					UIWindowSceneGeometryPreferencesIOS *geometryPreferences = [[UIWindowSceneGeometryPreferencesIOS alloc] init];
+					
+					// Set the interface orientation mask based on the requested orientation
+					UIInterfaceOrientationMask mask;
+					switch (p_orientation) {
+						case OS::ScreenOrientation::SCREEN_PORTRAIT:
+							mask = UIInterfaceOrientationMaskPortrait;
+							break;
+						case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
+							mask = UIInterfaceOrientationMaskLandscapeRight;
+							break;
+						case OS::ScreenOrientation::SCREEN_REVERSE_PORTRAIT:
+							mask = UIInterfaceOrientationMaskPortraitUpsideDown;
+							break;
+						case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+							mask = UIInterfaceOrientationMaskLandscape;
+							break;
+						case OS::ScreenOrientation::SCREEN_SENSOR_PORTRAIT:
+							mask = UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+							break;
+						case OS::ScreenOrientation::SCREEN_SENSOR:
+							mask = UIInterfaceOrientationMaskAll;
+							break;
+						case OS::ScreenOrientation::SCREEN_LANDSCAPE:
+							mask = UIInterfaceOrientationMaskLandscapeLeft;
+							break;
+						default:
+							mask = UIInterfaceOrientationMaskPortrait;
+					}
+					
+					NSLog(@"[GODOT_ORIENTATION] Setting interface orientation mask: %lu", (unsigned long)mask);
+					geometryPreferences.interfaceOrientations = mask;
+					
+					[windowScene requestGeometryUpdateWithPreferences:geometryPreferences
+														  errorHandler:^(NSError * _Nonnull error) {
+						NSLog(@"[GODOT_ORIENTATION] ERROR: Geometry update failed: %@", error.localizedDescription);
+					}];
+					NSLog(@"[GODOT_ORIENTATION] Requested geometry update (iOS 16+)");
 				} else {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+					NSLog(@"[GODOT_ORIENTATION] WARNING: No window scene available");
 				}
 			} else {
-				if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeLeft) {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
-				} else {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
-				}
+				// Pre-iOS 16 fallback
+				[AppDelegate.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
+				NSLog(@"[GODOT_ORIENTATION] Using pre-iOS 16 orientation update");
 			}
-		} break;
-		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
-			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
-			break;
-		case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
-			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
-			break;
-		default:
-			value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
-	}
-	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-	[UIViewController attemptRotationToDeviceOrientation];
+			
+			// Force the view to match window bounds BEFORE rotation
+			AppDelegate.viewController.view.frame = AppDelegate.viewController.view.window.bounds;
+			NSLog(@"[GODOT_ORIENTATION] Set view frame to window bounds: %@", NSStringFromCGRect(AppDelegate.viewController.view.frame));
+			
+			// Attempt rotation
+			[UIViewController attemptRotationToDeviceOrientation];
+			NSLog(@"[GODOT_ORIENTATION] Called attemptRotationToDeviceOrientation");
+			
+			// Force window to recalculate its size constraints (similar to manual resize)
+			if (AppDelegate.viewController.view.window) {
+				UIWindow *window = AppDelegate.viewController.view.window;
+				NSLog(@"[GODOT_ORIENTATION] Forcing window size recalculation");
+				
+				// Invalidate and force immediate window update
+				[window setNeedsLayout];
+				[window layoutIfNeeded];
+				
+				// Update view to match new window size
+				AppDelegate.viewController.view.frame = window.bounds;
+				NSLog(@"[GODOT_ORIENTATION] Window bounds after forced layout: %@", NSStringFromCGRect(window.bounds));
+			}
+			
+			// Force layout update to ensure proper full-screen rendering
+			[AppDelegate.viewController.view setNeedsLayout];
+			[AppDelegate.viewController.view layoutIfNeeded];
+			
+			NSLog(@"[GODOT_ORIENTATION] After layout - view frame: %@", NSStringFromCGRect(AppDelegate.viewController.view.frame));
+			NSLog(@"[GODOT_ORIENTATION] <== set_screen_orientation complete");
+		} else {
+			NSLog(@"[GODOT_ORIENTATION] ERROR: No view controller available");
+		}
+	});
 }
 
 String OSIPhone::get_user_data_dir() const {
@@ -741,6 +804,7 @@ void add_ios_init_callback(init_callback cb) {
 
 OSIPhone::OSIPhone(String p_data_dir) {
 	input = NULL;
+	is_resizing = false;
 	for (int i = 0; i < ios_init_callbacks_count; ++i) {
 		ios_init_callbacks[i]();
 	}
@@ -804,6 +868,34 @@ void OSIPhone::on_focus_in() {
 
 		audio_driver.start();
 	}
+}
+
+void OSIPhone::notify_resize() {
+	if (is_resizing) {
+		NSLog(@"[GODOT_ORIENTATION] OSIPhone::notify_resize: Already resizing, skipping to prevent loop");
+		return;
+	}
+	
+	NSLog(@"[GODOT_ORIENTATION] OSIPhone::notify_resize called");
+	is_resizing = true;
+	
+	// Force the GodotView to re-layout, which will update rendering
+	dispatch_async(dispatch_get_main_queue(), ^{
+		if (AppDelegate.viewController && AppDelegate.viewController.godotView) {
+			NSLog(@"[GODOT_ORIENTATION] OSIPhone::notify_resize: Forcing view layout");
+			[AppDelegate.viewController.godotView setNeedsLayout];
+			[AppDelegate.viewController.godotView layoutIfNeeded];
+			
+			// Also force the rendering layer to update
+			[(CAEAGLLayer *)AppDelegate.viewController.godotView.layer setNeedsLayout];
+		}
+		
+		// Reset flag after a short delay to allow next resize
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+			this->is_resizing = false;
+			NSLog(@"[GODOT_ORIENTATION] OSIPhone::notify_resize: Resize flag cleared");
+		});
+	});
 }
 
 #endif
