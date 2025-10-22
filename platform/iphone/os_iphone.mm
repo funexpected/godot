@@ -581,9 +581,41 @@ void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 					NSLog(@"[GODOT_ORIENTATION] WARNING: No window scene available");
 				}
 			} else {
-				// Pre-iOS 16 fallback
+				// Pre-iOS 16 fallback - use the old direct orientation setting method
+				UIInterfaceOrientation targetOrientation;
+				switch (p_orientation) {
+					case OS::ScreenOrientation::SCREEN_PORTRAIT:
+						targetOrientation = UIInterfaceOrientationPortrait;
+						break;
+					case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
+						targetOrientation = UIInterfaceOrientationLandscapeRight;
+						break;
+					case OS::ScreenOrientation::SCREEN_REVERSE_PORTRAIT:
+						targetOrientation = UIInterfaceOrientationPortraitUpsideDown;
+						break;
+					case OS::ScreenOrientation::SCREEN_LANDSCAPE:
+						targetOrientation = UIInterfaceOrientationLandscapeLeft;
+						break;
+					case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+						// For sensor modes, pick a default orientation
+						targetOrientation = UIInterfaceOrientationLandscapeLeft;
+						break;
+					case OS::ScreenOrientation::SCREEN_SENSOR_PORTRAIT:
+						targetOrientation = UIInterfaceOrientationPortrait;
+						break;
+					case OS::ScreenOrientation::SCREEN_SENSOR:
+						targetOrientation = UIInterfaceOrientationPortrait;
+						break;
+					default:
+						targetOrientation = UIInterfaceOrientationPortrait;
+				}
+				
+				NSLog(@"[GODOT_ORIENTATION] Using pre-iOS 16 orientation update, setting to: %ld", (long)targetOrientation);
+				
+				// Directly set the device orientation (old method for iOS < 16)
+				[[UIDevice currentDevice] setValue:@(targetOrientation) forKey:@"orientation"];
+				
 				[AppDelegate.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
-				NSLog(@"[GODOT_ORIENTATION] Using pre-iOS 16 orientation update");
 			}
 			
 			// Force the view to match window bounds BEFORE rotation

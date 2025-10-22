@@ -389,10 +389,15 @@ void EditorExportPlatformIOS::get_export_options(List<ExportOption> *r_options) 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "privacy/microphone_usage_description", PROPERTY_HINT_PLACEHOLDER_TEXT, "Provide a message if you need to use the microphone"), ""));
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "privacy/photolibrary_usage_description", PROPERTY_HINT_PLACEHOLDER_TEXT, "Provide a message if you need access to the photo library"), ""));
 
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation/portrait"), true));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation/landscape_left"), true));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation/landscape_right"), true));
-	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation/portrait_upside_down"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_iphone/portrait"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_iphone/landscape_left"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_iphone/landscape_right"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_iphone/portrait_upside_down"), true));
+
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_ipad/portrait"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_ipad/landscape_left"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_ipad/landscape_right"), true));
+	r_options->push_back(ExportOption(PropertyInfo(Variant::BOOL, "orientation_ipad/portrait_upside_down"), true));
 
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "required_icons/iphone_120x120", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPhone/iPod Touch with retina display
 	r_options->push_back(ExportOption(PropertyInfo(Variant::STRING, "required_icons/ipad_76x76", PROPERTY_HINT_FILE, "*.png"), "")); // Home screen on iPad
@@ -508,23 +513,40 @@ void EditorExportPlatformIOS::_fix_config_file(const Ref<EditorExportPreset> &p_
 			}
 
 			strnew += lines[i].replace("$required_device_capabilities", capabilities);
-		} else if (lines[i].find("$interface_orientations") != -1) {
+		} else if (lines[i].find("$interface_orientations_iphone") != -1) {
 			String orientations;
 
-			if ((bool)p_preset->get("orientation/portrait")) {
+			if ((bool)p_preset->get("orientation_iphone/portrait")) {
 				orientations += "<string>UIInterfaceOrientationPortrait</string>\n";
 			}
-			if ((bool)p_preset->get("orientation/landscape_left")) {
+			if ((bool)p_preset->get("orientation_iphone/landscape_left")) {
 				orientations += "<string>UIInterfaceOrientationLandscapeLeft</string>\n";
 			}
-			if ((bool)p_preset->get("orientation/landscape_right")) {
+			if ((bool)p_preset->get("orientation_iphone/landscape_right")) {
 				orientations += "<string>UIInterfaceOrientationLandscapeRight</string>\n";
 			}
-			if ((bool)p_preset->get("orientation/portrait_upside_down")) {
+			if ((bool)p_preset->get("orientation_iphone/portrait_upside_down")) {
 				orientations += "<string>UIInterfaceOrientationPortraitUpsideDown</string>\n";
 			}
 
-			strnew += lines[i].replace("$interface_orientations", orientations);
+			strnew += lines[i].replace("$interface_orientations_iphone", orientations);
+		} else if (lines[i].find("$interface_orientations_ipad") != -1) {
+			String orientations;
+
+			if ((bool)p_preset->get("orientation_ipad/portrait")) {
+				orientations += "<string>UIInterfaceOrientationPortrait</string>\n";
+			}
+			if ((bool)p_preset->get("orientation_ipad/landscape_left")) {
+				orientations += "<string>UIInterfaceOrientationLandscapeLeft</string>\n";
+			}
+			if ((bool)p_preset->get("orientation_ipad/landscape_right")) {
+				orientations += "<string>UIInterfaceOrientationLandscapeRight</string>\n";
+			}
+			if ((bool)p_preset->get("orientation_ipad/portrait_upside_down")) {
+				orientations += "<string>UIInterfaceOrientationPortraitUpsideDown</string>\n";
+			}
+
+			strnew += lines[i].replace("$interface_orientations_ipad", orientations);
 		} else if (lines[i].find("$camera_usage_description") != -1) {
 			String description = p_preset->get("privacy/camera_usage_description");
 			strnew += lines[i].replace("$camera_usage_description", description) + "\n";
