@@ -226,8 +226,9 @@
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+	NSLog(@"[ViewController] supportedInterfaceOrientations called");
 	if (!OSIPhone::get_singleton()) {
-		NSLog(@"[GODOT_ORIENTATION] supportedInterfaceOrientations: No singleton, returning Portrait");
+		NSLog(@"[GODOT_ORIENTATION] supportedInterfaceOrientations: No singleton, returning UIInterfaceOrientationMaskPortrait");
 		return UIInterfaceOrientationMaskPortrait;
 	}
 	OS::ScreenOrientation orientation = OS::get_singleton()->get_screen_orientation();

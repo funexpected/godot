@@ -520,6 +520,8 @@ int _get_system_orientation() {
 }
 
 void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
+	NSLog(@"[OSIPhone] set_screen_orientation called with: %d (PORTRAIT=1, LANDSCAPE=0, SENSOR_LANDSCAPE=4)", p_orientation);
+	NSLog(@"[OSIPhone] Input singleton available: %s", Input::get_singleton() ? "YES" : "NO");
 	OS::set_screen_orientation(p_orientation);
 	
 	NSLog(@"[GODOT_ORIENTATION] ==> set_screen_orientation called: %d", (int)p_orientation);
@@ -818,6 +820,10 @@ void OSIPhone::vibrate_handheld(int p_duration_ms) {
 
 bool OSIPhone::_check_internal_feature_support(const String &p_feature) {
 	return p_feature == "mobile";
+}
+
+bool OSIPhone::is_tablet() const {
+	return [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad;
 }
 
 void add_ios_init_callback(init_callback cb) {

@@ -447,6 +447,12 @@ bool OS::has_touchscreen_ui_hint() const {
 	return Input::get_singleton() && Input::get_singleton()->is_emulating_touch_from_mouse();
 }
 
+bool OS::is_tablet() const {
+	// Default implementation - desktop platforms return false
+	// Mobile platforms (iOS, Android) override this
+	return false;
+}
+
 uint64_t OS::get_free_static_memory() const {
 
 	return Memory::get_mem_available();

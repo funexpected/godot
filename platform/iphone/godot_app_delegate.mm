@@ -473,12 +473,14 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 // MARK: Interface Geometry
 
 - (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+	NSLog(@"[AppDelegate] supportedInterfaceOrientationsForWindow called for window: %@", window);
 	if (!OS::get_singleton()) {
-		NSLog(@"[delegate] call for orientation no singleton");
+		NSLog(@"[AppDelegate] OS singleton not available, returning Portrait");
 		return UIInterfaceOrientationMaskPortrait;
 	}
-	NSLog(@"[delegate] call for orientation no singleton %d", OS::get_singleton()->get_screen_orientation());
-	switch (OS::get_singleton()->get_screen_orientation()) {
+	OS::ScreenOrientation orientation = OS::get_singleton()->get_screen_orientation();
+	NSLog(@"[AppDelegate] Current orientation setting: %d (PORTRAIT=1, LANDSCAPE=0, SENSOR_LANDSCAPE=4)", orientation);
+	switch (orientation) {
 		case OS::SCREEN_PORTRAIT:
 			return UIInterfaceOrientationMaskPortrait;
 		case OS::SCREEN_REVERSE_LANDSCAPE:

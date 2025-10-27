@@ -45,7 +45,38 @@ const String godot_project_name_xml_string = R"(<?xml version="1.0" encoding="ut
 )";
 
 OS::ScreenOrientation _get_screen_orientation() {
-	String orientation_settings = ProjectSettings::get_singleton()->get("display/window/handheld/orientation");
+	// For Android export, we check both phone and tablet orientation settings.
+	// If they differ, we use a sensor mode to support both device types.
+	String phone_orientation = ProjectSettings::get_singleton()->get("display/window/handheld/orientation");
+	String tablet_orientation;
+	
+	// Check if tablet setting exists, otherwise use phone setting
+	if (ProjectSettings::get_singleton()->has_setting("display/window/handheld/orientation_tablet")) {
+		tablet_orientation = ProjectSettings::get_singleton()->get("display/window/handheld/orientation_tablet");
+	} else {
+		tablet_orientation = phone_orientation;
+	}
+	
+	// If phone and tablet have different orientations, use a sensor mode that accommodates both
+	String orientation_settings;
+	if (phone_orientation != tablet_orientation) {
+		// Different orientations for phone and tablet
+		bool phone_is_landscape = (phone_orientation == "landscape" || phone_orientation == "reverse_landscape" || phone_orientation == "sensor_landscape");
+		bool tablet_is_landscape = (tablet_orientation == "landscape" || tablet_orientation == "reverse_landscape" || tablet_orientation == "sensor_landscape");
+		
+		if (phone_is_landscape && tablet_is_landscape) {
+			orientation_settings = "sensor_landscape";
+		} else if (!phone_is_landscape && !tablet_is_landscape) {
+			orientation_settings = "sensor_portrait";
+		} else {
+			// One is portrait, one is landscape - use full sensor mode
+			orientation_settings = "sensor";
+		}
+	} else {
+		// Same orientation for both, use it directly
+		orientation_settings = phone_orientation;
+	}
+	
 	OS::ScreenOrientation screen_orientation;
 	if (orientation_settings == "portrait")
 		screen_orientation = OS::SCREEN_PORTRAIT;
