@@ -516,45 +516,138 @@ int _get_system_orientation() {
 }
 
 void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
+	NSLog(@"[OSIPhone] set_screen_orientation called with: %d (PORTRAIT=1, LANDSCAPE=0, SENSOR_LANDSCAPE=4)", p_orientation);
+	NSLog(@"[OSIPhone] Input singleton available: %s", Input::get_singleton() ? "YES" : "NO");
 	OS::set_screen_orientation(p_orientation);
-	NSNumber *value;
-	switch (p_orientation) {
-		case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE: {
-			if (!Input::get_singleton()) {
-				// Initialization process - use system orientation
-				int value_i = _get_system_orientation();
-				if (value_i == UIInterfaceOrientationPortrait || value_i == UIInterfaceOrientationPortraitUpsideDown) {
-					value_i = UIInterfaceOrientationLandscapeRight;
-				}
-				value = [NSNumber numberWithInt:value_i];
-				break;
-			}
-			Vector3 acc = Input::get_singleton()->get_accelerometer();
-			if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation])) {
-				if (acc[0] < 0.0) {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+	
+	NSLog(@"[GODOT_ORIENTATION] ==> set_screen_orientation called: %d", (int)p_orientation);
+	
+	// Use modern iOS API for orientation changes
+	dispatch_async(dispatch_get_main_queue(), ^{
+		if (AppDelegate.viewController) {
+			NSLog(@"[GODOT_ORIENTATION] View controller exists");
+			NSLog(@"[GODOT_ORIENTATION] Current view frame: %@", NSStringFromCGRect(AppDelegate.viewController.view.frame));
+			NSLog(@"[GODOT_ORIENTATION] Current window frame: %@", NSStringFromCGRect(AppDelegate.viewController.view.window.frame));
+			NSLog(@"[GODOT_ORIENTATION] Window bounds: %@", NSStringFromCGRect(AppDelegate.viewController.view.window.bounds));
+			
+			// Update supported orientations
+			if (@available(iOS 16.0, *)) {
+				// iOS 16+ method - request geometry update for proper full-screen support
+				[AppDelegate.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
+				UIWindowScene *windowScene = (UIWindowScene *)AppDelegate.viewController.view.window.windowScene;
+				if (windowScene) {
+					// Request full-screen geometry update with proper orientation mask
+					UIWindowSceneGeometryPreferencesIOS *geometryPreferences = [[UIWindowSceneGeometryPreferencesIOS alloc] init];
+					
+					// Set the interface orientation mask based on the requested orientation
+					UIInterfaceOrientationMask mask;
+					switch (p_orientation) {
+						case OS::ScreenOrientation::SCREEN_PORTRAIT:
+							mask = UIInterfaceOrientationMaskPortrait;
+							break;
+						case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
+							mask = UIInterfaceOrientationMaskLandscapeRight;
+							break;
+						case OS::ScreenOrientation::SCREEN_REVERSE_PORTRAIT:
+							mask = UIInterfaceOrientationMaskPortraitUpsideDown;
+							break;
+						case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+							mask = UIInterfaceOrientationMaskLandscape;
+							break;
+						case OS::ScreenOrientation::SCREEN_SENSOR_PORTRAIT:
+							mask = UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+							break;
+						case OS::ScreenOrientation::SCREEN_SENSOR:
+							mask = UIInterfaceOrientationMaskAll;
+							break;
+						case OS::ScreenOrientation::SCREEN_LANDSCAPE:
+							mask = UIInterfaceOrientationMaskLandscapeLeft;
+							break;
+						default:
+							mask = UIInterfaceOrientationMaskPortrait;
+					}
+					
+					NSLog(@"[GODOT_ORIENTATION] Setting interface orientation mask: %lu", (unsigned long)mask);
+					geometryPreferences.interfaceOrientations = mask;
+					
+					[windowScene requestGeometryUpdateWithPreferences:geometryPreferences
+														  errorHandler:^(NSError * _Nonnull error) {
+						NSLog(@"[GODOT_ORIENTATION] ERROR: Geometry update failed: %@", error.localizedDescription);
+					}];
+					NSLog(@"[GODOT_ORIENTATION] Requested geometry update (iOS 16+)");
 				} else {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+					NSLog(@"[GODOT_ORIENTATION] WARNING: No window scene available");
 				}
 			} else {
-				if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeLeft) {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
-				} else {
-					value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
+				// Pre-iOS 16 fallback - use the old direct orientation setting method
+				UIInterfaceOrientation targetOrientation;
+				switch (p_orientation) {
+					case OS::ScreenOrientation::SCREEN_PORTRAIT:
+						targetOrientation = UIInterfaceOrientationPortrait;
+						break;
+					case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
+						targetOrientation = UIInterfaceOrientationLandscapeRight;
+						break;
+					case OS::ScreenOrientation::SCREEN_REVERSE_PORTRAIT:
+						targetOrientation = UIInterfaceOrientationPortraitUpsideDown;
+						break;
+					case OS::ScreenOrientation::SCREEN_LANDSCAPE:
+						targetOrientation = UIInterfaceOrientationLandscapeLeft;
+						break;
+					case OS::ScreenOrientation::SCREEN_SENSOR_LANDSCAPE:
+						// For sensor modes, pick a default orientation
+						targetOrientation = UIInterfaceOrientationLandscapeLeft;
+						break;
+					case OS::ScreenOrientation::SCREEN_SENSOR_PORTRAIT:
+						targetOrientation = UIInterfaceOrientationPortrait;
+						break;
+					case OS::ScreenOrientation::SCREEN_SENSOR:
+						targetOrientation = UIInterfaceOrientationPortrait;
+						break;
+					default:
+						targetOrientation = UIInterfaceOrientationPortrait;
 				}
+				
+				NSLog(@"[GODOT_ORIENTATION] Using pre-iOS 16 orientation update, setting to: %ld", (long)targetOrientation);
+				
+				// Directly set the device orientation (old method for iOS < 16)
+				[[UIDevice currentDevice] setValue:@(targetOrientation) forKey:@"orientation"];
+				
+				[AppDelegate.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
 			}
-		} break;
-		case OS::ScreenOrientation::SCREEN_LANDSCAPE:
-			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeLeft];
-			break;
-		case OS::ScreenOrientation::SCREEN_REVERSE_LANDSCAPE:
-			value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
-			break;
-		default:
-			value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
-	}
-	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-	[UIViewController attemptRotationToDeviceOrientation];
+			
+			// Force the view to match window bounds BEFORE rotation
+			AppDelegate.viewController.view.frame = AppDelegate.viewController.view.window.bounds;
+			NSLog(@"[GODOT_ORIENTATION] Set view frame to window bounds: %@", NSStringFromCGRect(AppDelegate.viewController.view.frame));
+			
+			// Attempt rotation
+			[UIViewController attemptRotationToDeviceOrientation];
+			NSLog(@"[GODOT_ORIENTATION] Called attemptRotationToDeviceOrientation");
+			
+			// Force window to recalculate its size constraints (similar to manual resize)
+			if (AppDelegate.viewController.view.window) {
+				UIWindow *window = AppDelegate.viewController.view.window;
+				NSLog(@"[GODOT_ORIENTATION] Forcing window size recalculation");
+				
+				// Invalidate and force immediate window update
+				[window setNeedsLayout];
+				[window layoutIfNeeded];
+				
+				// Update view to match new window size
+				AppDelegate.viewController.view.frame = window.bounds;
+				NSLog(@"[GODOT_ORIENTATION] Window bounds after forced layout: %@", NSStringFromCGRect(window.bounds));
+			}
+			
+			// Force layout update to ensure proper full-screen rendering
+			[AppDelegate.viewController.view setNeedsLayout];
+			[AppDelegate.viewController.view layoutIfNeeded];
+			
+			NSLog(@"[GODOT_ORIENTATION] After layout - view frame: %@", NSStringFromCGRect(AppDelegate.viewController.view.frame));
+			NSLog(@"[GODOT_ORIENTATION] <== set_screen_orientation complete");
+		} else {
+			NSLog(@"[GODOT_ORIENTATION] ERROR: No view controller available");
+		}
+	});
 }
 
 String OSIPhone::get_user_data_dir() const {
@@ -723,6 +816,10 @@ void OSIPhone::vibrate_handheld(int p_duration_ms) {
 
 bool OSIPhone::_check_internal_feature_support(const String &p_feature) {
 	return p_feature == "mobile";
+}
+
+bool OSIPhone::is_tablet() const {
+	return [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad;
 }
 
 void add_ios_init_callback(init_callback cb) {

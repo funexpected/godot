@@ -87,7 +87,8 @@ static ViewController *mainViewController = nil;
                                                                alpha:1.0];
 	viewController.godotView.useCADisplayLink = bool(GLOBAL_DEF("display.iOS/use_cadisplaylink", true)) ? YES : NO;
 	viewController.godotView.renderingInterval = 1.0 / kRenderingFrequency;
-
+	viewController.modalPresentationStyle = UIModalPresentationFullScreen;
+	
 	self.window.rootViewController = viewController;
 
 	// Show the window

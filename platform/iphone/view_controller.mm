@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #import "view_controller.h"
+#include <UIKit/UIKit.h>
 
 #include "core/project_settings.h"
 #import "godot_view.h"
@@ -194,25 +195,65 @@
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+	NSLog(@"[ViewController] supportedInterfaceOrientations called");
 	if (!OSIPhone::get_singleton()) {
+		NSLog(@"[GODOT_ORIENTATION] supportedInterfaceOrientations: No singleton, returning UIInterfaceOrientationMaskPortrait");
 		return UIInterfaceOrientationMaskPortrait;
+	}
+	OS::ScreenOrientation orientation = OS::get_singleton()->get_screen_orientation();
+	UIInterfaceOrientationMask mask;
+	switch (orientation) {
+		case OS::SCREEN_PORTRAIT:
+			mask = UIInterfaceOrientationMaskPortrait;
+			break;
+		case OS::SCREEN_REVERSE_LANDSCAPE:
+			mask = UIInterfaceOrientationMaskLandscapeRight;
+			break;
+		case OS::SCREEN_REVERSE_PORTRAIT:
+			mask = UIInterfaceOrientationMaskPortraitUpsideDown;
+			break;
+		case OS::SCREEN_SENSOR_LANDSCAPE:
+			mask = UIInterfaceOrientationMaskLandscape;
+			break;
+		case OS::SCREEN_SENSOR_PORTRAIT:
+			mask = UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+			break;
+		case OS::SCREEN_SENSOR:
+			mask = UIInterfaceOrientationMaskAll;
+			break;
+		case OS::SCREEN_LANDSCAPE:
+			mask = UIInterfaceOrientationMaskLandscapeLeft;
+			break;
+		default:
+			mask = UIInterfaceOrientationMaskPortrait;
+			break;
+	}
+	NSLog(@"[GODOT_ORIENTATION] supportedInterfaceOrientations: orientation=%d, mask=%lu", (int)orientation, (unsigned long)mask);
+	return mask;
+}
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
+	UIInterfaceOrientation orientation;
+	if (!OSIPhone::get_singleton()) {
+		orientation = UIInterfaceOrientationPortrait;
 	}
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_PORTRAIT:
-			return UIInterfaceOrientationMaskPortrait;
+			orientation = UIInterfaceOrientationPortrait;
 		case OS::SCREEN_REVERSE_LANDSCAPE:
-			return UIInterfaceOrientationMaskLandscapeRight;
+			orientation = UIInterfaceOrientationLandscapeRight;
 		case OS::SCREEN_REVERSE_PORTRAIT:
-			return UIInterfaceOrientationMaskPortraitUpsideDown;
+			orientation = UIInterfaceOrientationPortraitUpsideDown;
 		case OS::SCREEN_SENSOR_LANDSCAPE:
-			return UIInterfaceOrientationMaskLandscape;
-		case OS::SCREEN_SENSOR_PORTRAIT:
-			return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
-		case OS::SCREEN_SENSOR:
-			return UIInterfaceOrientationMaskAll;
 		case OS::SCREEN_LANDSCAPE:
-			return UIInterfaceOrientationMaskLandscapeLeft;
+			orientation = UIInterfaceOrientationLandscapeLeft;
+		case OS::SCREEN_SENSOR:
+		case OS::SCREEN_SENSOR_PORTRAIT:
+		default:
+			orientation = UIInterfaceOrientationPortrait;
 	}
+	NSLog(@"[GODOT_ORIENTATION] preferredInterfaceOrientationForPresentation: orientation=%d", (int)orientation);
+	return orientation;
 }
 
 - (BOOL)prefersStatusBarHidden {

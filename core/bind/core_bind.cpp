@@ -239,6 +239,11 @@ bool _OS::has_touchscreen_ui_hint() const {
 	return OS::get_singleton()->has_touchscreen_ui_hint();
 }
 
+bool _OS::is_tablet() const {
+
+	return OS::get_singleton()->is_tablet();
+}
+
 void _OS::set_clipboard(const String &p_text) {
 
 	OS::get_singleton()->set_clipboard(p_text);
@@ -1336,6 +1341,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_keep_screen_on"), &_OS::is_keep_screen_on);
 
 	ClassDB::bind_method(D_METHOD("has_touchscreen_ui_hint"), &_OS::has_touchscreen_ui_hint);
+	ClassDB::bind_method(D_METHOD("is_tablet"), &_OS::is_tablet);
 
 	ClassDB::bind_method(D_METHOD("set_window_title", "title"), &_OS::set_window_title);
 	ClassDB::bind_method(D_METHOD("set_window_mouse_passthrough", "region"), &_OS::set_window_mouse_passthrough);

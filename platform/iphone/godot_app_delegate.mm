@@ -116,7 +116,7 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 			result = YES;
 		}
 	}
-
+	
 	return result;
 }
 
@@ -500,7 +500,7 @@ static NSMutableArray<ApplicationDelegateService *> *services = nil;
 																		  sessionRole:UIWindowSceneSessionRoleApplication];
 
     configuration.delegateClass = GodotSceneDelegate.class;
-
+    
     return configuration;
 }
 
@@ -520,9 +520,9 @@ API_AVAILABLE(ios(13.0))
 	if (@available(iOS 16, *)) {
 		NSLog(@"[delegate] willConnectToSession");
 		if (session != nil && session.role == UIWindowSceneSessionRoleExternalDisplay || session.role == UIWindowSceneSessionRoleExternalDisplayNonInteractive) {
-			NSLog(@"[delegate] external session");
-			return;
-		}
+		NSLog(@"[delegate] external session");
+		return;
+	}
 	}
 	UIApplication *app = [UIApplication sharedApplication];
     self.window = app.delegate.window;

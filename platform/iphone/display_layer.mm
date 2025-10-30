@@ -146,7 +146,7 @@ bool gles3_available = true;
 
 	glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
 	glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
-
+	
 	// For this sample, we also need a depth buffer, so we'll create and attach one via another renderbuffer.
 	glGenRenderbuffersOES(1, &depthRenderbuffer);
 	glBindRenderbufferOES(GL_RENDERBUFFER_OES, depthRenderbuffer);
