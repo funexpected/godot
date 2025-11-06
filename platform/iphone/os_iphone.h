@@ -183,7 +183,8 @@ public:
 
 	void on_focus_out();
 	void on_focus_in();
-	};
+};
+
 
 #endif // OS_IPHONE_H
 
