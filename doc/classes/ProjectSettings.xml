@@ -467,7 +467,7 @@
 			Default orientation on mobile phones. This setting is used for devices detected as phones (smartphones). For tablets, see [member display/window/handheld/orientation_tablet].
 			Valid values: "landscape", "portrait", "reverse_landscape", "reverse_portrait", "sensor_landscape", "sensor_portrait", "sensor".
 		</member>
-		<member name="display/window/handheld/orientation_tablet" type="String" setter="" getter="" default="&quot;landscape&quot;">
+		<member name="display/window/handheld/orientation_tablet" type="String" setter="" getter="" default="&quot;sensor_landscape&quot;">
 			Default orientation on tablets (iPad, Android tablets). This setting is used for devices detected as tablets based on screen size. For phones, see [member display/window/handheld/orientation].
 			Valid values: "landscape", "portrait", "reverse_landscape", "reverse_portrait", "sensor_landscape", "sensor_portrait", "sensor".
 			[b]Note:[/b] A device is considered a tablet if its screen size is 7 inches or larger (600dp on Android) or if it's an iPad.
