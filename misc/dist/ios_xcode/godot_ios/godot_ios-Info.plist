@@ -50,11 +50,11 @@
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		$interface_orientations
+		$interface_orientations_iphone
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
-		$interface_orientations
+		$interface_orientations_ipad
 	</array>
 	$additional_plist_content
 	$plist_launch_screen_name

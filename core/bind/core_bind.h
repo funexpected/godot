@@ -289,6 +289,7 @@ public:
 	void print_resources_by_type(const Vector<String> &p_types);
 
 	bool has_touchscreen_ui_hint() const;
+	bool is_tablet() const;
 
 	bool is_debug_build() const;
 

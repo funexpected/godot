@@ -470,6 +470,7 @@ public:
 	virtual bool is_no_window_mode_enabled() const;
 
 	virtual bool has_touchscreen_ui_hint() const;
+	virtual bool is_tablet() const;
 
 	enum ScreenOrientation {
 

@@ -42,6 +42,7 @@
 #include "dir_access_jandroid.h"
 #include "file_access_android.h"
 #include "net_socket_android.h"
+#include "thread_jandroid.h"
 
 #include <android/input.h>
 #include <core/os/keyboard.h>
@@ -728,6 +729,46 @@ void OS_Android::process_gyroscope(const Vector3 &p_gyroscope) {
 bool OS_Android::has_touchscreen_ui_hint() const {
 
 	return true;
+}
+
+bool OS_Android::is_tablet() const {
+	// Android distinguishes tablets as devices with screen size >= 7 inches (600dp)
+	// We check the smallest screen width in dp
+	JNIEnv *env = get_jni_env();
+	if (env == nullptr) {
+		return false;
+	}
+	
+	jclass activityClass = env->FindClass("android/app/Activity");
+	jclass configClass = env->FindClass("android/content/res/Configuration");
+	
+	if (activityClass && configClass) {
+		jobject activity = (jobject)godot_java->get_activity();
+		if (activity) {
+			jmethodID getResources = env->GetMethodID(activityClass, "getResources", "()Landroid/content/res/Resources;");
+			if (getResources) {
+				jobject resources = env->CallObjectMethod(activity, getResources);
+				if (resources) {
+					jclass resourcesClass = env->FindClass("android/content/res/Resources");
+					jmethodID getConfiguration = env->GetMethodID(resourcesClass, "getConfiguration", "()Landroid/content/res/Configuration;");
+					if (getConfiguration) {
+						jobject configuration = env->CallObjectMethod(resources, getConfiguration);
+						if (configuration) {
+							jfieldID smallestScreenWidthDpField = env->GetFieldID(configClass, "smallestScreenWidthDp", "I");
+							if (smallestScreenWidthDpField) {
+								jint smallestScreenWidthDp = env->GetIntField(configuration, smallestScreenWidthDpField);
+								// Android considers >= 600dp as tablet
+								return smallestScreenWidthDp >= 600;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	// Fallback: return false (treat as phone)
+	return false;
 }
 
 bool OS_Android::has_virtual_keyboard() const {

@@ -1180,7 +1180,20 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	{
-		String orientation = GLOBAL_DEF("display/window/handheld/orientation", "landscape");
+		// Choose orientation setting based on device type (phone vs tablet)
+		String orientation_setting_name;
+		String orientation;
+		if (OS::get_singleton()->is_tablet()) {
+			orientation_setting_name = "display/window/handheld/orientation_tablet";
+			// Default to sensor_landscape for tablets
+			orientation = GLOBAL_DEF(orientation_setting_name, "landscape");
+			print_line("[Main::setup] Device is TABLET - Loading orientation from: " + orientation_setting_name + " = " + orientation);
+		} else {
+			orientation_setting_name = "display/window/handheld/orientation";
+			// Default to portrait for phones (backward compatible)
+			orientation = GLOBAL_DEF(orientation_setting_name, "portrait");
+			print_line("[Main::setup] Device is PHONE - Loading orientation from: " + orientation_setting_name + " = " + orientation);
+		}
 
 		if (orientation == "portrait")
 			OS::get_singleton()->set_screen_orientation(OS::SCREEN_PORTRAIT);
@@ -1194,8 +1207,18 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			OS::get_singleton()->set_screen_orientation(OS::SCREEN_SENSOR_PORTRAIT);
 		else if (orientation == "sensor")
 			OS::get_singleton()->set_screen_orientation(OS::SCREEN_SENSOR);
-		else
+		else if (orientation == "landscape")
 			OS::get_singleton()->set_screen_orientation(OS::SCREEN_LANDSCAPE);
+		else {
+			// Default fallback based on device type
+			if (OS::get_singleton()->is_tablet()) {
+				OS::get_singleton()->set_screen_orientation(OS::SCREEN_LANDSCAPE);
+			} else {
+				OS::get_singleton()->set_screen_orientation(OS::SCREEN_PORTRAIT);
+			}
+		}
+		print_line("[Main::setup] Orientation applied");
+		
 	}
 
 	Engine::get_singleton()->set_iterations_per_second(GLOBAL_DEF("physics/common/physics_fps", 60));

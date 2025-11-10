@@ -127,6 +127,7 @@ public:
 	virtual bool _check_internal_feature_support(const String &p_feature);
 
 	virtual int get_screen_dpi(int p_screen = -1) const;
+	virtual bool is_tablet() const;
 
 	void touch_press(int p_idx, int p_x, int p_y, bool p_pressed, bool p_doubleclick);
 	void touch_drag(int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_y);
@@ -183,6 +184,7 @@ public:
 	void on_focus_out();
 	void on_focus_in();
 };
+
 
 #endif // OS_IPHONE_H
 
