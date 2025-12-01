@@ -613,8 +613,6 @@ void OSIPhone::set_screen_orientation(ScreenOrientation p_orientation) {
 
 				// Directly set the device orientation (old method for iOS < 16)
 				[[UIDevice currentDevice] setValue:@(targetOrientation) forKey:@"orientation"];
-
-				[AppDelegate.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
 			}
 
 			// Trigger the rotation immediately
