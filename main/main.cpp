@@ -1186,7 +1186,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		if (OS::get_singleton()->is_tablet()) {
 			orientation_setting_name = "display/window/handheld/orientation_tablet";
 			// Default to sensor_landscape for tablets
-			orientation = GLOBAL_DEF(orientation_setting_name, "landscape");
+			orientation = GLOBAL_DEF(orientation_setting_name, "sensor_landscape");
 			print_line("[Main::setup] Device is TABLET - Loading orientation from: " + orientation_setting_name + " = " + orientation);
 		} else {
 			orientation_setting_name = "display/window/handheld/orientation";
