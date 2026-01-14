@@ -240,17 +240,22 @@
 	switch (OS::get_singleton()->get_screen_orientation()) {
 		case OS::SCREEN_PORTRAIT:
 			orientation = UIInterfaceOrientationPortrait;
+			break;
 		case OS::SCREEN_REVERSE_LANDSCAPE:
 			orientation = UIInterfaceOrientationLandscapeRight;
+			break;
 		case OS::SCREEN_REVERSE_PORTRAIT:
 			orientation = UIInterfaceOrientationPortraitUpsideDown;
+			break;
 		case OS::SCREEN_SENSOR_LANDSCAPE:
 		case OS::SCREEN_LANDSCAPE:
 			orientation = UIInterfaceOrientationLandscapeLeft;
+			break;
 		case OS::SCREEN_SENSOR:
 		case OS::SCREEN_SENSOR_PORTRAIT:
 		default:
 			orientation = UIInterfaceOrientationPortrait;
+			break;
 	}
 	NSLog(@"[GODOT_ORIENTATION] preferredInterfaceOrientationForPresentation: orientation=%d", (int)orientation);
 	return orientation;
