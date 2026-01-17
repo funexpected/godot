@@ -51,11 +51,12 @@ ProjectSettings *ProjectSettings::get_singleton() {
 }
 
 String ProjectSettings::get_resource_path() const {
-
+	_THREAD_SAFE_METHOD_
 	return resource_path;
 };
 
 String ProjectSettings::localize_path(const String &p_path) const {
+	_THREAD_SAFE_METHOD_
 
 	if (resource_path == "")
 		return p_path; //not initialized yet
@@ -127,6 +128,7 @@ void ProjectSettings::set_restart_if_changed(const String &p_name, bool p_restar
 }
 
 String ProjectSettings::globalize_path(const String &p_path) const {
+	_THREAD_SAFE_METHOD_
 
 	if (p_path.begins_with("res://")) {
 
