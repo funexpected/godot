@@ -68,6 +68,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Messenger;
+import android.os.StrictMode;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings.Secure;
@@ -143,6 +144,10 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 	// Used to dispatch events to the main thread.
 	private final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
+
+	// ANR FIX: Watchdog for detecting slow operations
+	private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
+	private static final long WATCHDOG_TIMEOUT_MS = 3000; // 3 seconds warning
 
 	private GodotHost godotHost;
 	private GodotPluginRegistry pluginRegistry;
@@ -633,6 +638,11 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 
+		// ANR FIX: Enable StrictMode in debug builds to catch ANR issues early
+		if (BuildConfig.DEBUG) {
+			enableStrictMode();
+		}
+
 		final Activity activity = getActivity();
 		Window window = activity.getWindow();
 		window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
@@ -712,48 +722,40 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 			File f = new File(expansion_pack_path);
 
-			boolean pack_valid = true;
-
 			if (!f.exists()) {
-
-				pack_valid = false;
-
-			} else if (obbIsCorrupted(expansion_pack_path, main_pack_md5)) {
-				pack_valid = false;
-				try {
-					f.delete();
-				} catch (Exception e) {
-				}
+				// ANR FIX: File doesn't exist, start download immediately
+				startExpansionDownload(activity);
+				return;
 			}
 
-			if (!pack_valid) {
-
-				Intent notifierIntent = new Intent(activity, activity.getClass());
-				notifierIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-										Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-				PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0,
-						notifierIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-
-				int startResult;
-				try {
-					startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(
-							getContext(),
-							pendingIntent,
-							GodotDownloaderService.class);
-
-					if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
-						// This is where you do set up to display the download
-						// progress (next step in onCreateView)
-						mDownloaderClientStub = DownloaderClientMarshaller.CreateStub(this,
-								GodotDownloaderService.class);
-
-						return;
+			// ANR FIX: Validate OBB asynchronously to prevent blocking main thread
+			final String finalExpansionPath = expansion_pack_path;
+			final String finalMd5 = main_pack_md5;
+			final Activity finalActivity = activity;
+			
+			validateObbAsync(expansion_pack_path, main_pack_md5, new ObbValidationCallback() {
+				@Override
+				public void onValidationComplete(boolean isCorrupted) {
+					if (isCorrupted) {
+						// Delete corrupted file
+						File file = new File(finalExpansionPath);
+						try {
+							file.delete();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						// Start download
+						startExpansionDownload(finalActivity);
+					} else {
+						// OBB is valid, continue initialization
+						mCurrentIntent = finalActivity.getIntent();
+						initializeGodot();
 					}
-				} catch (NameNotFoundException e) {
-					// TODO Auto-generated catch block
 				}
-			}
+			});
+			
+			// Return early - initialization will complete in callback
+			return;
 		}
 
 		mCurrentIntent = activity.getIntent();
@@ -1042,14 +1044,29 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		System.exit(0);
 	}
 
-	private boolean obbIsCorrupted(String f, String main_pack_md5) {
+	// ANR FIX: Moved to background thread, optimized buffer size
+	private void validateObbAsync(final String f, final String main_pack_md5, final ObbValidationCallback callback) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				boolean isCorrupted = obbIsCorruptedInternal(f, main_pack_md5);
+				mainThreadHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						callback.onValidationComplete(isCorrupted);
+					}
+				});
+			}
+		}).start();
+	}
 
+	private boolean obbIsCorruptedInternal(String f, String main_pack_md5) {
+		InputStream fis = null;
 		try {
+			fis = new FileInputStream(f);
 
-			InputStream fis = new FileInputStream(f);
-
-			// Create MD5 Hash
-			byte[] buffer = new byte[16384];
+			// ANR FIX: Increased buffer size from 16KB to 128KB for better performance
+			byte[] buffer = new byte[131072]; // 128KB buffer
 
 			MessageDigest complete = MessageDigest.getInstance("MD5");
 			int numRead;
@@ -1060,28 +1077,117 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 				}
 			} while (numRead != -1);
 
-			fis.close();
 			byte[] messageDigest = complete.digest();
 
-			// Create Hex String
-			StringBuffer hexString = new StringBuffer();
-			for (int i = 0; i < messageDigest.length; i++) {
-				String s = Integer.toHexString(0xFF & messageDigest[i]);
-
+			// Create Hex String (optimized)
+			StringBuilder hexString = new StringBuilder(messageDigest.length * 2);
+			for (byte b : messageDigest) {
+				String s = Integer.toHexString(0xFF & b);
 				if (s.length() == 1) {
-					s = "0" + s;
+					hexString.append('0');
 				}
 				hexString.append(s);
 			}
 			String md5str = hexString.toString();
 
-			if (!md5str.equals(main_pack_md5)) {
-				return true;
-			}
-			return false;
+			return !md5str.equals(main_pack_md5);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return true;
+		} finally {
+			if (fis != null) {
+				try {
+					fis.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	// Callback interface for async OBB validation
+	private interface ObbValidationCallback {
+		void onValidationComplete(boolean isCorrupted);
+	}
+
+	// Legacy sync method for backwards compatibility (deprecated)
+	@Deprecated
+	private boolean obbIsCorrupted(String f, String main_pack_md5) {
+		return obbIsCorruptedInternal(f, main_pack_md5);
+	}
+
+	// ANR FIX: Extract download start logic to helper method
+	private void startExpansionDownload(Activity activity) {
+		Intent notifierIntent = new Intent(activity, activity.getClass());
+		notifierIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+								Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+		PendingIntent pendingIntent = PendingIntent.getActivity(activity, 0,
+				notifierIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+
+		try {
+			int startResult = DownloaderClientMarshaller.startDownloadServiceIfRequired(
+					getContext(),
+					pendingIntent,
+					GodotDownloaderService.class);
+
+			if (startResult != DownloaderClientMarshaller.NO_DOWNLOAD_REQUIRED) {
+				// Display download progress UI
+				mDownloaderClientStub = DownloaderClientMarshaller.CreateStub(this,
+						GodotDownloaderService.class);
+			}
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// ANR FIX: StrictMode detection for development builds
+	private void enableStrictMode() {
+		StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+				.detectDiskReads()
+				.detectDiskWrites()
+				.detectNetwork()
+				.detectCustomSlowCalls()
+				.penaltyLog()
+				.penaltyFlashScreen() // Visual warning
+				.build());
+
+		StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+				.detectLeakedSqlLiteObjects()
+				.detectLeakedClosableObjects()
+				.detectActivityLeaks()
+				.detectLeakedRegistrationObjects()
+				.penaltyLog()
+				.build());
+	}
+
+	// ANR FIX: Watchdog utilities for timeout detection
+	private Runnable currentWatchdog = null;
+	
+	private void startWatchdog(final String operationName) {
+		if (!BuildConfig.DEBUG) return; // Only in debug builds
+		
+		currentWatchdog = new Runnable() {
+			@Override
+			public void run() {
+				Log.w("Godot", "POTENTIAL ANR: " + operationName + " is taking longer than " + 
+					  WATCHDOG_TIMEOUT_MS + "ms on main thread!");
+				if (BuildConfig.DEBUG) {
+					// Print stack trace to help debug
+					StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+					for (StackTraceElement element : stackTrace) {
+						Log.w("Godot", "  at " + element.toString());
+					}
+				}
+			}
+		};
+		watchdogHandler.postDelayed(currentWatchdog, WATCHDOG_TIMEOUT_MS);
+	}
+	
+	private void stopWatchdog() {
+		if (currentWatchdog != null) {
+			watchdogHandler.removeCallbacks(currentWatchdog);
+			currentWatchdog = null;
 		}
 	}
 

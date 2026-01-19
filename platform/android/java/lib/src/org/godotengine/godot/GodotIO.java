@@ -43,11 +43,13 @@ import android.net.Uri;
 import android.os.*;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.LruCache;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.DisplayCutout;
 import android.view.WindowInsets;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
@@ -76,6 +78,12 @@ public class GodotIO {
 
 	public int last_file_id = 1;
 
+	// ANR FIX: Cache for asset directory listings to avoid repeated I/O
+	private final LruCache<String, String[]> dirListCache = new LruCache<>(50);
+	
+	// ANR FIX: Increased buffer size for better I/O performance
+	private static final int BUFFER_SIZE = 65536; // 64KB buffer
+
 	class AssetData {
 
 		public boolean eof = false;
@@ -98,7 +106,9 @@ public class GodotIO {
 		AssetData ad = new AssetData();
 
 		try {
-			ad.is = am.open(path);
+			// ANR FIX: Use BufferedInputStream for better I/O performance
+			InputStream rawStream = am.open(path);
+			ad.is = new BufferedInputStream(rawStream, BUFFER_SIZE);
 
 		} catch (Exception e) {
 
@@ -147,18 +157,38 @@ public class GodotIO {
 
 			if (bytes > (int)ad.pos) {
 				int todo = bytes - (int)ad.pos;
+				// ANR FIX: Use larger skip chunks for better performance
 				while (todo > 0) {
-					todo -= ad.is.skip(todo);
+					long skipped = ad.is.skip(todo);
+					if (skipped <= 0) {
+						// Skip returned 0, read and discard instead
+						byte[] skipBuffer = new byte[Math.min(todo, 8192)];
+						int read = ad.is.read(skipBuffer);
+						if (read <= 0) break;
+						todo -= read;
+					} else {
+						todo -= skipped;
+					}
 				}
 				ad.pos = bytes;
 			} else if (bytes < (int)ad.pos) {
 
-				ad.is = am.open(ad.path);
+				// ANR FIX: Reopen with BufferedInputStream
+				InputStream rawStream = am.open(ad.path);
+				ad.is = new BufferedInputStream(rawStream, BUFFER_SIZE);
 
 				ad.pos = bytes;
 				int todo = bytes;
 				while (todo > 0) {
-					todo -= ad.is.skip(todo);
+					long skipped = ad.is.skip(todo);
+					if (skipped <= 0) {
+						byte[] skipBuffer = new byte[Math.min(todo, 8192)];
+						int read = ad.is.read(skipBuffer);
+						if (read <= 0) break;
+						todo -= read;
+					} else {
+						todo -= skipped;
+					}
 				}
 			}
 
@@ -271,10 +301,21 @@ public class GodotIO {
 		ad.path = path;
 
 		try {
-			ad.files = am.list(path);
+			// ANR FIX: Use cache for directory listings to reduce I/O
+			String[] cachedFiles = dirListCache.get(path);
+			if (cachedFiles != null) {
+				ad.files = cachedFiles;
+			} else {
+				ad.files = am.list(path);
+				// Cache the result for future use
+				if (ad.files != null && ad.files.length > 0) {
+					dirListCache.put(path, ad.files);
+				}
+			}
+			
 			// no way to find path is directory or file exactly.
 			// but if ad.files.length==0, then it's an empty directory or file.
-			if (ad.files.length == 0) {
+			if (ad.files == null || ad.files.length == 0) {
 				return -1;
 			}
 		} catch (IOException e) {
