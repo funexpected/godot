@@ -33,6 +33,7 @@ package org.godotengine.godot;
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.Context.WINDOW_SERVICE;
 
+import org.godotengine.godot.BuildConfig;
 import org.godotengine.godot.input.GodotEditText;
 import org.godotengine.godot.plugin.GodotPlugin;
 import org.godotengine.godot.plugin.GodotPluginRegistry;
@@ -72,6 +73,7 @@ import android.os.StrictMode;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings.Secure;
+import android.util.Log;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
