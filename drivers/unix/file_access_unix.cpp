@@ -37,6 +37,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <utime.h>
 
 #include <errno.h>
 
@@ -308,6 +309,29 @@ bool FileAccessUnix::file_exists(const String &p_path) {
 		default:
 			return false;
 	}
+}
+
+Dictionary FileAccessUnix::_get_file_statistics(const String &p_file) {
+
+	String file = fix_path(p_file);
+	struct stat flags;
+	int err = stat(file.utf8().get_data(), &flags);
+
+	if (!err) {
+		Dictionary file_stat = Dictionary();
+		file_stat["mode"] = Variant(flags.st_mode);
+		file_stat["atime"] = Variant((int64_t)flags.st_atime);
+		file_stat["mtime"] = Variant((int64_t)flags.st_mtime);
+		file_stat["size"] = Variant(flags.st_size);
+		return file_stat;
+	} else {
+		ERR_FAIL_V_MSG(Dictionary(), "Failed to get stat flags for: " + p_file + ".");
+	};
+}
+
+void FileAccessUnix::_update_access_time(const String &p_file) {
+	String file = fix_path(p_file);
+	utime(file.utf8().get_data(), 0);
 }
 
 uint64_t FileAccessUnix::_get_modified_time(const String &p_file) {

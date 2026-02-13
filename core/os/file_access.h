@@ -35,6 +35,7 @@
 #include "core/os/memory.h"
 #include "core/typedefs.h"
 #include "core/ustring.h"
+#include "core/dictionary.h"
 
 /**
  * Multi-Platform abstraction for accessing to files.
@@ -63,6 +64,8 @@ protected:
 	String fix_path(const String &p_path) const;
 	virtual Error _open(const String &p_path, int p_mode_flags) = 0; ///< open a file
 	virtual uint64_t _get_modified_time(const String &p_file) = 0;
+	virtual Dictionary _get_file_statistics(const String &p_file) { return Dictionary(); };
+	virtual void _update_access_time(const String &p_file) { };
 
 	static FileCloseFailNotify close_fail_notify;
 
@@ -157,6 +160,8 @@ public:
 	static CreateFunc get_create_func(AccessType p_access);
 	static bool exists(const String &p_name); ///< return true if a file exists
 	static uint64_t get_modified_time(const String &p_file);
+	static Dictionary get_file_statistics(const String &p_file);
+	static void update_access_time(const String &p_file);
 	static uint32_t get_unix_permissions(const String &p_file);
 	static Error set_unix_permissions(const String &p_file, uint32_t p_permissions);
 
