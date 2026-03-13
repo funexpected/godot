@@ -725,40 +725,25 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 
 			File f = new File(expansion_pack_path);
 
+			boolean pack_valid = true;
+
 			if (!f.exists()) {
-				// ANR FIX: File doesn't exist, start download immediately
-				startExpansionDownload(activity);
-				return;
+				pack_valid = false;
+			} else if (obbIsCorruptedInternal(expansion_pack_path, main_pack_md5)) {
+				pack_valid = false;
+				try {
+					f.delete();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 
-			// ANR FIX: Validate OBB asynchronously to prevent blocking main thread
-			final String finalExpansionPath = expansion_pack_path;
-			final String finalMd5 = main_pack_md5;
-			final Activity finalActivity = activity;
-			
-			validateObbAsync(expansion_pack_path, main_pack_md5, new ObbValidationCallback() {
-				@Override
-				public void onValidationComplete(boolean isCorrupted) {
-					if (isCorrupted) {
-						// Delete corrupted file
-						File file = new File(finalExpansionPath);
-						try {
-							file.delete();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-						// Start download
-						startExpansionDownload(finalActivity);
-					} else {
-						// OBB is valid, continue initialization
-						mCurrentIntent = finalActivity.getIntent();
-						initializeGodot();
-					}
+			if (!pack_valid) {
+				startExpansionDownload(activity);
+				if (mDownloaderClientStub != null) {
+					return;
 				}
-			});
-			
-			// Return early - initialization will complete in callback
-			return;
+			}
 		}
 
 		mCurrentIntent = activity.getIntent();
