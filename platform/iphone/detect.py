@@ -35,6 +35,11 @@ def get_opts():
         ("IPHONESDK", "Path to the iPhone SDK", ""),
         BoolVariable("ios_exceptions", "Enable exceptions", False),
         ("ios_triple", "Triple for ios toolchain", ""),
+        BoolVariable(
+            "ios_library",
+            "Build as a library for host apps; omits UIApplicationMain entry so the host owns the app lifecycle",
+            False,
+        ),
     ]
 
 
@@ -183,3 +188,6 @@ def configure(env):
 
     env.Prepend(CPPPATH=["#platform/iphone"])
     env.Append(CPPDEFINES=["IPHONE_ENABLED", "UNIX_ENABLED", "GLES_ENABLED", "COREAUDIO_ENABLED"])
+
+    if env["ios_library"]:
+        env.Append(CPPDEFINES=["IOS_LIBRARY_MODE"])
