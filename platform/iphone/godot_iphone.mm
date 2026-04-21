@@ -71,6 +71,9 @@ int add_cmdline(int p_argc, char **p_args) {
 }
 
 int iphone_main(int argc, char **argv, String data_dir) {
+	static int call_count = 0;
+	call_count++;
+	NSLog(@"[godot-lib] iphone_main call #%d, argc=%d", call_count, argc);
 	size_t len = strlen(argv[0]);
 
 	while (len--) {

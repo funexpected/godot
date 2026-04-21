@@ -72,6 +72,7 @@ static void build_argv_from_array(NSArray<NSString *> *cmdline) {
 }
 
 int godot_library_start(NSArray<NSString *> *cmdline, NSString *dataDir) {
+	NSLog(@"[godot-lib] godot_library_start called, g_started=%d", g_started);
 	if (g_started) {
 		return 0;
 	}
@@ -79,17 +80,28 @@ int godot_library_start(NSArray<NSString *> *cmdline, NSString *dataDir) {
 		return -1;
 	}
 
+	// Flip the guard BEFORE calling into iphone_main. iphone_main /
+	// Main::setup / register_core_types mutates process-wide singletons
+	// (StringName::configured, IP::singleton, InputMap::singleton, ...);
+	// a crash or exception thrown anywhere inside would leave the engine
+	// half-initialized. If the host retries enter() we must NOT reach
+	// register_core_types again — the ERR_FAIL_COND messages are harmless
+	// but a second IP::create / InputMap() hits an abort in some
+	// configurations.
+	g_started = YES;
 	build_argv_from_array(cmdline);
 
 	int err = iphone_main(g_argc, g_argv, String::utf8([dataDir UTF8String]));
+	NSLog(@"[godot-lib] iphone_main returned err=%d", err);
 	if (err != 0) {
 		return err;
 	}
 
 	bool keep_screen_on = bool(GLOBAL_DEF("display/window/energy_saving/keep_screen_on", true));
+	NSLog(@"[godot-lib] keep_screen_on=%d", keep_screen_on);
 	OSIPhone::get_singleton()->set_keep_screen_on(keep_screen_on);
 
-	g_started = YES;
+	NSLog(@"[godot-lib] godot_library_start done");
 	return 0;
 }
 
