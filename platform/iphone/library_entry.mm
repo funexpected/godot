@@ -112,4 +112,23 @@ void godot_library_stop(void) {
 	g_started = NO;
 }
 
+// No-op stubs for the iOS plugin hooks. OSIPhone::start() /
+// OSIPhone::finalize() in os_iphone.mm call these, expecting the Godot
+// export pipeline to have generated concrete implementations
+// (platform/iphone/export/export.cpp:1442-1452). In library-mode builds
+// the host app isn't produced by that pipeline, so the symbols would be
+// undefined at link time. Provide empty definitions here so hosts that
+// don't ship any iOS plugins link cleanly. Declarations in os_iphone.h
+// use default C++ linkage (no extern "C"), so these must too — matching
+// the mangled symbol the caller expects.
+#if !defined(GODOT_IOS_PLUGINS_CUSTOM)
+
+void godot_ios_plugins_initialize() {
+}
+
+void godot_ios_plugins_deinitialize() {
+}
+
+#endif // !GODOT_IOS_PLUGINS_CUSTOM
+
 #endif // IOS_LIBRARY_MODE
