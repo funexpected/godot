@@ -113,17 +113,30 @@ UIViewController *godot_library_make_view_controller(void) {
 
 	[AppDelegate setViewController:vc];
 
-	// In the standalone Godot iOS flow, OSIPhone::on_focus_in() (triggered
-	// by the Godot AppDelegate's applicationDidBecomeActive) is what starts
-	// the CADisplayLink and drives drawView → setupView → Main::start().
-	// Library-mode hosts (e.g. a React Native shell) have their own app
-	// delegate and never forward applicationDidBecomeActive here, so we
-	// kick off rendering manually. The host is still responsible for
-	// forwarding subsequent focus-in/out events; for this prototype a
-	// one-shot kick at mount time is enough.
-	OSIPhone::get_singleton()->on_focus_in();
+	// Rendering does NOT start here. Hosts call godot_library_focus_in()
+	// after the VC becomes visible (root-VC swap completes, view is added
+	// to a window). This matches the on_focus_in / on_focus_out pattern
+	// Godot's standalone AppDelegate uses via applicationDidBecomeActive /
+	// applicationWillResignActive, but gives the library-mode host control
+	// over when the CADisplayLink spins.
 
 	return vc;
+}
+
+void godot_library_focus_in(void) {
+	if (!g_started) {
+		return;
+	}
+	NSLog(@"[godot-lib] focus_in — resuming rendering/audio");
+	OSIPhone::get_singleton()->on_focus_in();
+}
+
+void godot_library_focus_out(void) {
+	if (!g_started) {
+		return;
+	}
+	NSLog(@"[godot-lib] focus_out — pausing rendering/audio");
+	OSIPhone::get_singleton()->on_focus_out();
 }
 
 void godot_library_stop(void) {

@@ -55,6 +55,17 @@ UIViewController *_Nonnull godot_library_make_view_controller(void);
 // later without breaking their code.
 void godot_library_stop(void);
 
+// Start/stop the CADisplayLink, audio, and video playback. Hosts should call
+// godot_library_focus_in() after making the Godot VC visible (root-VC swap,
+// view-becomes-window), and godot_library_focus_out() before hiding it. The
+// fork's standalone entry wires these to applicationWillResignActive /
+// applicationDidBecomeActive; library-mode hosts own their own app delegate
+// and must forward the calls themselves. Safe to call before engine start
+// (no-op). Between focus_out and the next focus_in, Godot stops rendering
+// and pauses its audio driver.
+void godot_library_focus_in(void);
+void godot_library_focus_out(void);
+
 #ifdef __cplusplus
 }
 #endif
