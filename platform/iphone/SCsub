@@ -18,6 +18,7 @@ iphone_lib = [
     "device_metrics.m",
     "keyboard_input_view.mm",
     "native_video_view.m",
+    "library_entry.mm",
 ]
 
 env_ios = env.Clone()
