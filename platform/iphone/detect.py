@@ -40,6 +40,11 @@ def get_opts():
             "Build as a library for host apps; omits UIApplicationMain entry so the host owns the app lifecycle",
             False,
         ),
+        BoolVariable(
+            "ios_simulator",
+            "Target the iOS Simulator runtime (arm64 for Apple Silicon hosts, x86_64 for Intel) instead of a physical device",
+            False,
+        ),
     ]
 
 
@@ -129,10 +134,16 @@ def configure(env):
             CCFLAGS='-fobjc-arc -arch armv7 -fmessage-length=0 -fno-strict-aliasing -fdiagnostics-print-source-range-info -fdiagnostics-show-category=id -fdiagnostics-parseable-fixits -fpascal-strings -fblocks -isysroot $IPHONESDK -fvisibility=hidden -mthumb "-DIBOutlet=__attribute__((iboutlet))" "-DIBOutletCollection(ClassName)=__attribute__((iboutletcollection(ClassName)))" "-DIBAction=void)__attribute__((ibaction)" -miphoneos-version-min=12.0 -MMD -MT dependencies'.split()
         )
     elif env["arch"] == "arm64":
-        detect_darwin_sdk_path("iphone", env)
-        env.Append(
-            CCFLAGS="-fobjc-arc -arch arm64 -fmessage-length=0 -fno-strict-aliasing -fdiagnostics-print-source-range-info -fdiagnostics-show-category=id -fdiagnostics-parseable-fixits -fpascal-strings -fblocks -fvisibility=hidden -MMD -MT dependencies -miphoneos-version-min=12.0 -isysroot $IPHONESDK".split()
-        )
+        if env["ios_simulator"]:
+            detect_darwin_sdk_path("iphonesimulator", env)
+            env.Append(
+                CCFLAGS="-fobjc-arc -arch arm64 -fmessage-length=0 -fno-strict-aliasing -fdiagnostics-print-source-range-info -fdiagnostics-show-category=id -fdiagnostics-parseable-fixits -fpascal-strings -fblocks -fvisibility=hidden -MMD -MT dependencies -mios-simulator-version-min=12.0 -isysroot $IPHONESDK".split()
+            )
+        else:
+            detect_darwin_sdk_path("iphone", env)
+            env.Append(
+                CCFLAGS="-fobjc-arc -arch arm64 -fmessage-length=0 -fno-strict-aliasing -fdiagnostics-print-source-range-info -fdiagnostics-show-category=id -fdiagnostics-parseable-fixits -fpascal-strings -fblocks -fvisibility=hidden -MMD -MT dependencies -miphoneos-version-min=12.0 -isysroot $IPHONESDK".split()
+            )
         env.Append(CPPDEFINES=["NEED_LONG_INT"])
         env.Append(CPPDEFINES=["LIBYUV_DISABLE_NEON"])
 
@@ -167,7 +178,10 @@ def configure(env):
     elif env["arch"] == "arm":
         env.Append(LINKFLAGS=["-arch", "armv7", "-Wl,-dead_strip", "-miphoneos-version-min=12.0"])
     if env["arch"] == "arm64":
-        env.Append(LINKFLAGS=["-arch", "arm64", "-Wl,-dead_strip", "-miphoneos-version-min=12.0"])
+        if env["ios_simulator"]:
+            env.Append(LINKFLAGS=["-arch", "arm64", "-Wl,-dead_strip", "-mios-simulator-version-min=12.0"])
+        else:
+            env.Append(LINKFLAGS=["-arch", "arm64", "-Wl,-dead_strip", "-miphoneos-version-min=12.0"])
 
     env.Append(
         LINKFLAGS=[
@@ -191,3 +205,8 @@ def configure(env):
 
     if env["ios_library"]:
         env.Append(CPPDEFINES=["IOS_LIBRARY_MODE"])
+
+    if env["ios_simulator"]:
+        # Distinguishes the simulator-flavored .a from the device-flavored one
+        # so both can coexist in bin/ and hosts can pick based on SDK.
+        env.extra_suffix = ".sim" + env.extra_suffix
