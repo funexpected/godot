@@ -113,6 +113,16 @@ UIViewController *godot_library_make_view_controller(void) {
 
 	[AppDelegate setViewController:vc];
 
+	// In the standalone Godot iOS flow, OSIPhone::on_focus_in() (triggered
+	// by the Godot AppDelegate's applicationDidBecomeActive) is what starts
+	// the CADisplayLink and drives drawView → setupView → Main::start().
+	// Library-mode hosts (e.g. a React Native shell) have their own app
+	// delegate and never forward applicationDidBecomeActive here, so we
+	// kick off rendering manually. The host is still responsible for
+	// forwarding subsequent focus-in/out events; for this prototype a
+	// one-shot kick at mount time is enough.
+	OSIPhone::get_singleton()->on_focus_in();
+
 	return vc;
 }
 

@@ -172,9 +172,11 @@ void iOS::goto_host(const String &reason) {
 	// without Godot needing a direct reference to the host. No-op when no host
 	// is observing; harmless in standalone builds.
 	NSString *ns_reason = [NSString stringWithUTF8String:reason.utf8().get_data()];
+	NSLog(@"[iOS] goto_host(\"%@\") — posting NSNotification", ns_reason ?: @"");
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"GodotRequestExit"
 														object:nil
 													  userInfo:@{ @"reason" : ns_reason ?: @"" }];
+	NSLog(@"[iOS] goto_host — post returned");
 }
 
 void iOS::set_background_color(float r, float g, float b, float a)
