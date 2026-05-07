@@ -156,14 +156,16 @@ void godot_library_stop(void) {
 // don't ship any iOS plugins link cleanly. Declarations in os_iphone.h
 // use default C++ linkage (no extern "C"), so these must too — matching
 // the mangled symbol the caller expects.
-#if !defined(GODOT_IOS_PLUGINS_CUSTOM)
-
-void godot_ios_plugins_initialize() {
+//
+// Marked __attribute__((weak)) so a host that DOES ship a generated
+// dummy.cpp from the Godot iOS export pipeline (concrete implementations
+// calling register_<plugin>_types) overrides these stubs at link time
+// without a duplicate-symbol error, even when -force_load pulls every .o
+// from the library archive.
+__attribute__((weak)) void godot_ios_plugins_initialize() {
 }
 
-void godot_ios_plugins_deinitialize() {
+__attribute__((weak)) void godot_ios_plugins_deinitialize() {
 }
-
-#endif // !GODOT_IOS_PLUGINS_CUSTOM
 
 #endif // IOS_LIBRARY_MODE
