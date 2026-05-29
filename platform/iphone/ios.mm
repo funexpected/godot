@@ -49,6 +49,7 @@ void iOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("send_notification", "indifiter", "title", "body", "time_offset"), &iOS::send_notification);
 	ClassDB::bind_method(D_METHOD("cancel_notifications", "identifier_arr"), &iOS::cancel_notifications);
 	ClassDB::bind_method(D_METHOD("goto_host", "reason"), &iOS::goto_host);
+	ClassDB::bind_method(D_METHOD("host_ready", "reason"), &iOS::host_ready);
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -177,6 +178,20 @@ void iOS::goto_host(const String &reason) {
 														object:nil
 													  userInfo:@{ @"reason" : ns_reason ?: @"" }];
 	NSLog(@"[iOS] goto_host — post returned");
+}
+
+void iOS::host_ready(const String &reason) {
+	// Posts "GodotHostReady" on the default NSNotificationCenter so host apps
+	// (e.g. a React Native shell) know the engine has its first content frame up
+	// and can swap from a boot screen to the Godot view immediately, instead of
+	// waiting on a fixed timer. Mirrors goto_host's GodotRequestExit channel.
+	// No-op when no host is observing; harmless in standalone builds.
+	NSString *ns_reason = [NSString stringWithUTF8String:reason.utf8().get_data()];
+	NSLog(@"[iOS] host_ready(\"%@\") — posting NSNotification", ns_reason ?: @"");
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"GodotHostReady"
+														object:nil
+													  userInfo:@{ @"reason" : ns_reason ?: @"" }];
+	NSLog(@"[iOS] host_ready — post returned");
 }
 
 void iOS::set_background_color(float r, float g, float b, float a)
