@@ -50,6 +50,10 @@ void iOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("cancel_notifications", "identifier_arr"), &iOS::cancel_notifications);
 	ClassDB::bind_method(D_METHOD("goto_host", "reason"), &iOS::goto_host);
 	ClassDB::bind_method(D_METHOD("host_ready", "reason"), &iOS::host_ready);
+	// Inbound host→engine channel, the mirror of host_ready's outbound notify.
+	// A host shell (e.g. React Native) posts "GodotHostCommand"; we re-emit it
+	// as this signal so GDScript can react (e.g. the boot route chosen in React).
+	ADD_SIGNAL(MethodInfo("host_command", PropertyInfo(Variant::STRING, "name")));
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -202,4 +206,27 @@ void iOS::set_background_color(float r, float g, float b, float a)
 	// 	[UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
-iOS::iOS(){};
+// Observer token for the inbound "GodotHostCommand" channel. The iOS singleton
+// is process-lifetime, so this is registered once and never removed.
+static id _host_command_observer = nil;
+
+iOS::iOS() {
+	// Inbound host→engine channel, the mirror of host_ready's outbound notify.
+	// A host shell (e.g. React Native) posts "GodotHostCommand" with a "name";
+	// we hop to the engine thread (call_deferred → MessageQueue, flushed on the
+	// engine loop) and emit `host_command` so GDScript can react. The block runs
+	// on the posting (main) thread; call_deferred makes the hand-off safe. No-op
+	// in standalone builds where nothing posts the notification.
+	iOS *singleton = this;
+	_host_command_observer = [[NSNotificationCenter defaultCenter]
+			addObserverForName:@"GodotHostCommand"
+						object:nil
+						 queue:nil
+					usingBlock:^(NSNotification *note) {
+				NSString *ns_name = note.userInfo[@"name"];
+				const char *c_name = ns_name ? [ns_name UTF8String] : "";
+				String name = String::utf8(c_name ? c_name : "");
+				NSLog(@"[iOS] GodotHostCommand received: \"%@\"", ns_name ?: @"");
+				singleton->call_deferred("emit_signal", "host_command", name);
+			}];
+};
