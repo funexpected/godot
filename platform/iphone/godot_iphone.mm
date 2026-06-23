@@ -71,6 +71,9 @@ int add_cmdline(int p_argc, char **p_args) {
 }
 
 int iphone_main(int argc, char **argv, String data_dir) {
+	static int call_count = 0;
+	call_count++;
+	NSLog(@"[godot-lib] iphone_main call #%d, argc=%d", call_count, argc);
 	size_t len = strlen(argv[0]);
 
 	while (len--) {
@@ -100,8 +103,15 @@ int iphone_main(int argc, char **argv, String data_dir) {
 	argc = add_cmdline(argc, fargv);
 
 	printf("os created\n");
+	// Instrumentation for the "keep RN animating while Godot boots"
+	// investigation. Times Main::setup specifically (the type-registration +
+	// project-parsing phase, which on big apps is the long pole and the
+	// prime candidate for running off the UI thread). setup2 / start are
+	// timed separately in godot_view_renderer.mm.
+	NSDate *t0 = [NSDate date];
 	Error err = Main::setup(fargv[0], argc - 1, &fargv[1], false);
-	printf("setup %i\n", err);
+	NSTimeInterval dt = [[NSDate date] timeIntervalSinceDate:t0];
+	NSLog(@"[godot-lib] Main::setup took %.3fs (err=%d)", dt, (int)err);
 	if (err != OK) {
 		return 255;
 	}

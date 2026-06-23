@@ -54,6 +54,8 @@ public:
 
 	void share_data(const String &text, const String &image_path);
 	int get_interface_orientation() const;
+	void goto_host(const String &reason);
+	void host_ready(const String &reason);
 	iOS();
 };
 

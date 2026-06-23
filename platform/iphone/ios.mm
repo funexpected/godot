@@ -48,6 +48,12 @@ void iOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_app_version"), &iOS::get_app_version);
 	ClassDB::bind_method(D_METHOD("send_notification", "indifiter", "title", "body", "time_offset"), &iOS::send_notification);
 	ClassDB::bind_method(D_METHOD("cancel_notifications", "identifier_arr"), &iOS::cancel_notifications);
+	ClassDB::bind_method(D_METHOD("goto_host", "reason"), &iOS::goto_host);
+	ClassDB::bind_method(D_METHOD("host_ready", "reason"), &iOS::host_ready);
+	// Inbound host→engine channel, the mirror of host_ready's outbound notify.
+	// A host shell (e.g. React Native) posts "GodotHostCommand"; we re-emit it
+	// as this signal so GDScript can react (e.g. the boot route chosen in React).
+	ADD_SIGNAL(MethodInfo("host_command", PropertyInfo(Variant::STRING, "name")));
 };
 
 void iOS::alert(const char *p_alert, const char *p_title) {
@@ -165,6 +171,33 @@ UIViewController *root_controller = AppDelegate.viewController;
 
 }
 
+void iOS::goto_host(const String &reason) {
+	// Posts "GodotRequestExit" on the default NSNotificationCenter so host apps
+	// (e.g. a React Native shell) can observe it and swap the engine view out
+	// without Godot needing a direct reference to the host. No-op when no host
+	// is observing; harmless in standalone builds.
+	NSString *ns_reason = [NSString stringWithUTF8String:reason.utf8().get_data()];
+	NSLog(@"[iOS] goto_host(\"%@\") — posting NSNotification", ns_reason ?: @"");
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"GodotRequestExit"
+														object:nil
+													  userInfo:@{ @"reason" : ns_reason ?: @"" }];
+	NSLog(@"[iOS] goto_host — post returned");
+}
+
+void iOS::host_ready(const String &reason) {
+	// Posts "GodotHostReady" on the default NSNotificationCenter so host apps
+	// (e.g. a React Native shell) know the engine has its first content frame up
+	// and can swap from a boot screen to the Godot view immediately, instead of
+	// waiting on a fixed timer. Mirrors goto_host's GodotRequestExit channel.
+	// No-op when no host is observing; harmless in standalone builds.
+	NSString *ns_reason = [NSString stringWithUTF8String:reason.utf8().get_data()];
+	NSLog(@"[iOS] host_ready(\"%@\") — posting NSNotification", ns_reason ?: @"");
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"GodotHostReady"
+														object:nil
+													  userInfo:@{ @"reason" : ns_reason ?: @"" }];
+	NSLog(@"[iOS] host_ready — post returned");
+}
+
 void iOS::set_background_color(float r, float g, float b, float a)
 {
 	// AppDelegate.viewController.view.backgroundColor = 
@@ -173,4 +206,27 @@ void iOS::set_background_color(float r, float g, float b, float a)
 	// 	[UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
-iOS::iOS(){};
+// Observer token for the inbound "GodotHostCommand" channel. The iOS singleton
+// is process-lifetime, so this is registered once and never removed.
+static id _host_command_observer = nil;
+
+iOS::iOS() {
+	// Inbound host→engine channel, the mirror of host_ready's outbound notify.
+	// A host shell (e.g. React Native) posts "GodotHostCommand" with a "name";
+	// we hop to the engine thread (call_deferred → MessageQueue, flushed on the
+	// engine loop) and emit `host_command` so GDScript can react. The block runs
+	// on the posting (main) thread; call_deferred makes the hand-off safe. No-op
+	// in standalone builds where nothing posts the notification.
+	iOS *singleton = this;
+	_host_command_observer = [[NSNotificationCenter defaultCenter]
+			addObserverForName:@"GodotHostCommand"
+						object:nil
+						 queue:nil
+					usingBlock:^(NSNotification *note) {
+				NSString *ns_name = note.userInfo[@"name"];
+				const char *c_name = ns_name ? [ns_name UTF8String] : "";
+				String name = String::utf8(c_name ? c_name : "");
+				NSLog(@"[iOS] GodotHostCommand received: \"%@\"", ns_name ?: @"");
+				singleton->call_deferred("emit_signal", "host_command", name);
+			}];
+};

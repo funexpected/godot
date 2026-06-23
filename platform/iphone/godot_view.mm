@@ -31,6 +31,7 @@
 #import "godot_view.h"
 
 #include "core/project_settings.h"
+#include "host_input_queue.h"
 #include "os_iphone.h"
 #include "servers/audio_server.h"
 
@@ -348,6 +349,11 @@ static const int max_touches = 8;
 	}
 }
 
+// Touch callbacks fire on the UIKit main thread. We do NOT reach into Godot
+// directly (InputDefault is owned by the engine worker that drives
+// Main::iteration); instead, drop a POD record into HostInputQueue and let
+// OSIPhone::iterate drain it on the worker. Same pattern Android already uses
+// via GLSurfaceView.queueEvent.
 - (void)touchesBegan:(NSSet *)touchesSet withEvent:(UIEvent *)event {
 	NSArray *tlist = [event.allTouches allObjects];
 	for (unsigned int i = 0; i < [tlist count]; i++) {
@@ -356,7 +362,7 @@ static const int max_touches = 8;
 			int tid = [self getTouchIDForTouch:touch];
 			ERR_FAIL_COND(tid == -1);
 			CGPoint touchPoint = [touch locationInView:self];
-			OSIPhone::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
+			HostInput::touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
 		}
 	}
 }
@@ -370,7 +376,7 @@ static const int max_touches = 8;
 			ERR_FAIL_COND(tid == -1);
 			CGPoint touchPoint = [touch locationInView:self];
 			CGPoint prev_point = [touch previousLocationInView:self];
-			OSIPhone::get_singleton()->touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor);
+			HostInput::touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor);
 		}
 	}
 }
@@ -384,7 +390,7 @@ static const int max_touches = 8;
 			ERR_FAIL_COND(tid == -1);
 			[self removeTouch:touch];
 			CGPoint touchPoint = [touch locationInView:self];
-			OSIPhone::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
+			HostInput::touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
 		}
 	}
 }
@@ -396,7 +402,7 @@ static const int max_touches = 8;
 			UITouch *touch = [tlist objectAtIndex:i];
 			int tid = [self getTouchIDForTouch:touch];
 			ERR_FAIL_COND(tid == -1);
-			OSIPhone::get_singleton()->touches_cancelled(tid);
+			HostInput::touch_cancel(tid);
 		}
 	}
 	[self clearTouches];
