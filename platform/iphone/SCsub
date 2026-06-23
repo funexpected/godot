@@ -19,6 +19,7 @@ iphone_lib = [
     "keyboard_input_view.mm",
     "native_video_view.m",
     "library_entry.mm",
+    "host_input_queue.mm",
 ]
 
 env_ios = env.Clone()

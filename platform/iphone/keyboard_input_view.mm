@@ -31,6 +31,7 @@
 #import "keyboard_input_view.h"
 
 #include "core/os/keyboard.h"
+#include "host_input_queue.h"
 #include "os_iphone.h"
 
 @interface GodotKeyboardInputView () <UITextViewDelegate>
@@ -122,8 +123,8 @@
 
 - (void)deleteText:(NSInteger)charactersToDelete {
 	for (int i = 0; i < charactersToDelete; i++) {
-		OSIPhone::get_singleton()->key(KEY_BACKSPACE, true);
-		OSIPhone::get_singleton()->key(KEY_BACKSPACE, false);
+		HostInput::key(KEY_BACKSPACE, true);
+		HostInput::key(KEY_BACKSPACE, false);
 	}
 }
 
@@ -145,8 +146,8 @@
 				break;
 		}
 
-		OSIPhone::get_singleton()->key(character, true);
-		OSIPhone::get_singleton()->key(character, false);
+		HostInput::key(character, true);
+		HostInput::key(character, false);
 	}
 }
 
