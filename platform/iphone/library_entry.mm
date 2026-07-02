@@ -56,6 +56,16 @@ static int g_setup_result = -1;
 // doesn't need to take any locks.
 static std::atomic<int> g_ready_state{ 0 };
 
+// Physical screen size in pixels, captured on the UIKit main thread in
+// godot_library_start and stamped into video_mode once Main::setup finishes.
+// In app mode the GodotView sits in the key window from launch, so
+// createFramebuffer records the real screen size before any GDScript runs.
+// In library mode the view stays off-screen (zero frame) until the host
+// swaps it in, leaving video_mode at the project-settings size — early
+// scripts then mis-detect the display (Screen.is_iphone_x / is_ipad,
+// ui.aspect_coeff read it via OS.window_size before the first real layout).
+static CGSize g_native_screen_size = { 0, 0 };
+
 // argv backing — same lifetime requirement as before.
 static char **g_argv = NULL;
 static int g_argc = 0;
@@ -107,6 +117,20 @@ static void *engine_thread_main(void *) {
 			bool keep_screen_on = bool(GLOBAL_DEF("display/window/energy_saving/keep_screen_on", true));
 			NSLog(@"[godot-lib] keep_screen_on=%d", keep_screen_on);
 			OSIPhone::get_singleton()->set_keep_screen_on(keep_screen_on);
+
+			// Seed video_mode with the real screen pixels (standalone parity —
+			// see g_native_screen_size). Main::setup just overwrote it with the
+			// project-settings size; nothing else touches it until the first
+			// on-screen layout's createFramebuffer, which keeps it honest from
+			// then on. Without this, every GDScript size query during the
+			// off-screen boot sees the fictitious 1080x1920.
+			if (g_native_screen_size.width > 0) {
+				OS::VideoMode vm = OS::get_singleton()->get_video_mode();
+				vm.width = (int)g_native_screen_size.width;
+				vm.height = (int)g_native_screen_size.height;
+				OS::get_singleton()->set_video_mode(vm);
+				NSLog(@"[godot-lib] video_mode seeded from screen: %dx%d", vm.width, vm.height);
+			}
 		}
 
 		// Publish readiness BEFORE the notification, so observers that re-
@@ -184,6 +208,17 @@ int godot_library_start(NSArray<NSString *> *cmdline, NSString *dataDir) {
 	// (StringName::configured, IP::singleton, InputMap::singleton, ...);
 	// any retry after failure would double-allocate them.
 	g_started = YES;
+	// nativeBounds is portrait-oriented pixels — the same value the first
+	// createFramebuffer would record at a portrait launch. Captured here
+	// (documented main-thread entry point) because the engine thread must
+	// not touch UIKit.
+	if (NSThread.isMainThread) {
+		g_native_screen_size = [UIScreen mainScreen].nativeBounds.size;
+	} else {
+		dispatch_sync(dispatch_get_main_queue(), ^{
+			g_native_screen_size = [UIScreen mainScreen].nativeBounds.size;
+		});
+	}
 	build_argv_from_array(cmdline);
 	g_data_dir = dataDir;
 
