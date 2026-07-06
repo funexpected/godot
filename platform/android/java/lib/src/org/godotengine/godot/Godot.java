@@ -68,6 +68,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Messenger;
+import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings.Secure;
@@ -496,6 +497,38 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		});
 	}
 
+	// Shown when startup can't proceed because the expansion pack storage is
+	// unavailable. Retry recreates the activity so onCreate runs again (including
+	// another storage wait); Exit goes through System.exit so onDestroy doesn't
+	// call GodotLib.ondestroy() on a never-initialized engine.
+	private void alertStorageUnavailable() {
+		final Activity activity = getActivity();
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+				builder.setMessage("Device storage is not available yet. Please try again in a moment.")
+						.setTitle("Storage unavailable");
+				builder.setCancelable(false);
+				builder.setPositiveButton(
+						"Retry",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								activity.recreate();
+							}
+						});
+				builder.setNegativeButton(
+						"Exit",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								forceQuit();
+							}
+						});
+				builder.create().show();
+			}
+		});
+	}
+
 	public int getGLESVersionCode() {
 		ActivityManager am = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
 		ConfigurationInfo deviceInfo = am.getDeviceConfigurationInfo();
@@ -697,17 +730,35 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			command_line = new_args.toArray(new String[new_args.size()]);
 		}
 		if (use_apk_expansion && main_pack_md5 != null && main_pack_key != null) {
-			// check that environment is ok!
-			if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-				// show popup and die
+			// Build the full path to the app's expansion files.
+			// Helpers.getSaveFilePath returns Context.getObbDir(), which is null
+			// while shared storage is unavailable (still mounting after boot,
+			// restricted user profiles, ...). Right after boot this is transient,
+			// so poll briefly before giving up; the launch splash covers the wait.
+			// Previously the swallowed NPE left expansion_pack_path null and
+			// `new File(null)` below crashed the activity.
+			final long storage_wait_deadline = SystemClock.uptimeMillis() + 3000;
+			while (true) {
+				try {
+					expansion_pack_path = Helpers.getSaveFilePath(getContext());
+					expansion_pack_path += "/main." + activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode + "." + activity.getPackageName() + ".obb";
+				} catch (Exception e) {
+					e.printStackTrace();
+					expansion_pack_path = null;
+				}
+				String storageState = Environment.getExternalStorageState();
+				boolean storageAvailable = expansion_pack_path != null &&
+						(Environment.MEDIA_MOUNTED.equals(storageState) ||
+								Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState));
+				if (storageAvailable || SystemClock.uptimeMillis() >= storage_wait_deadline) {
+					break;
+				}
+				SystemClock.sleep(150);
 			}
 
-			// Build the full path to the app's expansion files
-			try {
-				expansion_pack_path = Helpers.getSaveFilePath(getContext());
-				expansion_pack_path += "/main." + activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode + "." + activity.getPackageName() + ".obb";
-			} catch (Exception e) {
-				e.printStackTrace();
+			if (expansion_pack_path == null) {
+				alertStorageUnavailable();
+				return;
 			}
 
 			File f = new File(expansion_pack_path);
