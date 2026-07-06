@@ -496,6 +496,29 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 		});
 	}
 
+	// Show a non-cancelable message and terminate on OK. Used when startup can't
+	// proceed (e.g. expansion pack storage unavailable); exits via System.exit so
+	// onDestroy doesn't call GodotLib.ondestroy() on a never-initialized engine.
+	private void alertAndQuit(final String message, final String title) {
+		final Activity activity = getActivity();
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+				builder.setMessage(message).setTitle(title);
+				builder.setCancelable(false);
+				builder.setPositiveButton(
+						"OK",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int id) {
+								forceQuit();
+							}
+						});
+				builder.create().show();
+			}
+		});
+	}
+
 	public int getGLESVersionCode() {
 		ActivityManager am = (ActivityManager)getContext().getSystemService(Context.ACTIVITY_SERVICE);
 		ConfigurationInfo deviceInfo = am.getDeviceConfigurationInfo();
@@ -697,17 +720,25 @@ public class Godot extends Fragment implements SensorEventListener, IDownloaderC
 			command_line = new_args.toArray(new String[new_args.size()]);
 		}
 		if (use_apk_expansion && main_pack_md5 != null && main_pack_key != null) {
-			// check that environment is ok!
-			if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-				// show popup and die
-			}
-
 			// Build the full path to the app's expansion files
 			try {
 				expansion_pack_path = Helpers.getSaveFilePath(getContext());
 				expansion_pack_path += "/main." + activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionCode + "." + activity.getPackageName() + ".obb";
 			} catch (Exception e) {
 				e.printStackTrace();
+				expansion_pack_path = null;
+			}
+
+			// Helpers.getSaveFilePath returns Context.getObbDir(), which is null
+			// while shared storage is unavailable (still mounting after boot,
+			// restricted user profiles, ...). The expansion pack can't be read in
+			// that state — exit with a message instead of crashing on `new File(null)`.
+			String storageState = Environment.getExternalStorageState();
+			if (expansion_pack_path == null ||
+					!(Environment.MEDIA_MOUNTED.equals(storageState) ||
+							Environment.MEDIA_MOUNTED_READ_ONLY.equals(storageState))) {
+				alertAndQuit("Device storage is not available yet. Please close and reopen the app.", "Storage unavailable");
+				return;
 			}
 
 			File f = new File(expansion_pack_path);
