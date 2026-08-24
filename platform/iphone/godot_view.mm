@@ -142,6 +142,13 @@ static const int max_touches = 8;
 
 	[self initTouches];
 
+	// Without the gesture recognizer, the view itself is the touch entry point,
+	// and UIView defaults to single-touch — every second finger is dropped. The
+	// recognizer used to receive all touches regardless of this flag. Matches
+	// upstream e3cd47f6c "[iOS] Fix multitouch not working correctly", which our
+	// 3.3.1 base predates.
+	self.multipleTouchEnabled = YES;
+
 	// Configure and start accelerometer
 	if (!self.motionManager) {
 		self.motionManager = [[CMMotionManager alloc] init];
