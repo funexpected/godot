@@ -633,6 +633,20 @@ void VisualServerCanvas::canvas_item_add_circle(RID p_item, const Point2 &p_pos,
 	canvas_item->commands.push_back(circle);
 }
 
+void VisualServerCanvas::canvas_item_add_multicircle(RID p_item, const Vector<Point2> &p_centers, const Vector<float> &p_radii, const Color &p_color) {
+	Item *canvas_item = canvas_item_owner.getornull(p_item);
+	ERR_FAIL_COND(!canvas_item);
+
+	Item::CommandMultiCircle *circles = memnew(Item::CommandMultiCircle);
+	ERR_FAIL_COND(!circles);
+	circles->color = p_color;
+	circles->centers = p_centers;
+	circles->radii = p_radii;
+
+	canvas_item->commands.push_back(circles);
+}
+
+
 void VisualServerCanvas::canvas_item_add_texture_rect(RID p_item, const Rect2 &p_rect, RID p_texture, bool p_tile, const Color &p_modulate, bool p_transpose, RID p_normal_map) {
 
 	Item *canvas_item = canvas_item_owner.getornull(p_item);
