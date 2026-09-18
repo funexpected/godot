@@ -39,7 +39,6 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "display_layer.h"
-#import "godot_view_gesture_recognizer.h"
 #import "godot_view_renderer.h"
 
 #import <CoreMotion/CoreMotion.h>
@@ -62,8 +61,6 @@ static const int max_touches = 8;
 @property(strong, nonatomic) CALayer<DisplayLayer> *renderingLayer;
 
 @property(strong, nonatomic) CMMotionManager *motionManager;
-
-@property(strong, nonatomic) GodotViewGestureRecognizer *delayGestureRecognizer;
 
 @end
 
@@ -139,16 +136,19 @@ static const int max_touches = 8;
 		[self.animationTimer invalidate];
 		self.animationTimer = nil;
 	}
-
-	if (self.delayGestureRecognizer) {
-		self.delayGestureRecognizer = nil;
-	}
 }
 
 - (void)godot_commonInit {
 	self.contentScaleFactor = [UIScreen mainScreen].nativeScale;
 
 	[self initTouches];
+
+	// Without the gesture recognizer, the view itself is the touch entry point,
+	// and UIView defaults to single-touch — every second finger is dropped. The
+	// recognizer used to receive all touches regardless of this flag. Matches
+	// upstream e3cd47f6c "[iOS] Fix multitouch not working correctly", which our
+	// 3.3.1 base predates.
+	self.multipleTouchEnabled = YES;
 
 	// Configure and start accelerometer
 	if (!self.motionManager) {
@@ -160,11 +160,6 @@ static const int max_touches = 8;
 			self.motionManager = nil;
 		}
 	}
-
-	// Initialize delay gesture recognizer
-	GodotViewGestureRecognizer *gestureRecognizer = [[GodotViewGestureRecognizer alloc] init];
-	self.delayGestureRecognizer = gestureRecognizer;
-	[self addGestureRecognizer:self.delayGestureRecognizer];
 }
 
 - (void)startRendering {
@@ -354,56 +349,40 @@ static const int max_touches = 8;
 // Main::iteration); instead, drop a POD record into HostInputQueue and let
 // OSIPhone::iterate drain it on the worker. Same pattern Android already uses
 // via GLSurfaceView.queueEvent.
-- (void)touchesBegan:(NSSet *)touchesSet withEvent:(UIEvent *)event {
-	NSArray *tlist = [event.allTouches allObjects];
-	for (unsigned int i = 0; i < [tlist count]; i++) {
-		if ([touchesSet containsObject:[tlist objectAtIndex:i]]) {
-			UITouch *touch = [tlist objectAtIndex:i];
-			int tid = [self getTouchIDForTouch:touch];
-			ERR_FAIL_COND(tid == -1);
-			CGPoint touchPoint = [touch locationInView:self];
-			HostInput::touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
-		}
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		CGPoint touchPoint = [touch locationInView:self];
+		HostInput::touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
 	}
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
-	NSArray *tlist = [event.allTouches allObjects];
-	for (unsigned int i = 0; i < [tlist count]; i++) {
-		if ([touches containsObject:[tlist objectAtIndex:i]]) {
-			UITouch *touch = [tlist objectAtIndex:i];
-			int tid = [self getTouchIDForTouch:touch];
-			ERR_FAIL_COND(tid == -1);
-			CGPoint touchPoint = [touch locationInView:self];
-			CGPoint prev_point = [touch previousLocationInView:self];
-			HostInput::touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor);
-		}
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		CGPoint touchPoint = [touch locationInView:self];
+		CGPoint prev_point = [touch previousLocationInView:self];
+		HostInput::touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor);
 	}
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
-	NSArray *tlist = [event.allTouches allObjects];
-	for (unsigned int i = 0; i < [tlist count]; i++) {
-		if ([touches containsObject:[tlist objectAtIndex:i]]) {
-			UITouch *touch = [tlist objectAtIndex:i];
-			int tid = [self getTouchIDForTouch:touch];
-			ERR_FAIL_COND(tid == -1);
-			[self removeTouch:touch];
-			CGPoint touchPoint = [touch locationInView:self];
-			HostInput::touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
-		}
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		[self removeTouch:touch];
+		CGPoint touchPoint = [touch locationInView:self];
+		HostInput::touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
 	}
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-	NSArray *tlist = [event.allTouches allObjects];
-	for (unsigned int i = 0; i < [tlist count]; i++) {
-		if ([touches containsObject:[tlist objectAtIndex:i]]) {
-			UITouch *touch = [tlist objectAtIndex:i];
-			int tid = [self getTouchIDForTouch:touch];
-			ERR_FAIL_COND(tid == -1);
-			HostInput::touch_cancel(tid);
-		}
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		HostInput::touch_cancel(tid);
 	}
 	[self clearTouches];
 }
