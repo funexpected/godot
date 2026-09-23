@@ -68,7 +68,14 @@
 
 	if (!self.hasStartedMain) {
 		self.hasStartedMain = YES;
+		// Instrumentation for off-main-boot investigation. OSIPhone::start()
+		// calls Main::start() which loads the main scene + runs first-pass
+		// GDScript _ready, allocating GL resources. Candidate for running
+		// off main in Option 1b (requires GL context handoff).
+		NSDate *t0 = [NSDate date];
 		OSIPhone::get_singleton()->start();
+		NSTimeInterval dt = [[NSDate date] timeIntervalSinceDate:t0];
+		NSLog(@"[godot-lib] OSIPhone::start (→ Main::start, scene load) took %.3fs", dt);
 		return YES;
 	}
 
@@ -80,7 +87,13 @@
 - (void)setupProjectData {
 	self.hasFinishedProjectDataSetup = YES;
 
+	// Instrumentation for off-main-boot investigation. Main::setup2 inits
+	// VisualServer / rasterizer, which means GL calls — moving this off
+	// main requires an EAGLContext current on the boot thread.
+	NSDate *t0 = [NSDate date];
 	Main::setup2();
+	NSTimeInterval dt = [[NSDate date] timeIntervalSinceDate:t0];
+	NSLog(@"[godot-lib] Main::setup2 took %.3fs", dt);
 
 	// this might be necessary before here
 	NSDictionary *dict = [[NSBundle mainBundle] infoDictionary];

@@ -36,6 +36,7 @@
 int gargc;
 char **gargv;
 
+#ifndef IOS_LIBRARY_MODE
 int main(int argc, char *argv[]) {
 	printf("*********** main.m\n");
 	gargc = argc;
@@ -49,3 +50,4 @@ int main(int argc, char *argv[]) {
 	printf("main done\n");
 	return 0;
 }
+#endif // IOS_LIBRARY_MODE

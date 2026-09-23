@@ -34,6 +34,7 @@
 
 #include "drivers/gles2/rasterizer_gles2.h"
 #include "drivers/gles3/rasterizer_gles3.h"
+#include "host_input_queue.h"
 #include "servers/visual/visual_server_raster.h"
 #include "servers/visual/visual_server_wrap_mt.h"
 
@@ -68,6 +69,29 @@ static init_callback *ios_init_callbacks = NULL;
 static int ios_init_callbacks_count = 0;
 static int ios_init_callbacks_capacity = 0;
 HashMap<String, void *> OSIPhone::dynamic_symbol_lookup_table;
+
+// UIKit/AVFoundation APIs are main-thread-only. Several OSIPhone methods are
+// reachable from GDScript (and thus from the engine worker thread that drives
+// Main::iteration in library mode). Hop to the UIApplication main queue when
+// we're not already there. dispatch_async fits the fire-and-forget calls;
+// dispatch_sync (with a guard) is used by the few methods that have to return
+// a value read from UIKit. Calls made from the standalone-app path (where
+// OSIPhone is created on main) skip the hop entirely thanks to the guard.
+static inline void osiphone_run_on_main_async(dispatch_block_t block) {
+	if ([NSThread isMainThread]) {
+		block();
+	} else {
+		dispatch_async(dispatch_get_main_queue(), block);
+	}
+}
+
+static inline void osiphone_run_on_main_sync(dispatch_block_t block) {
+	if ([NSThread isMainThread]) {
+		block();
+	} else {
+		dispatch_sync(dispatch_get_main_queue(), block);
+	}
+}
 
 int OSIPhone::get_video_driver_count() const {
 	return 2;
@@ -207,6 +231,11 @@ bool OSIPhone::iterate() {
 	if (!main_loop) {
 		return true;
 	}
+
+	// Drain UIKit-thread input (touches, keyboard) into the engine's
+	// InputDefault before stepping the scene. The producers push POD events
+	// into HostInputQueue from main; this is the consumer side.
+	HostInputQueue::get().drain();
 
 	return Main::iteration();
 };
@@ -355,9 +384,14 @@ void OSIPhone::set_window_title(const String &p_title) {
 }
 
 void OSIPhone::alert(const String &p_alert, const String &p_title) {
-	const CharString utf8_alert = p_alert.utf8();
-	const CharString utf8_title = p_title.utf8();
-	iOS::alert(utf8_alert.get_data(), utf8_title.get_data());
+	// Promote to NSString so the strings outlive this stack frame — the
+	// dispatch_async below may run after we've returned, and CharString's
+	// backing buffer would be gone.
+	NSString *ns_alert = [[NSString alloc] initWithUTF8String:p_alert.utf8().get_data()];
+	NSString *ns_title = [[NSString alloc] initWithUTF8String:p_title.utf8().get_data()];
+	osiphone_run_on_main_async(^{
+		iOS::alert([ns_alert UTF8String], [ns_title UTF8String]);
+	});
 }
 
 // MARK: Dynamic Libraries
@@ -450,16 +484,23 @@ void OSIPhone::show_virtual_keyboard(const String &p_existing_text, const Rect2 
 			keyboard_type = UIKeyboardTypeDefault;
 	 }
 
-	[AppDelegate.viewController.keyboardView
-			becomeFirstResponderWithString:existingString
-								 multiline:p_multiline
-							   cursorStart:p_cursor_start
-								 cursorEnd:p_cursor_end
-							  keyboardType:keyboard_type];
+	BOOL multiline = p_multiline;
+	int cursor_start = p_cursor_start;
+	int cursor_end = p_cursor_end;
+	osiphone_run_on_main_async(^{
+		[AppDelegate.viewController.keyboardView
+				becomeFirstResponderWithString:existingString
+									 multiline:multiline
+								   cursorStart:cursor_start
+									 cursorEnd:cursor_end
+								  keyboardType:keyboard_type];
+	});
 };
 
 void OSIPhone::hide_virtual_keyboard() {
-	[AppDelegate.viewController.keyboardView resignFirstResponder];
+	osiphone_run_on_main_async(^{
+		[AppDelegate.viewController.keyboardView resignFirstResponder];
+	});
 }
 
 void OSIPhone::set_virtual_keyboard_height(int p_height) {
@@ -483,20 +524,28 @@ Error OSIPhone::shell_open(String p_uri) {
 	NSString *urlPath = [[NSString alloc] initWithUTF8String:p_uri.utf8().get_data()];
 	NSURL *url = [NSURL URLWithString:urlPath];
 
-	if (![[UIApplication sharedApplication] canOpenURL:url]) {
+	__block BOOL canOpen = NO;
+	osiphone_run_on_main_sync(^{
+		canOpen = [[UIApplication sharedApplication] canOpenURL:url];
+	});
+	if (!canOpen) {
 		return ERR_CANT_OPEN;
 	}
 
 	printf("opening url %s\n", p_uri.utf8().get_data());
 
-	[[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+	osiphone_run_on_main_async(^{
+		[[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+	});
 
 	return OK;
 }
 
 void OSIPhone::set_keep_screen_on(bool p_enabled) {
 	OS::set_keep_screen_on(p_enabled);
-	[UIApplication sharedApplication].idleTimerDisabled = p_enabled;
+	osiphone_run_on_main_async(^{
+		[UIApplication sharedApplication].idleTimerDisabled = p_enabled;
+	});
 };
 
 int _get_system_orientation() {
@@ -686,12 +735,17 @@ int OSIPhone::get_screen_dpi(int p_screen) const {
 
 Rect2 OSIPhone::get_window_safe_area() const {
 	if (@available(iOS 11, *)) {
-		UIEdgeInsets insets = UIEdgeInsetsZero;
-		UIView *view = AppDelegate.viewController.godotView;
-
-		if ([view respondsToSelector:@selector(safeAreaInsets)]) {
-			insets = [view safeAreaInsets];
-		}
+		__block UIEdgeInsets insets = UIEdgeInsetsZero;
+		// safeAreaInsets is a UIView API — sync hop, since this is a value
+		// query. Safe at steady state; only risky if called while main is
+		// blocked waiting on the engine thread, which doesn't happen in
+		// post-boot lifetime.
+		osiphone_run_on_main_sync(^{
+			UIView *view = AppDelegate.viewController.godotView;
+			if ([view respondsToSelector:@selector(safeAreaInsets)]) {
+				insets = [view safeAreaInsets];
+			}
+		});
 
 		float scale = [UIScreen mainScreen].nativeScale;
 		Size2i insets_position = Size2i(insets.left, insets.top) * scale;
@@ -751,38 +805,51 @@ Error OSIPhone::native_video_play(String p_path, float p_volume, String p_audio_
 	NSString *audioTrack = [NSString stringWithUTF8String:p_audio_track.utf8()];
 	NSString *subtitleTrack = [NSString stringWithUTF8String:p_subtitle_track.utf8()];
 
-	if (![AppDelegate.viewController playVideoAtPath:filePath
-											  volume:p_volume
-											   audio:audioTrack
-											subtitle:subtitleTrack]) {
-		return OK;
-	}
-
-	return FAILED;
+	__block BOOL videoStarted = NO;
+	float volume = p_volume;
+	osiphone_run_on_main_sync(^{
+		videoStarted = ![AppDelegate.viewController playVideoAtPath:filePath
+															 volume:volume
+															  audio:audioTrack
+														   subtitle:subtitleTrack];
+	});
+	return videoStarted ? OK : FAILED;
 }
 
 bool OSIPhone::native_video_is_playing() const {
-	return [AppDelegate.viewController.videoView isVideoPlaying];
+	__block BOOL playing = NO;
+	osiphone_run_on_main_sync(^{
+		playing = [AppDelegate.viewController.videoView isVideoPlaying];
+	});
+	return playing;
 }
 
 void OSIPhone::native_video_pause() {
-	if (native_video_is_playing()) {
-		[AppDelegate.viewController.videoView pauseVideo];
-	}
+	osiphone_run_on_main_async(^{
+		if ([AppDelegate.viewController.videoView isVideoPlaying]) {
+			[AppDelegate.viewController.videoView pauseVideo];
+		}
+	});
 }
 
 void OSIPhone::native_video_unpause() {
-	[AppDelegate.viewController.videoView unpauseVideo];
+	osiphone_run_on_main_async(^{
+		[AppDelegate.viewController.videoView unpauseVideo];
+	});
 }
 
 void OSIPhone::native_video_focus_out() {
-	[AppDelegate.viewController.videoView unfocusVideo];
+	osiphone_run_on_main_async(^{
+		[AppDelegate.viewController.videoView unfocusVideo];
+	});
 }
 
 void OSIPhone::native_video_stop() {
-	if (native_video_is_playing()) {
-		[AppDelegate.viewController.videoView stopVideo];
-	}
+	osiphone_run_on_main_async(^{
+		if ([AppDelegate.viewController.videoView isVideoPlaying]) {
+			[AppDelegate.viewController.videoView stopVideo];
+		}
+	});
 }
 
 void OSIPhone::vibrate_handheld(int p_duration_ms) {

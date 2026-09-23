@@ -37,4 +37,12 @@
 @property(strong, nonatomic) UIWindow *window;
 @property(strong, class, readonly, nonatomic) ViewController *viewController;
 
+#ifdef IOS_LIBRARY_MODE
+// In library mode the host owns UIApplicationMain, so didFinishLaunchingWithOptions
+// never runs and mainViewController stays nil. Host apps use this setter to register
+// the active ViewController so the rest of the engine (keyboard, orientation, video,
+// render start/stop in os_iphone.mm / ios.mm) can reach it via AppDelegate.viewController.
++ (void)setViewController:(ViewController *)viewController;
+#endif
+
 @end

@@ -1,7 +1,17 @@
 import os
+import re
 import sys
 import platform
-from distutils.version import LooseVersion
+
+
+def _version_ge(a, b):
+    # Replacement for distutils.version.LooseVersion comparison.
+    # distutils was removed in Python 3.12; this keeps the build working on
+    # newer Python without adding a packaging/ dependency.
+    def _tuple(v):
+        return tuple(int(p) for p in re.findall(r"\d+", v))
+
+    return _tuple(a) >= _tuple(b)
 
 
 def is_active():
@@ -316,7 +326,7 @@ def configure(env):
     # Link flags
 
     ndk_version = get_env_ndk_version(env["ANDROID_NDK_ROOT"])
-    if ndk_version != None and LooseVersion(ndk_version) >= LooseVersion("17.1.4828580"):
+    if ndk_version != None and _version_ge(ndk_version, "17.1.4828580"):
         env.Append(LINKFLAGS=["-Wl,--exclude-libs,libgcc.a", "-Wl,--exclude-libs,libatomic.a", "-nostdlib++"])
     # Note: NDK 27+ doesn't need libandroid_support.a - it's handled by the unified toolchain
     env.Append(LINKFLAGS=["-shared", "--sysroot=" + lib_sysroot, "-Wl,--warn-shared-textrel"])

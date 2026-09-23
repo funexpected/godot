@@ -90,6 +90,16 @@ public:
 	// get the ID of the main thread
 	_FORCE_INLINE_ static ID get_main_id() { return main_thread_id; }
 
+	// Reassign main_thread_id to the calling thread. By default it's pinned to
+	// whichever thread first loaded the binary (the platform main thread for an
+	// iOS framework). Library/embedded hosts that drive Main::iteration from a
+	// worker thread call this from that worker, before Main::setup, so subsequent
+	// `is_main_thread`-style checks across the engine treat the worker as main.
+	// Main::setup2 also accepts a tid override (used by Android), but doing it
+	// up-front means register_core_types and project parsing also see the right
+	// thread identity.
+	_FORCE_INLINE_ static void make_main_thread() { main_thread_id = get_caller_id(); }
+
 	static Error set_name(const String &p_name);
 
 	void start(Thread::Callback p_callback, void *p_user, const Settings &p_settings = Settings());
@@ -104,6 +114,7 @@ public:
 	_FORCE_INLINE_ static ID get_caller_id() { return 0; }
 	// get the ID of the main thread
 	_FORCE_INLINE_ static ID get_main_id() { return 0; }
+	_FORCE_INLINE_ static void make_main_thread() {}
 
 	static Error set_name(const String &p_name) { return ERR_UNAVAILABLE; }
 

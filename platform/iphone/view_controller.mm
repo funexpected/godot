@@ -112,6 +112,16 @@
 		blue:0.79
 		alpha:1.0
 	];
+	// Paint the GL view the same indigo so a landscape<->portrait rotation's
+	// uncovered strip shows purple, not black. app_delegate.mm does this for the
+	// standalone app; library hosts (futuramath's Expo app) don't run that
+	// delegate, so paint it here too.
+	self.godotView.backgroundColor = [UIColor 
+		colorWithRed:0.42
+		green:0.35
+		blue:0.79
+		alpha:1.0
+	];
 }
 
 - (void)observeKeyboard {
