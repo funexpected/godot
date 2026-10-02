@@ -40,6 +40,40 @@ jobs:
               rsync -a -m -R --include '*/' --include '*.h' --include '*.inc' --exclude '*' --exclude '.git' --exclude 'bin' --exclude 'ios.headers' . ./ios.headers
               zip -X -r ios.headers.zip ios.headers
               mv ios.headers.zip bin/
+          # Library-mode engine for a host app (futuramath's React/Expo shell embeds
+          # Godot instead of Godot owning main()). Same template layout as
+          # ios.release, so fnx/Godot export treat it the same way; only the .a
+          # differs: ios_library=yes exports godot_library_start and drops _main,
+          # and module_webp_enabled=no avoids libwebp clashing with the host's
+          # SDWebImageWebPCoder. Shipped as a separate asset so ios.release (the
+          # standalone app template) stays as it is.
+          - os: macos-15-intel
+            token: ios.library
+            build: |
+              scons p=iphone -j$(sysctl -n hw.ncpu) tools=no bits=64 target=release_debug arch=arm64 ios_library=yes module_firebase_enabled=no module_websocket_enabled=no module_webp_enabled=no game_center=no debug_symbols=no separate_debug_symbols=yes
+              LIB=bin/libgodot.iphone.opt.debug.arm64.a
+              misc/ci/check_ios_library.sh "$LIB" 2
+              mkdir iphone
+              cp -R misc/dist/ios_xcode/ iphone/
+              cp "$LIB" iphone/libgodot.iphone.release.fat.a
+              zip -X -r ios.library.zip iphone
+              rm -rf bin/*
+              mv ios.library.zip bin/
+          # arm64 iOS Simulator slice of the library-mode engine (Apple Silicon
+          # simulators). Can't share a fat .a with the device slice — same arch,
+          # different platform — so it ships on its own; the host links it for
+          # simulator builds.
+          - os: macos-15-intel
+            token: ios.library.simulator
+            build: |
+              scons p=iphone -j$(sysctl -n hw.ncpu) tools=no bits=64 target=release_debug arch=arm64 ios_simulator=yes ios_library=yes module_firebase_enabled=no module_websocket_enabled=no module_webp_enabled=no game_center=no debug_symbols=no separate_debug_symbols=yes
+              LIB=bin/libgodot.iphone.opt.debug.sim.arm64.a
+              misc/ci/check_ios_library.sh "$LIB" 7
+              mkdir iphone
+              cp "$LIB" iphone/libgodot.iphone.release.simulator.a
+              zip -X -r ios.library.simulator.zip iphone
+              rm -rf bin/*
+              mv ios.library.simulator.zip bin/
           - os: ubuntu-latest
             token: android.template.debug
             build: |
