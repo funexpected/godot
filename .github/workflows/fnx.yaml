@@ -67,7 +67,7 @@ jobs:
             token: ios.library.simulator
             build: |
               scons p=iphone -j$(sysctl -n hw.ncpu) tools=no bits=64 target=release_debug arch=arm64 ios_simulator=yes ios_library=yes module_firebase_enabled=no module_websocket_enabled=no module_webp_enabled=no game_center=no debug_symbols=no separate_debug_symbols=yes
-              LIB=bin/libgodot.iphone.opt.debug.sim.arm64.a
+              LIB=bin/libgodot.iphone.opt.debug.arm64.sim.a
               misc/ci/check_ios_library.sh "$LIB" 7
               mkdir iphone
               cp "$LIB" iphone/libgodot.iphone.release.simulator.a
