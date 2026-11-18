@@ -278,6 +278,12 @@ void FileAccessZip::close() {
 	ERR_FAIL_COND(!arch);
 	arch->close_handle(zfile);
 	zfile = NULL;
+	read_buffer_pos = 0;
+	read_buffer_fill = 0;
+	if (read_buffer) {
+		memfree(read_buffer);
+		read_buffer = nullptr;
+	}
 }
 
 bool FileAccessZip::is_open() const {
@@ -288,19 +294,29 @@ bool FileAccessZip::is_open() const {
 void FileAccessZip::seek(size_t p_position) {
 
 	ERR_FAIL_COND(!zfile);
+	// A position inside the read-ahead is a move within it. It has to be: the zip's own
+	// position is ahead of ours by what is buffered, so handing such a seek to minizip would
+	// be a backward one, and in a deflated entry that rewinds and inflates from the start.
+	size_t buffer_start = (size_t)unztell(zfile) - read_buffer_fill;
+	if (read_buffer_fill > 0 && p_position >= buffer_start && p_position <= buffer_start + read_buffer_fill) {
+		read_buffer_pos = (int)(p_position - buffer_start);
+		return;
+	}
+	read_buffer_pos = 0;
+	read_buffer_fill = 0;
 	unzSeekCurrentFile(zfile, p_position);
 }
 
 void FileAccessZip::seek_end(int64_t p_position) {
 
 	ERR_FAIL_COND(!zfile);
-	unzSeekCurrentFile(zfile, get_len() + p_position);
+	seek(get_len() + p_position);
 }
 
 size_t FileAccessZip::get_position() const {
 
 	ERR_FAIL_COND_V(!zfile, 0);
-	return unztell(zfile);
+	return unztell(zfile) - (read_buffer_fill - read_buffer_pos);
 }
 
 size_t FileAccessZip::get_len() const {
@@ -318,6 +334,10 @@ bool FileAccessZip::eof_reached() const {
 
 uint8_t FileAccessZip::get_8() const {
 
+	if (read_buffer_pos < read_buffer_fill) {
+		at_eof = false;
+		return read_buffer[read_buffer_pos++];
+	}
 	uint8_t ret = 0;
 	get_buffer(&ret, 1);
 	return ret;
@@ -327,11 +347,48 @@ int FileAccessZip::get_buffer(uint8_t *p_dst, int p_length) const {
 	ERR_FAIL_COND_V(!p_dst && p_length > 0, -1);
 	ERR_FAIL_COND_V(p_length < 0, -1);
 	ERR_FAIL_COND_V(!zfile, -1);
-	at_eof = unzeof(zfile);
-	if (at_eof)
+
+	int read = 0;
+	// What the read-ahead already holds.
+	int buffered = read_buffer_fill - read_buffer_pos;
+	if (p_length == 0) {
+		at_eof = buffered == 0 && unzeof(zfile);
 		return 0;
-	int read = unzReadCurrentFile(zfile, p_dst, p_length);
-	ERR_FAIL_COND_V(read < 0, read);
+	}
+	if (buffered > 0) {
+		read = MIN(buffered, p_length);
+		memcpy(p_dst, read_buffer + read_buffer_pos, read);
+		read_buffer_pos += read;
+	}
+	at_eof = false;
+	if (read == p_length)
+		return read;
+
+	// The read-ahead is used up from here on.
+	read_buffer_pos = 0;
+	read_buffer_fill = 0;
+	if (unzeof(zfile)) {
+		at_eof = true;
+		return read;
+	}
+	int left = p_length - read;
+	if (left >= READ_BUFFER_SIZE) {
+		int direct = unzReadCurrentFile(zfile, p_dst + read, left);
+		ERR_FAIL_COND_V(direct < 0, direct);
+		read += direct;
+	} else {
+		if (!read_buffer) {
+			read_buffer = (uint8_t *)memalloc(READ_BUFFER_SIZE);
+			ERR_FAIL_COND_V(!read_buffer, -1);
+		}
+		int filled = unzReadCurrentFile(zfile, read_buffer, READ_BUFFER_SIZE);
+		ERR_FAIL_COND_V(filled < 0, filled);
+		read_buffer_fill = filled;
+		int from_buffer = MIN(filled, left);
+		memcpy(p_dst + read, read_buffer, from_buffer);
+		read_buffer_pos = from_buffer;
+		read += from_buffer;
+	}
 	if (read < p_length)
 		at_eof = true;
 	return read;

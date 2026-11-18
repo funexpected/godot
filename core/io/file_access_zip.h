@@ -89,6 +89,19 @@ class FileAccessZip : public FileAccess {
 
 	mutable bool at_eof;
 
+	// Read-ahead. minizip inflates on every unzReadCurrentFile() call, and FileAccess reads
+	// integers a byte at a time (get_32 -> get_16 -> get_8), so a binary resource read from a
+	// deflated entry paid one call into inflate per byte: a quarter of the time a 9 MB
+	// FlashDocument took to load on a Fire HD 10. Small reads are served from this buffer;
+	// reads of READ_BUFFER_SIZE and more go straight to the destination. The file's position
+	// is unztell() minus what is still unread here.
+	enum {
+		READ_BUFFER_SIZE = 16384
+	};
+	mutable uint8_t *read_buffer = nullptr; // allocated on the first small read
+	mutable int read_buffer_pos = 0; // next unread byte
+	mutable int read_buffer_fill = 0; // bytes held
+
 public:
 	virtual Error _open(const String &p_path, int p_mode_flags); ///< open a file
 	virtual void close(); ///< close a file
